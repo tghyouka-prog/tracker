@@ -355,6 +355,14 @@ html.theme-light .bottom-nav{background:rgba(250,248,245,.94)}
 .fb-row{display:flex;gap:.5rem;margin-top:.75rem;padding-top:.625rem;border-top:1px solid var(--b1)}
 .fb-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:.35rem;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-md);padding:.45rem .5rem;font-size:11.5px;font-weight:600;color:var(--t2);cursor:pointer;font-family:inherit}
 .fb-btn:active{opacity:.7}
+.fb-connect{margin-top:.75rem}
+.fb-connect-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:.4rem;background:var(--s2);border:1px solid var(--b1);color:var(--t2);border-radius:var(--r-md);padding:.55rem;font-size:12px;font-weight:650;cursor:pointer;font-family:inherit}
+.fb-connect-btn:active{opacity:.7}
+.fb-conn-row{display:flex;align-items:center;gap:.4rem;font-size:11.5px;color:var(--t2);flex-wrap:wrap}
+.fb-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex:none}
+.fb-conn-txt{flex:1;min-width:130px}
+.fb-mini{background:var(--s2);border:1px solid var(--b1);color:var(--t2);border-radius:6px;padding:.25rem .5rem;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
+.fb-mini.ghost{background:transparent;color:var(--t3)}
 
 /* ═══ UX IMPROVEMENTS ═══ */
 
@@ -2341,6 +2349,7 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
     </div>
     <canvas id="wh-canvas" class="wh-canvas" height="48"></canvas>
     <span class="wh-note" id="wh-note">Tap − / + above to log weight changes</span>
+    <div class="fb-connect" id="fb-connect"></div>
     <div class="fb-row">
       <button class="fb-btn" onclick="document.getElementById('fb-wt-in').click()"><i class="ti ti-scale"></i>Weight CSV</button>
       <button class="fb-btn" onclick="document.getElementById('fb-sl-in').click()"><i class="ti ti-moon"></i>Sleep JSON</button>
@@ -5494,6 +5503,7 @@ function save(){
       bodyWeight,budgetOverrides,
       checkins,dismissedInsights,appliedInsights,lastWeeklyShown,
       journeyLog,weightHistory,retroTicks,customItems,skippedToday,halfTicks,labelEdits,insightsLastRead,_lastInsightCount,
+      rhrHistory,hrvHistory,stepsHistory,
     }));
   }catch(e){}
 }
@@ -5530,6 +5540,9 @@ function load(){
     if(d.lastWeeklyShown) lastWeeklyShown=d.lastWeeklyShown;
     if(d.journeyLog) journeyLog=d.journeyLog;
     if(d.weightHistory) weightHistory=d.weightHistory;
+    if(d.rhrHistory) rhrHistory=d.rhrHistory;
+    if(d.hrvHistory) hrvHistory=d.hrvHistory;
+    if(d.stepsHistory) stepsHistory=d.stepsHistory;
     if(d.retroTicks) Object.assign(retroTicks,d.retroTicks);
     if(d.insightsLastRead) insightsLastRead=d.insightsLastRead;
     if(d._lastInsightCount) _lastInsightCount=d._lastInsightCount;
@@ -5864,6 +5877,33 @@ function generateInsights(){
   const stats=analyzeRecent();
   const insights=[];
 
+  // ── HRV / RESTING-HR RECOVERY SIGNAL (from Fitbit sync) ──
+  if(hrvHistory.length>=5){
+    const hv=hrvHistory.map(e=>e.v), latest=hv[hv.length-1];
+    const prior=hv.slice(-8,-1), base=prior.reduce((a,b)=>a+b,0)/prior.length;
+    if(base&&latest<base*0.85){
+      insights.push({
+        id:'hrv-drop',type:'recovery',icon:'ti-activity-heartbeat',
+        title:'HRV below baseline',
+        body:`Overnight HRV is <strong>${Math.round(latest)}ms</strong> vs a ${Math.round(base)}ms baseline — a ${Math.round((1-latest/base)*100)}% drop. Suppressed HRV means your nervous system is under-recovered. Prioritise sleep and pull back training intensity today.`,
+        data:`Latest ${Math.round(latest)}ms · baseline ${Math.round(base)}ms`,
+        action:'recovery',actionLabel:'Skip next training session',actionFn:'applyRecoveryDay',
+      });
+    }
+  }
+  if(rhrHistory.length>=5){
+    const rv=rhrHistory.map(e=>e.v), latest=rv[rv.length-1];
+    const prior=rv.slice(-8,-1), base=prior.reduce((a,b)=>a+b,0)/prior.length;
+    if(base&&latest>=base+5){
+      insights.push({
+        id:'rhr-elevated',type:'warning',icon:'ti-heartbeat',
+        title:'Resting heart rate elevated',
+        body:`Resting HR is <strong>${latest}bpm</strong>, ${Math.round(latest-base)}bpm above your ${Math.round(base)}bpm baseline. A sustained jump often precedes illness or signals accumulated fatigue — treat today as a recovery-priority day.`,
+        data:`Latest ${latest}bpm · baseline ${Math.round(base)}bpm`,
+      });
+    }
+  }
+
   // ── RECOVERY FLAG (highest priority) ──
   if(stats.lowEnergyStreak>=3||stats.poorSleepStreak>=3){
     insights.push({
@@ -6150,6 +6190,7 @@ function _playTabEntrance(pageId, odoWrapId){
 // so a new insight still surfaces under All and Train rather than vanishing.
 const COACH_CAT={
   'recovery-flag':'recovery','soreness-flag':'recovery','sleep-low':'recovery',
+  'hrv-drop':'recovery','rhr-elevated':'recovery',
   'food-protein-short':'fuel','food-protein-good':'fuel','food-kcal-under':'fuel',
   'food-kcal-over':'fuel','food-skipped':'fuel','targets-low':'fuel','targets-high':'fuel',
   'tracker-low':'train','consistent-execution':'train'
@@ -7454,6 +7495,146 @@ function _fbSleep(files){
   });
 }
 
+// ── FITBIT LIVE SYNC (OAuth 2.0 PKCE, public client — no secret) ──
+// New metric histories. {date, v} shape (weight/sleep keep their own shapes above).
+let rhrHistory=[];   // resting heart rate  [{date, v(bpm)}]
+let hrvHistory=[];   // overnight HRV rmssd [{date, v(ms)}]
+let stepsHistory=[]; // daily steps         [{date, v}]
+
+// Register a "Personal" app at https://dev.fitbit.com/apps (Personal = your own intraday HR/HRV).
+// Redirect URI must be EXACTLY the value below. Client ID is not secret; pasted once via prompt.
+const FITBIT_REDIRECT='https://tghyouka-prog.github.io/tracker/';
+const FITBIT_SCOPE='weight sleep heartrate activity';
+function _fbClientId(){ return localStorage.getItem('fitbitClientId')||''; }
+
+function _fbSleepRating(mins){ return mins<240?1:mins<300?2:mins<390?3:mins<450?4:5; }
+function _mergeSeries(arr,date,v,cap){
+  const i=arr.findIndex(e=>e.date===date);
+  if(i>=0) arr[i].v=v; else arr.push({date,v});
+  arr.sort((a,b)=>a.date.localeCompare(b.date));
+  if(arr.length>cap) arr.splice(0,arr.length-cap);
+}
+function _b64url(buf){ return btoa(String.fromCharCode.apply(null,new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+async function _pkceChallenge(v){ return _b64url(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v))); }
+function _pkceVerifier(){ const a=new Uint8Array(64); crypto.getRandomValues(a); return _b64url(a); }
+
+async function fitbitConnect(){
+  let id=_fbClientId();
+  if(!id){
+    id=(prompt('Paste your Fitbit app OAuth 2.0 Client ID (from dev.fitbit.com/apps):')||'').trim();
+    if(!id) return;
+    localStorage.setItem('fitbitClientId',id);
+  }
+  const v=_pkceVerifier();
+  sessionStorage.setItem('fb_pkce',v);
+  const ch=await _pkceChallenge(v);
+  location.href='https://www.fitbit.com/oauth2/authorize?'+new URLSearchParams({
+    client_id:id,response_type:'code',code_challenge:ch,code_challenge_method:'S256',
+    scope:FITBIT_SCOPE,redirect_uri:FITBIT_REDIRECT
+  });
+}
+function _fbStore(t){ localStorage.setItem('fitbitTok',JSON.stringify({access:t.access_token,refresh:t.refresh_token,exp:Date.now()+((t.expires_in||28800)-60)*1000})); }
+async function _fbToken(){
+  const raw=localStorage.getItem('fitbitTok'); if(!raw) return null;
+  const t=JSON.parse(raw);
+  if(Date.now()<t.exp) return t.access;
+  try{
+    const r=await fetch('https://api.fitbit.com/oauth2/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:new URLSearchParams({client_id:_fbClientId(),grant_type:'refresh_token',refresh_token:t.refresh})});
+    const nt=await r.json();
+    if(nt.access_token){ _fbStore(nt); return nt.access_token; }
+  }catch(e){}
+  return null;
+}
+async function _fitbitRedirectCatch(){
+  const p=new URLSearchParams(location.search);
+  const code=p.get('code');
+  if(!code) return false;
+  const v=sessionStorage.getItem('fb_pkce');
+  try{ history.replaceState({},'',FITBIT_REDIRECT); }catch(e){}
+  if(!v){ showToast('Fitbit auth expired — try again','action'); return true; }
+  sessionStorage.removeItem('fb_pkce');
+  try{
+    const r=await fetch('https://api.fitbit.com/oauth2/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:new URLSearchParams({client_id:_fbClientId(),grant_type:'authorization_code',code,code_verifier:v,redirect_uri:FITBIT_REDIRECT})});
+    const t=await r.json();
+    if(t.access_token){ _fbStore(t); showToast('Fitbit connected','action'); await fitbitSync(); }
+    else showToast('Fitbit auth failed','action');
+  }catch(e){ showToast('Fitbit auth error','action'); }
+  return true;
+}
+let _fbSyncing=false;
+async function fitbitSync(silent){
+  if(_fbSyncing) return;
+  const tok=await _fbToken();
+  if(!tok){ if(!silent) showToast('Connect Fitbit first','action'); return; }
+  _fbSyncing=true;
+  const H={Authorization:'Bearer '+tok};
+  const end=new Date().toISOString().slice(0,10);
+  const start=new Date(Date.now()-29*864e5).toISOString().slice(0,10);
+  const g=async(url)=>{ try{const r=await fetch('https://api.fitbit.com'+url,{headers:H}); return r.ok?await r.json():null;}catch(e){return null;} };
+  const [wt,sl,hr,hrv,st]=await Promise.all([
+    g(`/1/user/-/body/weight/date/${start}/${end}.json`),
+    g(`/1.2/user/-/sleep/date/${start}/${end}.json`),
+    g(`/1/user/-/activities/heart/date/${start}/${end}.json`),
+    g(`/1/user/-/hrv/date/${start}/${end}.json`),
+    g(`/1/user/-/activities/steps/date/${start}/${end}.json`),
+  ]);
+  let n=0;
+  if(wt&&wt['body-weight']){
+    wt['body-weight'].forEach(e=>{ const kg=parseFloat(e.value); if(isNaN(kg)) return;
+      const i=weightHistory.findIndex(x=>x.date===e.dateTime);
+      if(i>=0) weightHistory[i].kg=kg; else weightHistory.push({date:e.dateTime,kg}); n++; });
+    weightHistory.sort((a,b)=>a.date.localeCompare(b.date));
+    weightHistory=weightHistory.slice(-90);
+    if(weightHistory.length) applyWeight(weightHistory[weightHistory.length-1].kg,false);
+  }
+  if(sl&&sl.sleep){
+    const byDate={};
+    sl.sleep.forEach(s=>{ if(!s.dateOfSleep) return; if(byDate[s.dateOfSleep]==null||s.minutesAsleep>byDate[s.dateOfSleep]) byDate[s.dateOfSleep]=s.minutesAsleep||0; });
+    Object.keys(byDate).forEach(date=>{ const rating=_fbSleepRating(byDate[date]);
+      if(!checkins[date]) checkins[date]={};
+      checkins[date].sleep=rating;
+      const i=sleepHistory.findIndex(h=>h.date===date);
+      if(i>=0) sleepHistory[i].rating=rating; else sleepHistory.push({date,rating}); n++; });
+    sleepHistory.sort((a,b)=>a.date.localeCompare(b.date));
+    sleepHistory=sleepHistory.slice(-14);
+  }
+  if(hr&&hr['activities-heart']) hr['activities-heart'].forEach(e=>{ const b=e.value&&e.value.restingHeartRate; if(!b) return; _mergeSeries(rhrHistory,e.dateTime,b,60); n++; });
+  if(hrv&&hrv.hrv) hrv.hrv.forEach(e=>{ const v=e.value&&e.value.dailyRmssd; if(v==null) return; _mergeSeries(hrvHistory,e.dateTime,v,60); n++; });
+  if(st&&st['activities-steps']) st['activities-steps'].forEach(e=>{ const v=parseInt(e.value); if(isNaN(v)) return; _mergeSeries(stepsHistory,e.dateTime,v,60); });
+  localStorage.setItem('fitbitMeta',JSON.stringify({last:Date.now()}));
+  _fbSyncing=false;
+  save();
+  if(typeof renderWeightChart==='function') renderWeightChart();
+  if(typeof renderSleepHistory==='function') renderSleepHistory();
+  if(typeof renderInsights==='function') renderInsights();
+  renderFitbit();
+  if(!silent) showToast('Fitbit synced'+(n?' · '+n+' updates':' · up to date'),'action');
+}
+function fitbitDisconnect(){ localStorage.removeItem('fitbitTok'); localStorage.removeItem('fitbitMeta'); showToast('Fitbit disconnected','action'); renderFitbit(); }
+function _fbAgo(ts){ const s=(Date.now()-ts)/1000; if(s<90) return 'just now'; if(s<3600) return Math.round(s/60)+'m ago'; if(s<86400) return Math.round(s/3600)+'h ago'; return Math.round(s/86400)+'d ago'; }
+function renderFitbit(){
+  const el=document.getElementById('fb-connect'); if(!el) return;
+  if(localStorage.getItem('fitbitTok')){
+    const meta=JSON.parse(localStorage.getItem('fitbitMeta')||'{}');
+    const last=meta.last?_fbAgo(meta.last):'not yet';
+    const steps=stepsHistory.length?stepsHistory[stepsHistory.length-1].v.toLocaleString()+' steps':'';
+    el.innerHTML=`<div class="fb-conn-row"><span class="fb-dot"></span><span class="fb-conn-txt">Fitbit · synced ${last}${steps?' · '+steps:''}</span>`
+      +`<button class="fb-mini" onclick="fitbitSync()">Sync now</button><button class="fb-mini ghost" onclick="fitbitDisconnect()">Disconnect</button></div>`;
+  } else {
+    el.innerHTML=`<button class="fb-connect-btn" onclick="fitbitConnect()"><i class="ti ti-heart-rate-monitor"></i>Connect Fitbit — auto-sync weight · sleep · HRV</button>`;
+  }
+}
+// Runnable self-check (call _fbSelfCheck() in console). Covers the two non-trivial bits: rating boundaries + merge dedupe/cap.
+function _fbSelfCheck(){
+  console.assert(_fbSleepRating(239)===1&&_fbSleepRating(240)===2&&_fbSleepRating(389)===3&&_fbSleepRating(449)===4&&_fbSleepRating(450)===5,'sleep rating boundaries');
+  const a=[]; _mergeSeries(a,'2026-01-02',5,3); _mergeSeries(a,'2026-01-01',4,3); _mergeSeries(a,'2026-01-02',9,3);
+  console.assert(a.length===2&&a[0].date==='2026-01-01'&&a[1].v===9,'merge dedupe+sort');
+  _mergeSeries(a,'2026-01-03',1,2); console.assert(a.length===2&&a[0].date==='2026-01-02','merge cap');
+  return 'ok';
+}
+
 
 
 // ── DAY MODE ──
@@ -8042,6 +8223,7 @@ renderRules();
 renderWhyTiles();
 initGeminiKeyField();
 renderMealLog();
+renderFitbit();
 renderWeekStrip();
 renderSessionHistory();
 renderBudget();
@@ -8092,6 +8274,13 @@ const smartBtn=document.getElementById('sess-smart-btn');
 if(smartBtn) smartBtn.style.display=CYCLE_TO_SESSION[cycleDay]?'flex':'none';
 // Show weekly summary if it's been 7+ days
 setTimeout(()=>maybeShowWeeklySummary(),1500);
+// Fitbit: catch OAuth redirect (?code=...), else auto-sync if connected & stale (>6h)
+_fitbitRedirectCatch().then(handled=>{
+  if(handled) return;
+  const meta=JSON.parse(localStorage.getItem('fitbitMeta')||'{}');
+  if(localStorage.getItem('fitbitTok')&&(!meta.last||Date.now()-meta.last>6*3600*1000)) fitbitSync(true);
+});
+
 // Always land on Overview regardless of stored state
 go('tracker');
 </script>
