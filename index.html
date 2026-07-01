@@ -7495,17 +7495,16 @@ function _fbSleep(files){
   });
 }
 
-// ── FITBIT LIVE SYNC (OAuth 2.0 PKCE, public client — no secret) ──
-// New metric histories. {date, v} shape (weight/sleep keep their own shapes above).
+// ── GOOGLE HEALTH LIVE SYNC (via Cloudflare Worker OAuth broker) ──
+// Legacy Fitbit Web API shuts down Sept 2026; data now comes from the Google Health API, which
+// needs a server-held OAuth secret. The Worker (gh-worker/worker.js) holds the secret + proxies
+// reads; the browser only ever holds a refresh token. Deploy the Worker, then paste its URL when
+// you tap Connect. One-time Google Cloud setup is in gh-worker/README.md.
 let rhrHistory=[];   // resting heart rate  [{date, v(bpm)}]
 let hrvHistory=[];   // overnight HRV rmssd [{date, v(ms)}]
 let stepsHistory=[]; // daily steps         [{date, v}]
 
-// Register a "Personal" app at https://dev.fitbit.com/apps (Personal = your own intraday HR/HRV).
-// Redirect URI must be EXACTLY the value below. Client ID is not secret; pasted once via prompt.
-const FITBIT_REDIRECT='https://tghyouka-prog.github.io/tracker/';
-const FITBIT_SCOPE='weight sleep heartrate activity';
-function _fbClientId(){ return localStorage.getItem('fitbitClientId')||''; }
+function _ghWorker(){ return (localStorage.getItem('ghWorker')||'').replace(/\/+$/,''); }
 
 function _fbSleepRating(mins){ return mins<240?1:mins<300?2:mins<390?3:mins<450?4:5; }
 function _mergeSeries(arr,date,v,cap){
@@ -7514,95 +7513,66 @@ function _mergeSeries(arr,date,v,cap){
   arr.sort((a,b)=>a.date.localeCompare(b.date));
   if(arr.length>cap) arr.splice(0,arr.length-cap);
 }
-function _b64url(buf){ return btoa(String.fromCharCode.apply(null,new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
-async function _pkceChallenge(v){ return _b64url(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v))); }
-function _pkceVerifier(){ const a=new Uint8Array(64); crypto.getRandomValues(a); return _b64url(a); }
+// v4 parse helpers — exact value field names aren't fully documented, so pull by key-hint and
+// fall back to the first number, always skipping date/time fields.
+function _ghDate(dp){ const d=(dp.civilStartTime&&dp.civilStartTime.date)||(dp.startTime&&dp.startTime.date)||dp.date; if(!d||d.year==null) return null; return d.year+'-'+String(d.month).padStart(2,'0')+'-'+String(d.day).padStart(2,'0'); }
+const _GH_SKIP=new Set(['civilstarttime','civilendtime','starttime','endtime','date','time','year','month','day','hours','minutes','seconds','nanos','origindatatype','dataorigin']);
+function _ghNum(obj,hints){ let hit=null,any=null; (function walk(o){ if(o==null||typeof o!=='object') return; for(const k of Object.keys(o)){ const kl=k.toLowerCase(); if(_GH_SKIP.has(kl)) continue; const v=o[k]; if(typeof v==='number'||(typeof v==='string'&&v.trim()!==''&&!isNaN(v))){ const num=parseFloat(v); if(any==null) any=num; if(hit==null&&hints.some(h=>kl.includes(h))) hit=num; } else if(typeof v==='object') walk(v); } })(obj); return hit!=null?hit:any; }
+function _ghPoints(r){ return (r&&(r.rollupDataPoints||r.dataPoints))||[]; }
 
-async function fitbitConnect(){
-  let id=_fbClientId();
-  if(!id){
-    id=(prompt('Paste your Fitbit app OAuth 2.0 Client ID (from dev.fitbit.com/apps):')||'').trim();
-    if(!id) return;
-    localStorage.setItem('fitbitClientId',id);
+function fitbitConnect(){
+  let w=_ghWorker();
+  if(!w){
+    w=(prompt('Paste your Cloudflare Worker URL (e.g. https://gh-sync.<you>.workers.dev):')||'').trim().replace(/\/+$/,'');
+    if(!w) return;
+    localStorage.setItem('ghWorker',w);
   }
-  const v=_pkceVerifier();
-  sessionStorage.setItem('fb_pkce',v);
-  const ch=await _pkceChallenge(v);
-  location.href='https://www.fitbit.com/oauth2/authorize?'+new URLSearchParams({
-    client_id:id,response_type:'code',code_challenge:ch,code_challenge_method:'S256',
-    scope:FITBIT_SCOPE,redirect_uri:FITBIT_REDIRECT
-  });
+  location.href=w+'/start';
 }
-function _fbStore(t){ localStorage.setItem('fitbitTok',JSON.stringify({access:t.access_token,refresh:t.refresh_token,exp:Date.now()+((t.expires_in||28800)-60)*1000})); }
-async function _fbToken(){
-  const raw=localStorage.getItem('fitbitTok'); if(!raw) return null;
-  const t=JSON.parse(raw);
-  if(Date.now()<t.exp) return t.access;
-  try{
-    const r=await fetch('https://api.fitbit.com/oauth2/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body:new URLSearchParams({client_id:_fbClientId(),grant_type:'refresh_token',refresh_token:t.refresh})});
-    const nt=await r.json();
-    if(nt.access_token){ _fbStore(nt); return nt.access_token; }
-  }catch(e){}
-  return null;
-}
-async function _fitbitRedirectCatch(){
-  const p=new URLSearchParams(location.search);
-  const code=p.get('code');
-  if(!code) return false;
-  const v=sessionStorage.getItem('fb_pkce');
-  try{ history.replaceState({},'',FITBIT_REDIRECT); }catch(e){}
-  if(!v){ showToast('Fitbit auth expired — try again','action'); return true; }
-  sessionStorage.removeItem('fb_pkce');
-  try{
-    const r=await fetch('https://api.fitbit.com/oauth2/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body:new URLSearchParams({client_id:_fbClientId(),grant_type:'authorization_code',code,code_verifier:v,redirect_uri:FITBIT_REDIRECT})});
-    const t=await r.json();
-    if(t.access_token){ _fbStore(t); showToast('Fitbit connected','action'); await fitbitSync(); }
-    else showToast('Fitbit auth failed','action');
-  }catch(e){ showToast('Fitbit auth error','action'); }
-  return true;
+// Called at init: the Worker redirects back to #gh_refresh=... (or #gh_error=...)
+function _fitbitRedirectCatch(){
+  const h=location.hash||'';
+  const m=h.match(/[#&]gh_refresh=([^&]+)/);
+  const err=h.match(/[#&]gh_error=([^&]+)/);
+  if(!m&&!err) return Promise.resolve(false);
+  try{ history.replaceState({},'',location.pathname); }catch(e){}
+  if(err){ showToast('Google auth failed: '+decodeURIComponent(err[1]),'action'); return Promise.resolve(true); }
+  localStorage.setItem('ghRefresh',decodeURIComponent(m[1]));
+  showToast('Google Health connected','action');
+  return fitbitSync().then(()=>true);
 }
 let _fbSyncing=false;
 async function fitbitSync(silent){
   if(_fbSyncing) return;
-  const tok=await _fbToken();
-  if(!tok){ if(!silent) showToast('Connect Fitbit first','action'); return; }
+  const refresh=localStorage.getItem('ghRefresh'), w=_ghWorker();
+  if(!refresh||!w){ if(!silent) showToast('Connect Google Health first','action'); return; }
   _fbSyncing=true;
-  const H={Authorization:'Bearer '+tok};
-  const end=new Date().toISOString().slice(0,10);
-  const start=new Date(Date.now()-29*864e5).toISOString().slice(0,10);
-  const g=async(url)=>{ try{const r=await fetch('https://api.fitbit.com'+url,{headers:H}); return r.ok?await r.json():null;}catch(e){return null;} };
-  const [wt,sl,hr,hrv,st]=await Promise.all([
-    g(`/1/user/-/body/weight/date/${start}/${end}.json`),
-    g(`/1.2/user/-/sleep/date/${start}/${end}.json`),
-    g(`/1/user/-/activities/heart/date/${start}/${end}.json`),
-    g(`/1/user/-/hrv/date/${start}/${end}.json`),
-    g(`/1/user/-/activities/steps/date/${start}/${end}.json`),
-  ]);
+  let data;
+  try{
+    const r=await fetch(w+'/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({refresh})});
+    data=await r.json();
+  }catch(e){ _fbSyncing=false; if(!silent) showToast('Sync failed — check Worker URL','action'); return; }
+  if(!data||data.error){ _fbSyncing=false; if(!silent) showToast('Sync error: '+((data&&data.error)||'no data'),'action'); if(data&&/invalid_grant|refresh/.test(data.error)){ localStorage.removeItem('ghRefresh'); renderFitbit(); } return; }
+  console.log('[GH sync raw]',data); // first-run calibration of v4 field names
   let n=0;
-  if(wt&&wt['body-weight']){
-    wt['body-weight'].forEach(e=>{ const kg=parseFloat(e.value); if(isNaN(kg)) return;
-      const i=weightHistory.findIndex(x=>x.date===e.dateTime);
-      if(i>=0) weightHistory[i].kg=kg; else weightHistory.push({date:e.dateTime,kg}); n++; });
-    weightHistory.sort((a,b)=>a.date.localeCompare(b.date));
-    weightHistory=weightHistory.slice(-90);
-    if(weightHistory.length) applyWeight(weightHistory[weightHistory.length-1].kg,false);
-  }
-  if(sl&&sl.sleep){
-    const byDate={};
-    sl.sleep.forEach(s=>{ if(!s.dateOfSleep) return; if(byDate[s.dateOfSleep]==null||s.minutesAsleep>byDate[s.dateOfSleep]) byDate[s.dateOfSleep]=s.minutesAsleep||0; });
-    Object.keys(byDate).forEach(date=>{ const rating=_fbSleepRating(byDate[date]);
-      if(!checkins[date]) checkins[date]={};
-      checkins[date].sleep=rating;
-      const i=sleepHistory.findIndex(h=>h.date===date);
-      if(i>=0) sleepHistory[i].rating=rating; else sleepHistory.push({date,rating}); n++; });
-    sleepHistory.sort((a,b)=>a.date.localeCompare(b.date));
-    sleepHistory=sleepHistory.slice(-14);
-  }
-  if(hr&&hr['activities-heart']) hr['activities-heart'].forEach(e=>{ const b=e.value&&e.value.restingHeartRate; if(!b) return; _mergeSeries(rhrHistory,e.dateTime,b,60); n++; });
-  if(hrv&&hrv.hrv) hrv.hrv.forEach(e=>{ const v=e.value&&e.value.dailyRmssd; if(v==null) return; _mergeSeries(hrvHistory,e.dateTime,v,60); n++; });
-  if(st&&st['activities-steps']) st['activities-steps'].forEach(e=>{ const v=parseInt(e.value); if(isNaN(v)) return; _mergeSeries(stepsHistory,e.dateTime,v,60); });
+  // weight (kg)
+  _ghPoints(data.weight).forEach(dp=>{ const date=_ghDate(dp); const kg=_ghNum(dp.weight||dp,['kilogram','kg','mass','weight']); if(!date||kg==null) return;
+    const i=weightHistory.findIndex(x=>x.date===date); if(i>=0) weightHistory[i].kg=+kg.toFixed(1); else weightHistory.push({date,kg:+kg.toFixed(1)}); n++; });
+  weightHistory.sort((a,b)=>a.date.localeCompare(b.date)); weightHistory=weightHistory.slice(-90);
+  if(_ghPoints(data.weight).length&&weightHistory.length) applyWeight(weightHistory[weightHistory.length-1].kg,false);
+  // sleep (minutes asleep → 1–5)
+  _ghPoints(data.sleep).forEach(dp=>{ const date=_ghDate(dp); let mins=_ghNum(dp.sleep||dp,['minutesasleep','asleep','minutes','duration']); if(!date||mins==null) return;
+    if(mins>1440) mins=mins/60; // seconds → minutes guard
+    const rating=_fbSleepRating(mins);
+    if(!checkins[date]) checkins[date]={}; checkins[date].sleep=rating;
+    const i=sleepHistory.findIndex(h=>h.date===date); if(i>=0) sleepHistory[i].rating=rating; else sleepHistory.push({date,rating}); n++; });
+  sleepHistory.sort((a,b)=>a.date.localeCompare(b.date)); sleepHistory=sleepHistory.slice(-14);
+  // resting HR (bpm)
+  _ghPoints(data.rhr).forEach(dp=>{ const date=_ghDate(dp); const bpm=_ghNum(dp['daily-resting-heart-rate']||dp,['bpm','beats','resting','heart','rate']); if(!date||bpm==null) return; _mergeSeries(rhrHistory,date,Math.round(bpm),60); n++; });
+  // HRV (rmssd ms)
+  _ghPoints(data.hrv).forEach(dp=>{ const date=_ghDate(dp); const ms=_ghNum(dp['heart-rate-variability']||dp,['rmssd','millis','hrv','ms']); if(!date||ms==null) return; _mergeSeries(hrvHistory,date,+ms.toFixed(1),60); n++; });
+  // steps
+  _ghPoints(data.steps).forEach(dp=>{ const date=_ghDate(dp); const s=_ghNum(dp.steps||dp,['count','steps']); if(!date||s==null) return; _mergeSeries(stepsHistory,date,Math.round(s),60); });
   localStorage.setItem('fitbitMeta',JSON.stringify({last:Date.now()}));
   _fbSyncing=false;
   save();
@@ -7610,28 +7580,33 @@ async function fitbitSync(silent){
   if(typeof renderSleepHistory==='function') renderSleepHistory();
   if(typeof renderInsights==='function') renderInsights();
   renderFitbit();
-  if(!silent) showToast('Fitbit synced'+(n?' · '+n+' updates':' · up to date'),'action');
+  if(!silent) showToast('Synced'+(n?' · '+n+' updates':' · up to date'),'action');
 }
-function fitbitDisconnect(){ localStorage.removeItem('fitbitTok'); localStorage.removeItem('fitbitMeta'); showToast('Fitbit disconnected','action'); renderFitbit(); }
+function fitbitDisconnect(){ localStorage.removeItem('ghRefresh'); localStorage.removeItem('fitbitMeta'); showToast('Google Health disconnected','action'); renderFitbit(); }
 function _fbAgo(ts){ const s=(Date.now()-ts)/1000; if(s<90) return 'just now'; if(s<3600) return Math.round(s/60)+'m ago'; if(s<86400) return Math.round(s/3600)+'h ago'; return Math.round(s/86400)+'d ago'; }
 function renderFitbit(){
   const el=document.getElementById('fb-connect'); if(!el) return;
-  if(localStorage.getItem('fitbitTok')){
+  if(localStorage.getItem('ghRefresh')){
     const meta=JSON.parse(localStorage.getItem('fitbitMeta')||'{}');
     const last=meta.last?_fbAgo(meta.last):'not yet';
     const steps=stepsHistory.length?stepsHistory[stepsHistory.length-1].v.toLocaleString()+' steps':'';
-    el.innerHTML=`<div class="fb-conn-row"><span class="fb-dot"></span><span class="fb-conn-txt">Fitbit · synced ${last}${steps?' · '+steps:''}</span>`
+    el.innerHTML=`<div class="fb-conn-row"><span class="fb-dot"></span><span class="fb-conn-txt">Google Health · synced ${last}${steps?' · '+steps:''}</span>`
       +`<button class="fb-mini" onclick="fitbitSync()">Sync now</button><button class="fb-mini ghost" onclick="fitbitDisconnect()">Disconnect</button></div>`;
   } else {
-    el.innerHTML=`<button class="fb-connect-btn" onclick="fitbitConnect()"><i class="ti ti-heart-rate-monitor"></i>Connect Fitbit — auto-sync weight · sleep · HRV</button>`;
+    el.innerHTML=`<button class="fb-connect-btn" onclick="fitbitConnect()"><i class="ti ti-heart-rate-monitor"></i>Connect Google Health — auto-sync weight · sleep · HRV</button>`;
   }
 }
-// Runnable self-check (call _fbSelfCheck() in console). Covers the two non-trivial bits: rating boundaries + merge dedupe/cap.
+// Runnable self-check (call _fbSelfCheck() in console): rating boundaries, merge cap, and v4 parse.
 function _fbSelfCheck(){
   console.assert(_fbSleepRating(239)===1&&_fbSleepRating(240)===2&&_fbSleepRating(389)===3&&_fbSleepRating(449)===4&&_fbSleepRating(450)===5,'sleep rating boundaries');
   const a=[]; _mergeSeries(a,'2026-01-02',5,3); _mergeSeries(a,'2026-01-01',4,3); _mergeSeries(a,'2026-01-02',9,3);
   console.assert(a.length===2&&a[0].date==='2026-01-01'&&a[1].v===9,'merge dedupe+sort');
   _mergeSeries(a,'2026-01-03',1,2); console.assert(a.length===2&&a[0].date==='2026-01-02','merge cap');
+  const dp={civilStartTime:{date:{year:2026,month:2,day:26}},steps:{countSum:'3822'}};
+  console.assert(_ghDate(dp)==='2026-02-26','gh date parse');
+  console.assert(_ghNum(dp.steps,['count','steps'])===3822,'gh num hint');
+  console.assert(_ghNum({massKilograms:74.5},['kilogram','kg','mass'])===74.5,'gh num weight');
+  console.assert(_ghNum({civilStartTime:{date:{year:2026,month:2,day:1}},restingHeartRateBpm:58},['bpm','resting','heart'])===58,'gh num skips date');
   return 'ok';
 }
 
@@ -8274,11 +8249,11 @@ const smartBtn=document.getElementById('sess-smart-btn');
 if(smartBtn) smartBtn.style.display=CYCLE_TO_SESSION[cycleDay]?'flex':'none';
 // Show weekly summary if it's been 7+ days
 setTimeout(()=>maybeShowWeeklySummary(),1500);
-// Fitbit: catch OAuth redirect (?code=...), else auto-sync if connected & stale (>6h)
+// Google Health: catch Worker redirect (#gh_refresh=...), else auto-sync if connected & stale (>6h)
 _fitbitRedirectCatch().then(handled=>{
   if(handled) return;
   const meta=JSON.parse(localStorage.getItem('fitbitMeta')||'{}');
-  if(localStorage.getItem('fitbitTok')&&(!meta.last||Date.now()-meta.last>6*3600*1000)) fitbitSync(true);
+  if(localStorage.getItem('ghRefresh')&&(!meta.last||Date.now()-meta.last>6*3600*1000)) fitbitSync(true);
 });
 
 // Always land on Overview regardless of stored state
