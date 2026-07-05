@@ -294,6 +294,7 @@ html.theme-light .bottom-nav{background:rgba(250,248,245,.94)}
 .shift-btn.s-ds{background:var(--blue-dim);border-color:rgba(91,156,246,.3);color:var(--blue)}
 .shift-btn.s-ns{background:var(--amber-dim);border-color:rgba(240,160,32,.3);color:var(--amber)}
 .shift-btn.s-off{background:var(--teal-dim);border-color:rgba(38,201,138,.3);color:var(--teal)}
+.shift-btn.s-school{background:var(--blue-dim);border-color:rgba(91,156,246,.3);color:var(--blue)}
 .shift-btn.lift-day{position:relative}
 .shift-btn.lift-day:not(.s-ns):not(.s-off){border-color:rgba(240,160,32,.35);border-width:1.5px}
 .shift-btn.s-ns.lift-day{border-color:var(--amber);border-width:2px;box-shadow:0 0 0 1px rgba(240,160,32,.15)}
@@ -2122,6 +2123,7 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
         <div class="shift-group-label">Regular</div>
         <div class="shift-group-btns">
           <button class="shift-btn s-ds" id="btn-ds" onclick="setShift('ds')"><i class="ti ti-sun" style="font-size:12px"></i>Day</button>
+          <button class="shift-btn" id="btn-school" onclick="setShift('school')"><i class="ti ti-school" style="font-size:12px"></i>School</button>
           <button class="shift-btn lift-day" id="btn-ns1" onclick="setShift('ns1')"><i class="ti ti-barbell" style="font-size:12px"></i>Night 1</button>
           <button class="shift-btn" id="btn-ns2" onclick="setShift('ns2')"><i class="ti ti-moon" style="font-size:12px"></i>Night 2</button>
           <button class="shift-btn lift-day" id="btn-off" onclick="setShift('off')"><i class="ti ti-barbell" style="font-size:12px"></i>Off · Lift</button>
@@ -4248,6 +4250,23 @@ const TIMELINE={
     {phase:'Wind-down',t:'Before sleep',label:'Sleep stack + vault',sub:'Magnesium + 0.5mg Melatonin (post-night only) · 270g FU High Protein + honey + kiwi.',type:'supp',prot:22,kcal:295,tier:'foundation'},
     {phase:'Sleep',t:'Then sleep',label:'Sleep',sub:'Extra shift = recovery critical. Target 7–8 hrs.',type:'sleep',tier:'foundation'},
   ],
+  // School term (Jul–Oct 2026): fixed daytime, classes 08:30–17:30, wake 07:00, flexible evening training.
+  school:[
+    {phase:'Morning',t:'07:00',label:'Outdoor light — 5–10 min',sub:'Within 30 min of wake. Anchors cortisol peak before the day.',type:'action',tier:'default'},
+    {phase:'Morning',t:'Wake',label:'Water on waking — ~500ml',sub:'Before food. Sip on waking, finish over ~20–30 min.',type:'action',hydro:500,tier:'foundation'},
+    {phase:'Morning',t:'07:05',label:'Morning transporter',sub:'150ml Rokeby Fitmilk + 5g Creatine + fast carb (banana, oats, white toast, honey, dates or juice).',type:'food',prot:8,kcal:200,tier:'default'},
+    {phase:'Pre-class',t:'07:45',label:'Pack supplement pouch',sub:'LE Two-Per-Day (2 caps) + Omega-3 (4 softgels) for midday. Mag and Melatonin stay home.',type:'action',tier:'default'},
+    {phase:'Class',t:'08:30',label:'Classes start — 08:30 (earlier some days)',sub:'Log water through the day — daily target on the hydration strip.',type:'action',tier:'default'},
+    {phase:'Midday',t:'~12:30',label:'Midday meal',sub:"GYG / Stuff'd / Soup Spoon, canteen protein, or a lighter plate — aim ~50g protein.",type:'food',prot:50,kcal:700,tier:'foundation'},
+    {phase:'Midday',t:'~12:45',label:'Supplement stack',sub:'LE Two-Per-Day (2 caps) + Super Omega-3 Plus (4 softgels) with food.',type:'supp',tier:'foundation'},
+    {phase:'After school',t:'~18:00',label:'Training — Push / Pull / Legs (if training today)',sub:'Evening gym slot. Log the session; skip on rest days — train whichever days suit the week.',type:'action',tier:'optional'},
+    {phase:'After school',t:'Post-gym',label:'Post-gym flask (training days)',sub:'150ml Rokeby Fitmilk Full Cream + 2 scoops Isolate + 5g Creatine. 500ml water across 30 min.',type:'food',prot:50,kcal:350,tier:'optional'},
+    {phase:'Evening',t:'~19:30',label:'Dinner',sub:'Protein + carbs + veg — main evening meal. Aim ~40–50g protein.',type:'food',prot:45,kcal:650,tier:'foundation'},
+    {phase:'Pre-sleep',t:'~21:45',label:'Magnesium Glycinate',sub:'60–90 min before sleep — not at the vault.',type:'supp',tier:'foundation'},
+    {phase:'Pre-sleep',t:'~22:00',label:'Dim screens / Night Mode on',type:'action',tier:'optional'},
+    {phase:'Pre-sleep',t:'~22:30',label:'Vault',sub:'270g Farmers Union High Protein (or 250g Chobani) + Honey + Kiwi.',type:'food',prot:23,kcal:300,tier:'default'},
+    {phase:'Sleep',t:'23:00',label:'Sleep — blackout, earplugs, DND',sub:'Target ~8 hrs (07:00 wake).',type:'sleep',tier:'foundation'},
+  ],
 };
 
 const CYCLE_TO_SHIFT=['ds','ns1','ns2','off','off','off'];
@@ -4283,6 +4302,18 @@ const CYCLE_DNOO = [
 
 const CYCLE_TO_SHIFT_DNOO = ['ds','ns1','off','off'];
 
+// ── SCHOOL TERM OVERRIDE (fixed daytime schedule, ~Jul–Oct 2026) ──
+// During the term, weekdays auto-select the 'school' timeline, weekends fall back to 'off'.
+// The DNOO cycle keeps advancing underneath, so the rotation resumes correctly once term ends.
+const SCHOOL_TERM={start:'2026-07-09', end:'2026-10-10'};
+function schoolTermToday(d){
+  d=d||new Date();
+  const iso=d.toISOString().slice(0,10);
+  if(iso<SCHOOL_TERM.start||iso>SCHOOL_TERM.end) return null;
+  const dow=d.getDay(); // 0=Sun … 6=Sat
+  return (dow>=1&&dow<=5)?'school':'off';
+}
+
 // Active cycle and mapping — swap based on date
 function getActiveCycle(){
   return getActiveRotation()==='DNOO' ? CYCLE_DNOO : CYCLE;
@@ -4306,8 +4337,9 @@ function setShift(s, syncCycle=true){
     leave:{cls:'s-leave',lift:false},
     xds:  {cls:'s-xds', lift:false},
     xns:  {cls:'s-xns', lift:false},
+    school:{cls:'s-school',lift:false},
   };
-  ['ds','ns1','ns2','off','leave','xds','xns'].forEach(k=>{
+  ['ds','ns1','ns2','off','leave','xds','xns','school'].forEach(k=>{
     const b=document.getElementById('btn-'+k);
     if(!b) return;
     const cfg=SHIFT_CONFIG[k]||{cls:'',lift:false};
@@ -4358,6 +4390,7 @@ function collapseShiftSelector(s){
     leave:{icon:'ti-palm-tree',name:'Leave'},
     xds:{icon:'ti-sun-2',name:'Extra day'},
     xns:{icon:'ti-moon-stars',name:'Extra night'},
+    school:{icon:'ti-school',name:'School'},
     off_post_ns2:{icon:'ti-sunrise',name:'Post-night'},
   };
   const m=meta[s]||meta.ds;
@@ -4385,7 +4418,7 @@ function updateContextStrip(){
       ds:{icon:'ti-sun',name:'Day'},ns1:{icon:'ti-barbell',name:'Night 1'},
       ns2:{icon:'ti-moon',name:'Night 2'},off:{icon:'ti-barbell',name:'Off · Lift'},
       leave:{icon:'ti-palm-tree',name:'Leave'},xds:{icon:'ti-sun-2',name:'Extra day'},
-      xns:{icon:'ti-moon-stars',name:'Extra night'},off_post_ns2:{icon:'ti-sunrise',name:'Post-night'},
+      xns:{icon:'ti-moon-stars',name:'Extra night'},school:{icon:'ti-school',name:'School'},off_post_ns2:{icon:'ti-sunrise',name:'Post-night'},
     };
     const modeMeta={ideal:{color:'var(--teal)',name:'On track'},rough:{color:'var(--amber)',name:'Rough night'},survival:{color:'var(--red)',name:'Running on empty'}};
     const sm=shiftMeta[shift]||shiftMeta.ds;
@@ -4660,7 +4693,7 @@ function _fitFocusDeck(){
 function updateTodayHeader(){
   const g=document.getElementById('today-greet'),s=document.getElementById('today-shift');
   if(g){const h=new Date().getHours();g.textContent=h<5?'Still up':h<12?'Good morning':h<17?'Good afternoon':h<21?'Good evening':'Good night';}
-  if(s){const nm={ds:'Day shift',ns1:'Night 1',ns2:'Night 2',off:'Off day',leave:'Leave',xds:'Extra day',xns:'Extra night'};s.textContent=nm[shift]||'Today';}
+  if(s){const nm={ds:'Day shift',ns1:'Night 1',ns2:'Night 2',off:'Off day',leave:'Leave',xds:'Extra day',xns:'Extra night',school:'School day'};s.textContent=nm[shift]||'Today';}
 }
 // ── Linear shift timeline: on-duty → off-duty, now-marker, time left ──
 function _fmtMins(mins){mins=((Math.round(mins)%1440)+1440)%1440;const h=Math.floor(mins/60),m=mins%60;return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;}
@@ -7213,6 +7246,7 @@ function updateShiftChip(){
     leave:{cls:'s-leave',icon:'ti-palm-tree',   lbl:'Leave'},
     xds:  {cls:'s-xds', icon:'ti-sun-2',        lbl:'Extra day'},
     xns:  {cls:'s-xns', icon:'ti-moon-stars',   lbl:'Extra night'},
+    school:{cls:'s-school',icon:'ti-school',    lbl:'School'},
   };
   const m=map[shift]||map.ds;
   if(chip){chip.className='shift-quick-chip';chip.classList.add(m.cls);}
@@ -8246,7 +8280,7 @@ if(todayCheckin&&!todayCheckin.skipped&&todayCheckin.sleep&&todayCheckin.energy)
 autoRollCycle();
 const todayKey='shiftSetFor_'+new Date().toISOString().slice(0,10);
 if(!localStorage.getItem(todayKey)){
-  const scheduledShift=getActiveCycleToShift()[cycleDay]||'off';
+  const scheduledShift=schoolTermToday()||getActiveCycleToShift()[cycleDay]||'off';
   setShift(scheduledShift,false);
 }
 renderCycle(); // re-render after auto-roll — keeps the cycle card honest (esp. across the DNOO boundary)
