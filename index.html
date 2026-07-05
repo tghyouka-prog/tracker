@@ -476,7 +476,7 @@ html.theme-light .bottom-nav{background:rgba(250,248,245,.94)}
 .vt-btn:active{transform:scale(.97)}
 .focus-hero{margin-bottom:.875rem}
 @keyframes focusIn{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
-.focus-deck{position:relative;height:232px;margin-bottom:.5rem}
+.focus-deck{position:relative;height:232px;margin-bottom:.5rem;transition:height .25s ease}
 .focus-peek{position:absolute;inset:0;background:var(--s2);border-radius:22px;transform:translateY(15px) scale(.93);border:1px solid var(--b1)}
 .focus-rev{position:absolute;inset:0;border-radius:22px;display:flex;align-items:center;gap:10px;opacity:0;pointer-events:none}
 .focus-rev-done{justify-content:flex-start;padding-left:30px}
@@ -4617,6 +4617,7 @@ function renderFocusHero(){
   renderShiftTimeline();
   if(idx<0){
     hero.className='focus-hero all-done';
+    const _dk=document.getElementById('focus-deck'); if(_dk) _dk.style.height=''; // let CSS height:auto take over
     let skipCount=0;
     for(let i=0;i<items.length;i++) if(skippedToday[focusSkipKey(i)]&&!ticks[tlKey(shift,i)]) skipCount++;
     if(main) main.textContent='Done.';
@@ -4642,6 +4643,17 @@ function renderFocusHero(){
   if(footR) footR.textContent=_after>0?_after+' more after':'last one';
   if(quietStreak){quietStreak.textContent=_sv>0?_sv+' days moving':'';quietStreak.style.color='';quietStreak.style.opacity='';}
   _focusNudgeMaybe();
+  _fitFocusDeck();
+}
+// Size the swipe deck to the current card's natural content so nothing clips (sub text length varies).
+function _fitFocusDeck(){
+  const deck=document.getElementById('focus-deck'), card=document.getElementById('focus-card');
+  if(!deck||!card) return;
+  const pp=card.style.position, ph=card.style.height;
+  card.style.position='relative'; card.style.height='auto'; // measure true content height, ignoring the absolute stretch
+  const nat=card.offsetHeight;
+  card.style.position=pp; card.style.height=ph;
+  deck.style.height=Math.max(232,nat)+'px';
 }
 
 // ── Today header greeting + shift name ──
