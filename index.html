@@ -2286,7 +2286,7 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
   <div class="fuel-sec mo-rise">
     <div class="fuel-sec-top">
       <span class="fuel-sec-name">Calories</span>
-      <span class="fuel-sec-nums"><span id="kcal-cur-nut">0</span> <span class="u" id="kcal-target-label-nut">/ 2,600 kcal</span></span>
+      <span class="fuel-sec-nums"><span id="kcal-cur-nut">0</span> <span class="u" id="kcal-target-label-nut">/ 2,840 kcal</span></span>
     </div>
     <div class="macro-bar-wrap"><div class="macro-bar-fill kcal" id="kcal-bar-nut" style="width:0%"></div></div>
     <div class="macro-gap gap-low" id="kcal-gap-nut"></div>
@@ -2336,7 +2336,7 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
     </div>
     <div class="fuel-tgt-strip">
       <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-prot-target">148–163g</div><span class="fuel-tgt-lbl">Protein</span></div>
-      <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-kcal-target">~2,600</div><span class="fuel-tgt-lbl">Kcal</span></div>
+      <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-kcal-target">~2,840</div><span class="fuel-tgt-lbl">Kcal</span></div>
       <div class="fuel-tgt-col"><div class="fuel-tgt-val">~2–2.5L</div><span class="fuel-tgt-lbl">Water</span></div>
     </div>
     <div class="page-note" style="margin-top:.625rem;padding-top:.5rem;border-top:1px solid var(--b1)"><span id="nut-prot-calc">2.0–2.2g / kg</span> · <span id="nut-hydro-calc">+800ml from food</span></div>
@@ -3068,9 +3068,10 @@ let bodyWeight=74;
 function calcTargets(kg){
   const protLow=Math.round(kg*2.0);
   const protHigh=Math.round(kg*2.2);
-  // Kcal: BMR ~35 kcal/kg, recomp target = BMR + modest activity bump
-  // Capped at BMR to prevent inflated targets on weight gain; manual override via DEXA
-  const kcalCalc=Math.round(kg*35);
+  // Kcal: ~35 kcal/kg maintenance + a lean-gain surplus → aims ~0.2–0.35 kg/week.
+  // Titrate LEAN_GAIN_SURPLUS by the weekly weight trend; if gaining >0.35 kg/wk, lower it.
+  const LEAN_GAIN_SURPLUS=250; // ponytail: single tunable knob — set to the scale, not a formula
+  const kcalCalc=Math.round(kg*35)+LEAN_GAIN_SURPLUS;
   // Hydration: 35ml/kg total fluid minus ~800ml from food/Rokeby, rounded to nearest 250ml
   const hydroCalc=Math.max(1500,Math.min(3000,Math.round((kg*35-800)/250)*250));
   return {protLow,protHigh,protTarget:protHigh,kcal:kcalCalc,hydro:hydroCalc};
@@ -3097,7 +3098,7 @@ function applyWeight(kg,save_=true){
   if(kd) kd.textContent='~'+t.kcal.toLocaleString();
   if(pc) pc.textContent='2.0–2.2g / kg · '+kg+'kg';
   if(hc) hc.textContent='~'+Math.round(t.hydro/100)/10+'L + ~800ml from food';
-  if(note) note.textContent='2.0–2.2g protein/kg · BMR ~35 kcal/kg · shift worker adjustment applied. Targets recalculate when you update weight ±2kg.';
+  if(note) note.textContent='2.0–2.2g protein/kg · ~35 kcal/kg + lean-gain surplus · target 0.2–0.35 kg/week. Titrate by the weekly weight trend; recalculates when you update weight ±2kg.';
 
   // Macro bar labels — update both dashboard and nutrition page
   ['', '-nut'].forEach(suffix=>{
@@ -3347,7 +3348,7 @@ function resetCycle(){
 // ── MACROS ──
 // Protein and kcal base values are derived from Tracker ticks.
 // kcal also has a manual top-up store for snacks/extras.
-const TARGETS={prot:163,hydro:2000,kcal:2600};
+const TARGETS={prot:163,hydro:2000,kcal:2840};
 const macros={prot:0,hydro:0,kcal:0};
 // ── MEAL LOGGER ──
 let mealLibrary=[];    // [{id, name, prot, kcal}] — persisted across days
@@ -5606,7 +5607,7 @@ function load(){
       // Auto-carry forward yesterday's macros as snapshot
       if(d.macros&&!yesterdayData){
         const p=d.macros.prot||0,h=d.macros.hydro||0,k=d.macros.kcal||0;
-        yesterdayData={prot:p,hydro:h,kcal:k,score:Math.round((Math.min(100,p/163*100)+Math.min(100,h/2000*100)+Math.min(100,k/2600*100))/3)};
+        yesterdayData={prot:p,hydro:h,kcal:k,score:Math.round((Math.min(100,p/163*100)+Math.min(100,h/2000*100)+Math.min(100,k/2840*100))/3)};
       }
     }
   }catch(e){}
