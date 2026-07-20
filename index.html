@@ -2565,12 +2565,21 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
         <button class="rem-btn" id="sess-smart-btn" onclick="smartPreselect()" title="Auto-select from cycle day" style="display:none"><i class="ti ti-wand" style="font-size:12px"></i>Auto</button>
         <select id="sess-type-select" onchange="updateSessType()" class="sel-input">
           <option value="">— pick session —</option>
-          <option value="Push A">Push A — Chest</option>
-          <option value="Pull A">Pull A — Lat width</option>
-          <option value="Legs A">Legs A — Quads</option>
-          <option value="Push B">Push B — Shoulders</option>
-          <option value="Pull B">Pull B — Thickness</option>
-          <option value="Legs B">Legs B — Hamstrings</option>
+          <optgroup label="Current split">
+            <option value="Sun-Pull">Sun · Pull — Lat width + triceps</option>
+            <option value="Mon-Push">Mon · Push — Upper chest + delts + biceps</option>
+            <option value="Tue-Legs">Tue · Legs — Quads (HBL)</option>
+            <option value="Thu-Upper">Thu · Upper — Back width + chest</option>
+            <option value="Fri-Lower">Fri · Lower — Ham/glute + arms</option>
+          </optgroup>
+          <optgroup label="Legacy PPL A/B">
+            <option value="Push A">Push A — Chest</option>
+            <option value="Pull A">Pull A — Lat width</option>
+            <option value="Legs A">Legs A — Quads</option>
+            <option value="Push B">Push B — Shoulders</option>
+            <option value="Pull B">Pull B — Thickness</option>
+            <option value="Legs B">Legs B — Hamstrings</option>
+          </optgroup>
         </select>
       </div>
     </div>
@@ -4307,6 +4316,8 @@ const CYCLE_TO_SHIFT_DNOO = ['ds','ns1','off','off'];
 // During the term, weekdays auto-select the 'school' timeline, weekends fall back to 'off'.
 // The DNOO cycle keeps advancing underneath, so the rotation resumes correctly once term ends.
 const SCHOOL_TERM={start:'2026-07-09', end:'2026-10-10'};
+// Current split is day-of-week based (Wed/Sat = rest). Used to preselect today's session in the logger.
+const DOW_TO_SESSION={0:'Sun-Pull',1:'Mon-Push',2:'Tue-Legs',4:'Thu-Upper',5:'Fri-Lower'};
 function schoolTermToday(d){
   d=d||new Date();
   const iso=d.toISOString().slice(0,10);
@@ -5264,6 +5275,12 @@ function updateSessType(){
     'Push B':[{name:'Seated DB Shoulder Press',sets:'4'},{name:'Incline Machine Press',sets:'3'},{name:'Cable Lateral Raises',sets:'4'},{name:'Pec Deck Flyes',sets:'3'},{name:'Close-Grip Machine Press',sets:'3'}],
     'Pull B':[{name:'Seated Cable Rows',sets:'4'},{name:'Neutral-Grip Lat Pulldowns',sets:'3'},{name:'Single-Arm Cable Pullover',sets:'3'},{name:'Reverse Pec Deck',sets:'4'},{name:'EZ-Bar Preacher Curls',sets:'3'}],
     'Legs B':[{name:'Single-Leg RDL DB',sets:'4'},{name:'Bulgarian Split Squats',sets:'3'},{name:'Leg Press',sets:'3'},{name:'Seated Leg Curls',sets:'3'},{name:'Seated Calf Raises',sets:'4'}],
+    // Current aesthetic-priority split (day-of-week based) — priority lifts listed first
+    'Sun-Pull':[{name:'Wide-Grip Lat Pulldown',sets:'4'},{name:'Straight-Arm Cable Pullover',sets:'3'},{name:'Chest-Supported Row',sets:'4'},{name:'Overhead Cable Triceps Extension',sets:'3'},{name:'Triceps Pushdown',sets:'3'}],
+    'Mon-Push':[{name:'Incline Smith Press',sets:'4'},{name:'DB Lateral Raises',sets:'4'},{name:'Machine Shoulder Press',sets:'3'},{name:'Incline DB Curls',sets:'4'},{name:'Cable Fly',sets:'2'}],
+    'Tue-Legs':[{name:'Leg Press',sets:'4'},{name:'Leg Extensions',sets:'3'},{name:'Seated Leg Curls',sets:'3'},{name:'Hip Thrust',sets:'3'},{name:'Standing Calf Raises',sets:'4'}],
+    'Thu-Upper':[{name:'Lat Pulldown (alt grip)',sets:'4'},{name:'Flat DB Press',sets:'4'},{name:'Single-Arm Cable Row',sets:'3'},{name:'Seated DB Shoulder Press',sets:'3'},{name:'Cable Lateral Raises',sets:'4'}],
+    'Fri-Lower':[{name:'Lying Leg Curls',sets:'4'},{name:'Bulgarian Split Squats',sets:'3'},{name:'45° Back Extension',sets:'3'},{name:'Reverse Pec Deck',sets:'3'},{name:'Cable Curls',sets:'3'}],
   };
 
   if(sessType&&DEFAULTS[sessType]){
@@ -5296,9 +5313,9 @@ function showLastSessionRef(sessType){
 }
 
 function smartPreselect(){
-  // Auto-select session type based on current cycle day
+  // Prefer today's session from the current day-of-week split; fall back to the cycle map.
   const CYCLE_TO_SESSION={1:'Push A',2:'Pull A',3:'Legs A',4:'Push B',5:'Pull B',6:'Legs B'};
-  const suggested=CYCLE_TO_SESSION[cycleDay];
+  const suggested=DOW_TO_SESSION[new Date().getDay()]||CYCLE_TO_SESSION[cycleDay];
   if(!suggested) return;
   const sel=document.getElementById('sess-type-select');
   if(sel){sel.value=suggested;updateSessType();}
@@ -8290,10 +8307,10 @@ if(shift) collapseShiftSelector(shift);
 // Render the timeline + focus hero + progress now that shift is known
 render();
 updateBar();
-// Show smart pre-select button if cycle day maps to a session
+// Show smart pre-select button if today's weekday (new split) or cycle day maps to a session
 const CYCLE_TO_SESSION={1:'Push A',2:'Pull A',3:'Legs A',4:'Push B',5:'Pull B',6:'Legs B'};
 const smartBtn=document.getElementById('sess-smart-btn');
-if(smartBtn) smartBtn.style.display=CYCLE_TO_SESSION[cycleDay]?'flex':'none';
+if(smartBtn) smartBtn.style.display=(DOW_TO_SESSION[new Date().getDay()]||CYCLE_TO_SESSION[cycleDay])?'flex':'none';
 // Show weekly summary if it's been 7+ days
 setTimeout(()=>maybeShowWeeklySummary(),1500);
 // Google Health: catch Worker redirect (#gh_refresh=...), else auto-sync if connected & stale (>6h)
