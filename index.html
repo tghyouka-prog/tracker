@@ -2397,6 +2397,9 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
             <option value="Thu-Upper">Thu · Upper — Back width + chest</option>
             <option value="Fri-Lower">Fri · Lower — Ham/glute + arms</option>
           </optgroup>
+          <optgroup label="Conditioning">
+            <option value="Cardio">Cardio — Zone 2 (Wed/Sat)</option>
+          </optgroup>
           <optgroup label="Legacy PPL A/B">
             <option value="Push A">Push A — Chest</option>
             <option value="Pull A">Pull A — Lat width</option>
@@ -5106,6 +5109,7 @@ function updateSessType(){
     'Tue-Legs':[{name:'Leg Press',sets:'4'},{name:'Leg Extensions',sets:'3'},{name:'Seated Leg Curls',sets:'3'},{name:'Hip Thrust',sets:'3'},{name:'Standing Calf Raises',sets:'4'}],
     'Thu-Upper':[{name:'Lat Pulldown (alt grip)',sets:'4'},{name:'Flat DB Press',sets:'4'},{name:'Single-Arm Cable Row',sets:'3'},{name:'Seated DB Shoulder Press',sets:'3'},{name:'Cable Lateral Raises',sets:'4'}],
     'Fri-Lower':[{name:'Lying Leg Curls',sets:'4'},{name:'Bulgarian Split Squats',sets:'3'},{name:'45° Back Extension',sets:'3'},{name:'Reverse Pec Deck',sets:'3'},{name:'Cable Curls',sets:'3'}],
+    'Cardio':[{name:'Zone 2 run / walk / cycle',sets:'',reps:'',weight:''}],
   };
 
   if(sessType&&DEFAULTS[sessType]){
@@ -5128,11 +5132,12 @@ function showLastSessionRef(sessType){
   if(!last){refEl.style.display='none';return;}
   const d=new Date(last.date);
   const label=d.toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short'});
+  const isCardio=sessType==='Cardio';
   content.innerHTML=`<div style="font-size:11px;color:var(--t3);margin-bottom:3px">${label}</div>`+
     last.lifts.slice(0,5).map(l=>`
       <div class="lsr-item">
         <span class="lsr-name">${l.name}</span>
-        <span class="lsr-val">${l.weight?l.weight+'kg':''}${l.sets?' × '+l.sets:''}${l.reps?' × '+l.reps+'r':''}</span>
+        <span class="lsr-val">${l.weight?l.weight+(isCardio?'km':'kg'):''}${l.sets?' × '+l.sets:''}${l.reps?' × '+l.reps+(isCardio?' min':'r'):''}</span>
       </div>`).join('');
   refEl.style.display='block';
 }
@@ -5164,6 +5169,9 @@ function renderLiftRows(){
     el.innerHTML='<div style="font-size:12px;color:var(--t3);padding:.25rem 0 .5rem">Select a session type above — exercises will pre-fill.</div>';
     return;
   }
+  const isCardio=document.getElementById('sess-type-select')?.value==='Cardio';
+  const wLbl=isCardio?'Distance':'Weight', wPh=isCardio?'km':'kg', wStep=isCardio?'0.1':'0.5';
+  const rLbl=isCardio?'Duration':'Reps', rPh=isCardio?'min':'—';
   el.innerHTML=currentLifts.map((l,i)=>{
     const shadow=lastLiftFor(l.name);
     const shadowHtml=shadow?`<div class="lift-shadow">${shadow.html}</div>`:'';
@@ -5178,21 +5186,21 @@ function renderLiftRows(){
       ${shadowHtml}
       <div class="lift-card-fields">
         <div class="lift-field">
-          <span class="lift-field-label">Weight</span>
+          <span class="lift-field-label">${wLbl}</span>
           <input class="lift-field-input" type="number" inputmode="decimal"
-            value="${l.weight||''}" placeholder="kg"
-            min="0" step="0.5" oninput="currentLifts[${i}].weight=this.value">
+            value="${l.weight||''}" placeholder="${wPh}"
+            min="0" step="${wStep}" oninput="currentLifts[${i}].weight=this.value">
         </div>
-        <div class="lift-field">
+        <div class="lift-field"${isCardio?' style="opacity:.4"':''}>
           <span class="lift-field-label">Sets</span>
           <input class="lift-field-input" type="number" inputmode="numeric"
             value="${l.sets||''}" placeholder="${l._defaultSets||'—'}"
-            min="1" max="10" oninput="currentLifts[${i}].sets=this.value">
+            min="1" max="10" oninput="currentLifts[${i}].sets=this.value" ${isCardio?'disabled':''}>
         </div>
         <div class="lift-field">
-          <span class="lift-field-label">Reps</span>
+          <span class="lift-field-label">${rLbl}</span>
           <input class="lift-field-input" type="number" inputmode="numeric"
-            value="${l.reps||''}" placeholder="—"
+            value="${l.reps||''}" placeholder="${rPh}"
             min="0" oninput="currentLifts[${i}].reps=this.value">
         </div>
         <div class="lift-field">
@@ -5215,8 +5223,9 @@ function lastLiftFor(name){
     if(match){
       const d=new Date(sess.date);
       const when=d.toLocaleDateString('en-SG',{day:'numeric',month:'short'});
-      const w=match.weight?`${match.weight}kg`:'';
-      const sr=(match.sets&&match.reps)?`${match.sets}×${match.reps}`:(match.reps?`${match.reps} reps`:'');
+      const isCardio=sess.type==='Cardio';
+      const w=match.weight?`${match.weight}${isCardio?'km':'kg'}`:'';
+      const sr=(match.sets&&match.reps)?`${match.sets}×${match.reps}`:(match.reps?`${match.reps}${isCardio?' min':' reps'}`:'');
       const rpe=match.rpe?` @${match.rpe}`:'';
       const parts=[w,sr].filter(Boolean).join(' · ');
       return {
@@ -5304,12 +5313,35 @@ function renderTrainHero(){
   }
   const s=sessionLog[0];
   const eyebrow=new Date(s.date).toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short'});
-  let topSet=0,vol=0;
-  (s.lifts||[]).forEach(l=>{const w=parseFloat(l.weight)||0,r=parseFloat(l.reps)||0,st=parseFloat(l.sets)||1;if(w>topSet)topSet=w;vol+=w*r*st;});
   const cutoff=new Date(Date.now()-7*864e5).toISOString().slice(0,10);
   const weekCount=sessionLog.filter(x=>x.date>=cutoff).length;
-  // Headline trend — top set vs the previous session of the same type
   const prevSame=sessionLog.slice(1).find(x=>x.type===s.type);
+  if(s.type==='Cardio'){
+    const l=(s.lifts||[])[0]||{};
+    const dist=parseFloat(l.weight)||0, dur=parseFloat(l.reps)||0;
+    let trendLine='',pillL='Latest',pillC='';
+    if(prevSame){
+      const prevDist=parseFloat((prevSame.lifts||[])[0]?.weight)||0;
+      const delta=+(dist-prevDist).toFixed(1);
+      if(prevDist>0&&delta>0){trendLine=`<div class="trc-trend up"><i class="ti ti-arrow-up-right" style="font-size:13px"></i>+${delta}km vs last run</div>`;pillL='PB';pillC='ac';}
+      else if(prevDist>0&&delta<0) trendLine=`<div class="trc-trend down"><i class="ti ti-arrow-down-right" style="font-size:13px"></i>${delta}km vs last run</div>`;
+      else if(prevDist>0) trendLine=`<div class="trc-trend flat">Same distance as last run</div>`;
+    }
+    host.innerHTML=`<div class="train-rec-card mo-rise-card">
+      <div class="trc-top"><span class="trc-eyebrow">${eyebrow}</span><span class="trc-pill ${pillC}">${pillL}</span></div>
+      <div class="trc-type">Cardio — Zone 2</div>
+      ${trendLine}
+      <div class="trc-strip">
+        <div class="trc-col"><div class="trc-val">${dist||'—'}${dist?'<span class="trc-u">km</span>':''}</div><span class="trc-lbl">Distance</span></div>
+        <div class="trc-col"><div class="trc-val">${dur||'—'}${dur?'<span class="trc-u">min</span>':''}</div><span class="trc-lbl">Duration</span></div>
+        <div class="trc-col"><div class="trc-val">${weekCount}<span class="trc-u">x</span></div><span class="trc-lbl">This week</span></div>
+      </div>
+    </div>`;
+    return;
+  }
+  let topSet=0,vol=0;
+  (s.lifts||[]).forEach(l=>{const w=parseFloat(l.weight)||0,r=parseFloat(l.reps)||0,st=parseFloat(l.sets)||1;if(w>topSet)topSet=w;vol+=w*r*st;});
+  // Headline trend — top set vs the previous session of the same type
   let trendLine='';
   if(prevSame){
     const topPrev=Math.max(0,...(prevSame.lifts||[]).map(l=>parseFloat(l.weight)||0));
@@ -5344,6 +5376,7 @@ function renderSessionHistory(){
   if(!recent.length){list.innerHTML='';return;}
   list.innerHTML=recent.map((s,idx)=>{
     const i=idx+1; // real index in sessionLog
+    const isCardio=s.type==='Cardio';
     const label2=new Date(s.date).toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short'});
     const topNow=Math.max(0,...(s.lifts||[]).map(l=>parseFloat(l.weight)||0));
     // Inline trend — top set vs the previous session of the same type (older = higher index)
@@ -5352,17 +5385,20 @@ function renderSessionHistory(){
     if(prevSess){
       const topPrev=Math.max(0,...(prevSess.lifts||[]).map(l=>parseFloat(l.weight)||0));
       const delta=+(topNow-topPrev).toFixed(1);
-      if(topPrev>0&&delta>0) trend=`<span class="thr-trend up"><i class="ti ti-arrow-up-right" style="font-size:12px"></i>+${delta}kg</span>`;
-      else if(topPrev>0&&delta<0) trend=`<span class="thr-trend down"><i class="ti ti-arrow-down-right" style="font-size:12px"></i>${delta}kg</span>`;
+      const u=isCardio?'km':'kg';
+      if(topPrev>0&&delta>0) trend=`<span class="thr-trend up"><i class="ti ti-arrow-up-right" style="font-size:12px"></i>+${delta}${u}</span>`;
+      else if(topPrev>0&&delta<0) trend=`<span class="thr-trend down"><i class="ti ti-arrow-down-right" style="font-size:12px"></i>${delta}${u}</span>`;
       else if(topPrev>0) trend=`<span class="thr-trend flat">— even</span>`;
     }
     const lifts=(s.lifts||[]).map(l=>{
       const prev=sessionLog.slice(i+1).flatMap(ss=>ss.lifts||[]).filter(ll=>ll.name===l.name&&ll.weight);
       const prevBest=prev.length?Math.max(...prev.map(ll=>parseFloat(ll.weight)||0)):0;
       const isPB=l.weight&&parseFloat(l.weight)>prevBest&&prevBest>0;
-      const sets=l.sets?l.sets+'×':'';
+      const sets=(l.sets&&!isCardio)?l.sets+'×':'';
       const rpe=l.rpe?` · RPE ${l.rpe}`:'';
-      return `<div class="thr-lift"><span class="thr-lift-name">${l.name}${isPB?' <span class="pb-badge">PB</span>':''}</span><span class="thr-lift-val">${l.weight?l.weight+'kg ':''}${sets}${l.reps?l.reps+'r':''}${rpe}</span></div>`;
+      const wVal=l.weight?l.weight+(isCardio?'km ':'kg '):'';
+      const rVal=l.reps?l.reps+(isCardio?' min':'r'):'';
+      return `<div class="thr-lift"><span class="thr-lift-name">${l.name}${isPB?' <span class="pb-badge">PB</span>':''}</span><span class="thr-lift-val">${wVal}${sets}${rVal}${rpe}</span></div>`;
     }).join('');
     const notes=s.notes?`<div style="font-size:11px;color:var(--t3);margin-top:4px;font-style:italic">${s.notes}</div>`:'';
     return `<div class="train-hist-row mo-rise">
@@ -6508,12 +6544,13 @@ function checkMilestones(){
 
 // Hook: called after saveSession
 function checkPBMilestones(session){
+  const isCardio=session.type==='Cardio', u=isCardio?'km':'kg';
   session.lifts.forEach(l=>{
     const prev=sessionLog.slice(1).flatMap(s=>s.lifts).filter(ll=>ll.name===l.name&&ll.weight);
     const prevBest=prev.length?Math.max(...prev.map(ll=>parseFloat(ll.weight)||0)):0;
     if(l.weight&&parseFloat(l.weight)>prevBest&&prevBest>0){
       recordJourneyEvent('pb',`PB — ${l.name}`,
-        `${l.weight}kg${l.reps?' × '+l.reps+' reps':''} (previous best: ${prevBest}kg)`,
+        `${l.weight}${u}${l.reps?' × '+l.reps+(isCardio?' min':' reps'):''} (previous best: ${prevBest}${u})`,
         {lift:l.name,weight:l.weight,reps:l.reps,prev:prevBest});
     }
   });
@@ -7240,8 +7277,9 @@ function renderPBChart(){
   [...sessionLog].reverse().forEach(s=>{
     if(!s.lifts) return;
     const lift=s.lifts.find(l=>l.name===current&&l.weight);
-    if(lift) points.push({date:s.date,weight:parseFloat(lift.weight)});
+    if(lift) points.push({date:s.date,weight:parseFloat(lift.weight),type:s.type});
   });
+  const pbUnit=points.some(p=>p.type==='Cardio')?'km':'kg';
   if(points.length<2){canvas.style.display='none';if(emptyEl){emptyEl.style.display='block';emptyEl.textContent='Log 2+ sessions with '+current+'.';}return;}
   canvas.style.display='block';if(emptyEl) emptyEl.style.display='none';
   const W=canvas.offsetWidth||320;canvas.width=W*2;canvas.height=280;
@@ -7255,7 +7293,7 @@ function renderPBChart(){
   for(let i=0;i<=4;i++){
     const y=pad.t+ch*(1-i/4);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();
     ctx.fillStyle='rgba(255,248,240,.3)';ctx.font='9px -apple-system,sans-serif';ctx.textAlign='right';
-    ctx.fillText(Math.round(minW+range*i/4)+'kg',pad.l-4,y+3);
+    ctx.fillText(Math.round(minW+range*i/4)+pbUnit,pad.l-4,y+3);
   }
   ctx.beginPath();ctx.strokeStyle=_ac();ctx.lineWidth=2;ctx.lineJoin='round';
   points.forEach((p,i)=>{const x=pad.l+i/(n-1)*cw,y=pad.t+ch*(1-(p.weight-minW)/range);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
