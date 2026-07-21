@@ -1868,198 +1868,6 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
     <i class="ti ti-bulb"></i><span>Coach</span>
   </button>
 </nav>
-
-<!-- ===== DASHBOARD ===== -->
-<div class="page" id="page-dashboard">
-
-
-  <!-- Overview header — status context + settings gear -->
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem 0 .5rem">
-    <div>
-      <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3)">Overview</div>
-      <div class="header-meta" id="header-meta" style="margin-top:2px"><span id="header-weight">74</span> kg · PPL A/B · <span id="rotation-label">1D–2N–3O</span></div>
-    </div>
-    <div style="display:flex;align-items:center;gap:.5rem">
-      <span class="header-chip" id="header-shift-chip">Day</span>
-      <button onclick="openSettings()" style="background:none;border:none;cursor:pointer;color:var(--t3);padding:4px;-webkit-tap-highlight-color:transparent;display:flex;align-items:center" title="Settings" aria-label="Settings">
-        <i class="ti ti-settings" style="font-size:19px"></i>
-      </button>
-    </div>
-  </div>
-
-  <!-- Score ring + streak -->
-  <div class="score-row db-section">
-    <div class="score-ring-wrap">
-      <svg width="80" height="80" viewBox="0 0 80 80">
-        <g transform="rotate(-90 40 40)">
-          <!-- Background tracks — 4 segments, 82° each, 8° gaps -->
-          <circle class="arc-bg" cx="40" cy="40" r="33" stroke-dasharray="47.3 160.0" stroke-dashoffset="0"/>
-          <circle class="arc-bg" cx="40" cy="40" r="33" stroke-dasharray="47.3 160.0" stroke-dashoffset="-51.8"/>
-          <circle class="arc-bg" cx="40" cy="40" r="33" stroke-dasharray="47.3 160.0" stroke-dashoffset="-103.6"/>
-          <circle class="arc-bg" cx="40" cy="40" r="33" stroke-dasharray="47.3 160.0" stroke-dashoffset="-155.4"/>
-          <!-- 70% threshold marks (at 33.1 into each segment) — subtle tick -->
-          <circle class="arc-threshold" cx="40" cy="40" r="33" stroke-dasharray="1 206.3" stroke-dashoffset="-33.1"/>
-          <circle class="arc-threshold" cx="40" cy="40" r="33" stroke-dasharray="1 206.3" stroke-dashoffset="-84.9"/>
-          <circle class="arc-threshold" cx="40" cy="40" r="33" stroke-dasharray="1 206.3" stroke-dashoffset="-136.7"/>
-          <circle class="arc-threshold" cx="40" cy="40" r="33" stroke-dasharray="1 206.3" stroke-dashoffset="-188.5"/>
-          <!-- 90% threshold marks (at 42.6 into each segment) — slightly brighter -->
-          <circle class="arc-threshold-90" cx="40" cy="40" r="33" stroke-dasharray="1 206.3" stroke-dashoffset="-42.6"/>
-          <circle class="arc-threshold-90" cx="40" cy="40" r="33" stroke-dasharray="1 206.3" stroke-dashoffset="-94.4"/>
-          <circle class="arc-threshold-90" cx="40" cy="40" r="33" stroke-dasharray="1 206.3" stroke-dashoffset="-146.2"/>
-          <circle class="arc-threshold-90" cx="40" cy="40" r="33" stroke-dasharray="1 206.3" stroke-dashoffset="-198.0"/>
-          <!-- Protein (top, teal) -->
-          <circle class="arc-seg prot" id="arc-prot" cx="40" cy="40" r="33" stroke-dasharray="47.3 160.0" stroke-dashoffset="0"/>
-          <!-- Hydration (right, blue) -->
-          <circle class="arc-seg hydro" id="arc-hydro" cx="40" cy="40" r="33" stroke-dasharray="47.3 160.0" stroke-dashoffset="-51.8"/>
-          <!-- Calories (bottom, amber) -->
-          <circle class="arc-seg kcal" id="arc-kcal" cx="40" cy="40" r="33" stroke-dasharray="47.3 160.0" stroke-dashoffset="-103.6"/>
-          <!-- Tracker (left, purple) -->
-          <circle class="arc-seg tracker" id="arc-tracker" cx="40" cy="40" r="33" stroke-dasharray="47.3 160.0" stroke-dashoffset="-155.4"/>
-        </g>
-      </svg>
-      <div class="score-center"><div class="score-pct" id="score-pct">0%</div><div class="score-lbl">today</div></div>
-    </div>
-    <div class="score-right">
-      <div class="score-title" id="score-title">Start logging your day</div>
-      <div class="score-sub" id="score-sub">Tick meals in the Tracker to fill each arc</div>
-      <div class="arc-legend">
-        <span class="arc-dot prot" id="arc-lbl-prot"><i class="ti ti-circle-filled" style="font-size:7px;margin-right:3px"></i>0g prot</span>
-        <span class="arc-dot hydro" id="arc-lbl-hydro"><i class="ti ti-circle-filled" style="font-size:7px;margin-right:3px"></i>0L water</span>
-        <span class="arc-dot kcal" id="arc-lbl-kcal"><i class="ti ti-circle-filled" style="font-size:7px;margin-right:3px"></i>0 kcal</span>
-        <span class="arc-dot tracker"><i class="ti ti-circle-filled" style="font-size:7px;margin-right:3px"></i><span id="arc-lbl-tracker">0% done</span></span>
-      </div>
-      <div class="streak-row">
-        <i class="ti ti-flame" style="color:var(--amber);font-size:14px" aria-hidden="true"></i>
-        <span class="streak-val" id="streak-val">0</span>
-        <span class="streak-lbl">day streak</span>
-        <span class="xp-label" id="xp-label">0 XP</span>
-        <button class="shift-quick-chip" id="shift-quick-chip" onclick="go('tracker')" title="Tap to change shift in Tracker">
-          <i class="ti ti-sun" id="shift-chip-icon"></i>
-          <span id="shift-chip-label">Day</span>
-        </button>
-      </div>
-      <div class="streak-milestone-hint" id="streak-milestone-hint">
-        <i class="ti ti-flame"></i><span id="streak-milestone-text"></span>
-      </div>
-      <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xp-bar" style="width:0%"></div></div>
-    </div>
-  </div>
-
-  <!-- Weekly summary strip -->
-  <div class="db-section">
-    <div class="db-label">This week</div>
-    <div class="week-strip" id="week-strip"></div>
-    <div style="display:flex;gap:10px;font-size:11px;color:var(--t3);flex-wrap:wrap;margin-top:.375rem">
-      <span><span style="color:var(--teal)">●</span> Hit</span>
-      <span><span style="color:var(--amber)">●</span> Partial</span>
-      <span><span style="color:var(--red)">●</span> Missed</span>
-      <span style="margin-left:auto"><i class="ti ti-moon" style="font-size:11px"></i> Sleep · <i class="ti ti-barbell" style="font-size:11px"></i> Session</span>
-    </div>
-  </div>
-
-  <!-- Overview metric cards -->
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:.75rem">
-
-    <div onclick="go('nutrition')" class="ov-card">
-      <div class="ov-card-label">Protein</div>
-      <div id="ov-prot-val" style="font-size:18px;font-weight:700;color:var(--teal);line-height:1">0g</div>
-      <div id="ov-prot-target" style="font-size:11px;color:var(--t3);margin-top:2px">/ 148g</div>
-    </div>
-
-    <div onclick="go('training')" class="ov-card">
-      <div class="ov-card-label">Last lift</div>
-      <div id="ov-sess-val" style="font-size:14px;font-weight:700;color:var(--t1);line-height:1.2">—</div>
-      <div id="ov-sess-date" style="font-size:11px;color:var(--t3);margin-top:2px">No sessions yet</div>
-    </div>
-
-    <div onclick="go('insights')" class="ov-card">
-      <div class="ov-card-label">Streak</div>
-      <div id="ov-streak-val" style="font-size:18px;font-weight:700;color:var(--amber);line-height:1">0</div>
-      <div style="font-size:11px;color:var(--t3);margin-top:2px">days</div>
-    </div>
-
-  </div>
-
-  <!-- Microcycle & planning — collapsed by default -->
-  <div class="db-section">
-    <div class="collapsible-header" onclick="toggleCollapse('microcycle-body')">
-      <span><i class="ti ti-rotate-clockwise" style="font-size:13px;margin-right:6px;color:var(--t2)"></i>Microcycle &amp; planning <span id="cycle-header-summary" style="font-size:11px;color:var(--t2);font-weight:400;margin-left:6px;letter-spacing:0;text-transform:none"></span><span id="deload-badge" style="margin-left:4px"></span></span>
-      <i class="ti ti-chevron-down" id="chev-microcycle-body"></i>
-    </div>
-    <div class="collapsible-body" id="microcycle-body">
-      <div class="cycle-wrap" style="padding-top:.75rem">
-
-        <!-- Header: today + cycle badge + single action row -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem">
-          <div>
-            <div class="cycle-title" id="cycle-today-label">—</div>
-            <div style="font-size:11px;color:var(--t3);margin-top:1px" id="cycle-date-label"></div>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <div class="cycle-num-badge" id="cycle-num-badge">Cycle 1</div>
-            <button class="cycle-adv" onclick="advanceDay()" style="color:var(--teal);border-color:rgba(212,255,71,.3)">
-              <i class="ti ti-check" style="font-size:12px"></i> Day done
-            </button>
-            <button class="cycle-adv" onclick="resetCycle()" style="color:var(--t3)" title="Reset to Day 1">
-              <i class="ti ti-refresh" style="font-size:11px"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- Compact deload line -->
-        <div style="display:flex;align-items:center;gap:.625rem;margin-bottom:.875rem">
-          <div style="display:flex;gap:4px;flex:1" id="deload-pips"></div>
-          <div style="font-size:11px;color:var(--t3);flex-shrink:0" id="deload-countdown"></div>
-        </div>
-
-        <!-- Day tiles — tap to correct -->
-        <div class="cycle-days" id="cycle-days-grid"></div>
-        <div style="font-size:10.5px;color:var(--t3);margin-top:.5rem;text-align:center;opacity:.8">Auto-advances each day · tap a tile to correct</div>
-
-        <!-- Mission card -->
-        <div class="today-mission" id="today-mission" style="display:none">
-          <div class="mission-label">Today's mission</div>
-          <div class="mission-summary" onclick="toggleMission()" id="mission-summary">
-            <span id="mission-text">—</span>
-            <i class="ti ti-chevron-down mission-toggle" id="mission-toggle"></i>
-          </div>
-          <div class="mission-detail" id="mission-sub"></div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <div style="text-align:center;padding:.5rem 0 .25rem">
-    <button onclick="go('journey')" onmouseenter="this.style.opacity='.7'" onmouseleave="this.style.opacity='1'" ontouchstart="this.style.opacity='.7'" ontouchend="this.style.opacity='1'" style="background:transparent;border:none;color:var(--teal);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.01em;transition:opacity .15s">View Journey →</button>
-  </div>
-
-  <!-- Rename habit sheet -->
-  <div class="why-overlay" id="rename-overlay" onclick="if(event.target===this)closeRenameSheet()">
-    <div class="why-sheet">
-      <div class="why-q" style="font-size:16px">Rename habit</div>
-      <input class="sess-notes-input" id="rename-label" type="text" placeholder="Habit name" aria-label="Habit name" style="width:100%;margin-bottom:.625rem;box-sizing:border-box">
-      <input class="sess-notes-input" id="rename-sub" type="text" placeholder="Detail line (optional)" aria-label="Habit detail line" style="width:100%;box-sizing:border-box">
-      <div style="display:flex;gap:8px;margin-top:1.25rem">
-        <button class="custom-cancel-btn" style="flex:1" onclick="closeRenameSheet()">Cancel</button>
-        <button class="custom-cancel-btn" style="flex:1;color:var(--t3)" onclick="resetRename()">Reset to original</button>
-        <button class="custom-save-btn" style="flex:1" onclick="saveRename()">Save</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Why answer sheet -->
-  <div class="why-overlay" id="why-overlay" onclick="closeWhySheet(event)">
-    <div class="why-sheet">
-      <div class="why-q" id="why-q">—</div>
-      <div class="why-a" id="why-a"></div>
-      <button class="custom-cancel-btn" style="margin-top:1.25rem;width:100%" onclick="closeWhySheet()">Close</button>
-    </div>
-  </div>
-
-
-  </div>
-
 </div>
 
 <!-- ===== TRACKER ===== -->
@@ -7185,6 +6993,7 @@ function exportData(){
     checkins,dismissedInsights,appliedInsights,lastWeeklyShown,
     journeyLog,retroTicks,
     customItems,skippedToday,halfTicks,labelEdits,
+    weightHistory,rhrHistory,hrvHistory,stepsHistory,insightsLastRead,_lastInsightCount,
   };
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json'});
@@ -7229,6 +7038,9 @@ function importData(){
     if(d.weekHistory) Object.assign(weekHistory,d.weekHistory);
     if(d.journeyLog) journeyLog=d.journeyLog;
     if(d.weightHistory) weightHistory=d.weightHistory;
+    if(d.rhrHistory) rhrHistory=d.rhrHistory;
+    if(d.hrvHistory) hrvHistory=d.hrvHistory;
+    if(d.stepsHistory) stepsHistory=d.stepsHistory;
     if(d.rsStock) Object.assign(rsStock,d.rsStock);
     if(d.budgetOverrides) Object.assign(budgetOverrides,d.budgetOverrides);
     if(d.checkins) Object.assign(checkins,d.checkins);
@@ -7244,7 +7056,7 @@ function importData(){
     // Re-render
     renderRestock();renderMealLog();renderWeekStrip();
     renderSessionHistory();renderBudget();renderJourney();
-    renderInsights();
+    renderInsights();renderWeightChart();renderFitbit();
     showToast('Everything restored ✓','action');
     setTimeout(()=>toggleImportArea(),1500);
   }catch(e){if(msg){msg.style.color='var(--red)';msg.textContent='Import failed: '+e.message;}}
