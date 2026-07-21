@@ -364,6 +364,9 @@ html.theme-light .bottom-nav{background:rgba(250,248,245,.94)}
 .fb-conn-txt{flex:1;min-width:130px}
 .fb-mini{background:var(--s2);border:1px solid var(--b1);color:var(--t2);border-radius:6px;padding:.25rem .5rem;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
 .fb-mini.ghost{background:transparent;color:var(--t3)}
+.steps-mini{display:flex;align-items:center;gap:6px;margin-top:.5rem;font-size:11.5px;color:var(--t3)}
+.steps-mini i{font-size:13px;color:var(--t2)}
+.steps-mini b{color:var(--t1);font-weight:600}
 
 /* ═══ UX IMPROVEMENTS ═══ */
 
@@ -2160,6 +2163,7 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
     <canvas id="wh-canvas" class="wh-canvas" height="48"></canvas>
     <span class="wh-note" id="wh-note">Tap − / + above to log weight changes</span>
     <div class="fb-connect" id="fb-connect"></div>
+    <div class="steps-mini" id="steps-mini" style="display:none"></div>
     <div class="fb-row">
       <button class="fb-btn" onclick="document.getElementById('fb-wt-in').click()"><i class="ti ti-scale"></i>Weight CSV</button>
       <button class="fb-btn" onclick="document.getElementById('fb-sl-in').click()"><i class="ti ti-moon"></i>Sleep JSON</button>
@@ -7471,6 +7475,16 @@ function renderFitbit(){
   } else {
     el.innerHTML=`<button class="fb-connect-btn" onclick="fitbitConnect()"><i class="ti ti-heart-rate-monitor"></i>Connect Google Health — auto-sync weight · sleep · HRV</button>`;
   }
+  renderStepsMini();
+}
+function renderStepsMini(){
+  const el=document.getElementById('steps-mini');
+  if(!el||!stepsHistory.length){ if(el) el.style.display='none'; return; }
+  const latest=stepsHistory[stepsHistory.length-1];
+  const last7=stepsHistory.slice(-7);
+  const avg=Math.round(last7.reduce((a,e)=>a+e.v,0)/last7.length);
+  el.innerHTML=`<i class="ti ti-shoe"></i><span><b>${latest.v.toLocaleString()}</b> steps (${latest.date}) · ${avg.toLocaleString()} avg/day last ${last7.length}</span>`;
+  el.style.display='flex';
 }
 // Runnable self-check (call _fbSelfCheck() in console): rating boundaries, merge cap, and v4 parse.
 function _fbSelfCheck(){
