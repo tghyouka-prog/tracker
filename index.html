@@ -1184,9 +1184,9 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 /* Button row */
 .btn-row{display:flex;gap:6px;flex-wrap:wrap}
 
-/* Accent variant rem-btns */
-.rem-btn.accent-teal{color:var(--teal);border-color:rgba(38,201,138,.3)}
-.rem-btn.accent-amber{color:var(--amber);border-color:rgba(240,160,32,.3)}
+/* Accent variant rem-btns — neutralized (Supphead rollout): Train's "Log a session" is already the
+   one gold CTA for this screen; Add lift/Save session stay plain secondary pills, not a 2nd/3rd accent. */
+.rem-btn.accent-teal,.rem-btn.accent-amber{color:var(--t2);border-color:var(--b2)}
 
 /* Select input */
 .sel-input{font-size:11px;padding:5px 8px;border-radius:var(--r-md);border:1px solid var(--b2);background:var(--s2);color:var(--t2);cursor:pointer;outline:none}
@@ -1510,9 +1510,10 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
   border:none!important;
 }
 .reset-btn,.fb-btn,.fb-connect-btn,.fb-mini,.add-custom-btn,.mb,.wt-btn,.cf-pill,.eod-btn,
-.fuel-log-btn,.train-cta{
+.fuel-log-btn,.train-cta,.rt-btn,.rem-btn{
   border:none!important;border-radius:999px!important;
 }
+.rest-timer,.sel-input{border:none!important}
 .focus-verb,.trc-type,.coach-h1,.cs-odo{font-weight:800!important}
 </style>
 </head>
