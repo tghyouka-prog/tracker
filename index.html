@@ -42,11 +42,11 @@
 
   --t1:#f0f0f0; --t2:#8c8c8c; --t3:#707070;
 
-  /* ── SINGLE ACCENT: electric lime — high-luminance, unmistakable ── */
+  /* ── SINGLE ACCENT: warm gold (Supphead direction) — high-luminance, unmistakable ── */
   /* Every interactive state, progress, completion uses this one colour */
-  --teal:#8b93ff; --teal-dim:rgba(139,147,255,.10);
-  /* Focus card accent — shift-adaptive: cool periwinkle for night/dark */
-  --focus-ac:#8b93ff; --focus-ac-ink:#0a0b1a;
+  --teal:#e3aa3c; --teal-dim:rgba(227,170,60,.12);
+  /* Focus card accent — shift-adaptive: brighter gold for night/dark legibility */
+  --focus-ac:#e3aa3c; --focus-ac-ink:#1a1207;
 
   /* Secondary accents: intentionally quieter so accent dominates */
   --amber:#c97a1d; --amber-dim:rgba(201,122,29,.09);
@@ -76,8 +76,8 @@ html.theme-light{
   --bg:#faf8f5; --s1:#ffffff; --s2:#f3f0eb; --s3:#eae6df; --s4:#dfdad2;
   --b1:rgba(40,30,20,.08); --b2:rgba(40,30,20,.14); --b3:rgba(40,30,20,.24);
   --t1:#1c1916; --t2:#5f594f; --t3:#6b6258;
-  --teal:#e89211; --teal-dim:rgba(232,146,17,.12);
-  --focus-ac:#e89211; --focus-ac-ink:#2a1400;
+  --teal:#c9992e; --teal-dim:rgba(201,153,46,.12);
+  --focus-ac:#c9992e; --focus-ac-ink:#1a1610;
   --amber:#c97a1d; --amber-dim:rgba(201,122,29,.10);
   --blue:#2f6fd0;  --blue-dim:rgba(47,111,208,.10);
   --red:#cc4438;   --red-dim:rgba(204,68,56,.10);
@@ -666,37 +666,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .fuel-tgt-val{font-size:13px;font-weight:600;color:var(--t1);font-variant-numeric:tabular-nums;line-height:1.1}
 .fuel-tgt-lbl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;display:block;margin-top:3px}
 
-/* ── SUPPHEAD-STYLE MOCK (Fuel tab only) — light canvas, gold accent, borderless cards, pill buttons, chunky bold type ──
-   Token cascade: overriding the shared --s/--b/--t/--teal/--focus-ac variables scoped to #page-nutrition means every
-   existing rule that reads var(--s1) etc. picks up the new palette automatically, regardless of the app's active
-   dark/light theme. Only non-variable properties (radius bump, border removal, font-weight) need direct overrides.
-   Known limitation: the canvas-drawn weight sparkline reads --teal from <html> directly (see _ac() helper), so it
-   stays the app's real accent color rather than gold — out of scope for a CSS-only mock. */
-#page-nutrition{
-  --bg:#fdfcfa; --s1:#f2f0eb; --s2:#eeece6; --s3:#e3e0d8; --s4:#d8d4c9;
-  --b1:transparent; --b2:transparent; --b3:rgba(22,21,19,.08);
-  --t1:#161513; --t2:#5f594f; --t3:#8a8478;
-  --teal:#c9992e; --focus-ac:#c9992e; --focus-ac-ink:#1a1610;
-  --r-lg:20px; --r-md:999px; --r-sm:10px;
-  background:var(--bg)!important;
-}
-#page-nutrition .coach-eyebrow{font-weight:700!important}
-#page-nutrition .coach-h1{font-weight:800!important;font-size:26px!important;letter-spacing:-.01em!important}
-#page-nutrition .cs-card,#page-nutrition .fuel-sec,#page-nutrition .fuel-wt-card,#page-nutrition .weight-history-strip{
-  border:none!important;box-shadow:none!important;border-radius:20px!important;
-  padding:1.125rem 1.25rem!important;margin-bottom:.875rem!important;
-}
-#page-nutrition .cs-pill{border:none!important}
-#page-nutrition .cs-pill.ac{background:var(--focus-ac)!important;color:var(--focus-ac-ink)!important}
-#page-nutrition .cs-odo{font-weight:800!important}
-#page-nutrition .cs-foot,#page-nutrition .fuel-tgt-strip{border-top-color:var(--b3)!important}
-#page-nutrition .cs-fc,#page-nutrition .fuel-tgt-col{border-right-color:var(--b3)!important}
-#page-nutrition .fuel-log-btn{font-weight:800!important;box-shadow:none!important}
-#page-nutrition .mb{border:none!important;font-weight:600!important}
-#page-nutrition .wt-btn{border:none!important}
-#page-nutrition .fb-connect-btn,#page-nutrition .fb-mini,#page-nutrition .fb-btn{border:none!important;font-weight:700!important}
-#page-nutrition .fb-mini.ghost{background:transparent!important}
-#page-nutrition .fb-dot{background:var(--focus-ac)!important}
 .macro-btns{display:flex;flex-wrap:wrap;gap:5px}
 .mb{font-size:11px;font-weight:500;padding:5px 12px;border-radius:var(--r-md);border:1px solid var(--b2);background:var(--s2);color:var(--t2);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
 .mb i{font-size:12px;flex-shrink:0}
