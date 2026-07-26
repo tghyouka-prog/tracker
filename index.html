@@ -1520,6 +1520,17 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
    Hidden via CSS (not deleted) so nothing is lost — every element below still renders and
    updates normally underneath, it's just not part of the default visible surface anymore. */
 #date-ctx-row,.view-toggle,.progress-wrap,.tracker-footer-row,#tracker-quiet-streak{display:none!important}
+
+/* ── SUPPHEAD ROLLOUT (stage 4): strip the explanatory micro-copy + reference sections the mock never showed ──
+   Fuel: gap-hints, pace notes, and the calc/disclaimer lines under each section. "Targets recalibrate
+   automatically" stays (the mock's weight card had an equivalent one-liner). */
+#kcal-gap-nut,#hydro-gap-nut,#hydro-pace-nut,#nut-calc-line,#nut-note{display:none!important}
+.fuel-sec>.page-note{display:none!important}
+/* Every reference/lookup collapsible app-wide (Meal & hydration, Stock & budget, Progress chart,
+   Exercise/Protocol reference, Full cycle detail, What the coach watches for) — none appear in the mock. */
+.collapsible-header,.collapsible-body{display:none!important}
+/* Coach's "Why it works" marquee — same reasoning, scoped so Train's unrelated .db-section is untouched. */
+#page-insights .db-section{display:none!important}
 </style>
 </head>
 <body>
@@ -2168,7 +2179,7 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
       <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-kcal-target">~2,840</div><span class="fuel-tgt-lbl">Kcal</span></div>
       <div class="fuel-tgt-col"><div class="fuel-tgt-val">~2–2.5L</div><span class="fuel-tgt-lbl">Water</span></div>
     </div>
-    <div class="page-note" style="margin-top:.625rem;padding-top:.5rem;border-top:1px solid var(--b1)"><span id="nut-prot-calc">2.0–2.2g / kg</span> · <span id="nut-hydro-calc">+800ml from food</span></div>
+    <div class="page-note" id="nut-calc-line" style="margin-top:.625rem;padding-top:.5rem;border-top:1px solid var(--b1)"><span id="nut-prot-calc">2.0–2.2g / kg</span> · <span id="nut-hydro-calc">+800ml from food</span></div>
     <div class="page-note" id="nut-note" style="margin-top:.25rem"></div>
   </div>
 
