@@ -1515,6 +1515,11 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
 }
 .rest-timer,.sel-input{border:none!important}
 .focus-verb,.trc-type,.coach-h1,.cs-odo{font-weight:800!important}
+
+/* ── SUPPHEAD ROLLOUT (stage 3): match the mock's composition, not just its colors ──
+   Hidden via CSS (not deleted) so nothing is lost — every element below still renders and
+   updates normally underneath, it's just not part of the default visible surface anymore. */
+#date-ctx-row,.view-toggle,.progress-wrap,.tracker-footer-row,#tracker-quiet-streak{display:none!important}
 </style>
 </head>
 <body>
@@ -2381,11 +2386,11 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
   <div class="sec-label" id="train-hist-label" style="display:none">Recent sessions</div>
   <div id="sess-history-list"></div>
 
-  <!-- Single filled CTA → jump to logger -->
-  <button class="train-cta" onclick="document.getElementById('sess-card-logger').scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('sess-type-select').focus(),350)"><i class="ti ti-plus" style="font-size:15px"></i>Log a session</button>
+  <!-- Single filled CTA → reveal + jump to logger (collapsed by default, matches the mock's CTA-only composition) -->
+  <button class="train-cta" onclick="document.getElementById('sess-card-logger').style.display='block';document.getElementById('sess-card-logger').scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('sess-type-select').focus(),350)"><i class="ti ti-plus" style="font-size:15px"></i>Log a session</button>
 
-  <!-- ── SESSION LOGGER (below the fold) ── -->
-  <div class="sess-card" id="sess-card-logger" style="margin-top:.25rem">
+  <!-- ── SESSION LOGGER (collapsed by default, revealed by the CTA above) ── -->
+  <div class="sess-card" id="sess-card-logger" style="margin-top:.25rem;display:none">
 
     <!-- Session type + smart pre-select -->
     <div class="sess-header">
