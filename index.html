@@ -1500,6 +1500,20 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
 .tab-anim .mo-rise{animation:moRise .55s cubic-bezier(.34,1.4,.45,1) both}
 .tab-anim .mo-rise-card{animation:moRiseCard .6s cubic-bezier(.34,1.4,.45,1) both}
 @media (prefers-reduced-motion:reduce){.tab-anim .mo-rise,.tab-anim .mo-rise-card{animation:none !important}.cs-odo{transition:none !important}}
+
+/* ── SUPPHEAD ROLLOUT (stage 2, app-wide): borderless cards, pill-shaped controls, chunky bold headlines ──
+   Targeted overrides rather than a blanket --b1/--b2 token change, since those tokens are also used for
+   functional dividers (footer stat-strips, input borders) that should stay visible. */
+.card,.stat-card,.up-next-card,.supp-timing-table,.pb-chart-wrap,.weight-history-strip,
+.day-mode-card,.focus-card,.macro-card,.fuel-sec,.fuel-wt-card,.score-row,.insight-card,.cs-card,
+.context-strip{
+  border:none!important;
+}
+.reset-btn,.fb-btn,.fb-connect-btn,.fb-mini,.add-custom-btn,.mb,.wt-btn,.cf-pill,.eod-btn,
+.fuel-log-btn,.train-cta{
+  border:none!important;border-radius:999px!important;
+}
+.focus-verb,.trc-type,.coach-h1,.cs-odo{font-weight:800!important}
 </style>
 </head>
 <body>
