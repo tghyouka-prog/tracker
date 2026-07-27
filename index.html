@@ -2924,6 +2924,11 @@ let history={prot:[],hydro:[],kcal:[]};
 // ── WEIGHT & TARGETS ──
 let bodyWeight=74;
 
+// Day-completion streak. Was stored as a DOM element's textContent (#streak-val, which lived in the
+// now-deleted dashboard) — that silently broke save()/load() everywhere once the element vanished.
+// A real variable can't disappear when unrelated markup gets cleaned up.
+let dayStreak=0;
+
 function calcTargets(kg){
   const protLow=Math.round(kg*2.0);
   const protHigh=Math.round(kg*2.2);
@@ -3137,10 +3142,7 @@ function renderCycle(){
   if(el('mission-sub')) el('mission-sub').textContent=d.mission+(d.sub?' — '+d.sub:'');
   if(el('deload-badge')) el('deload-badge').textContent=(cycleNum%4===0)?'⚠ Deload week':'';
   if(el('offset-display')) el('offset-display').textContent=cycleDay+1;
-  const mappedShift=getActiveCycleToShift()[cycleDay]||'off';
-  const _ovKey='shiftSetFor_'+new Date().toISOString().slice(0,10);
-  const _hasOverride=(()=>{try{return !!localStorage.getItem(_ovKey);}catch(e){return false;}})();
-  if(mappedShift!==shift && !_hasOverride) setShift(mappedShift,false);
+  // Shift selection is fully manual now — renderCycle only displays the rotation, it never changes `shift`.
   renderRules();
 }
 
@@ -3749,8 +3751,7 @@ function updateScore(){
     const _today=biologicalToday();
     let _last=null; try{ _last=localStorage.getItem('streakLastDate'); }catch(e){}
     if(_last!==_today){
-      const cur=parseInt(document.getElementById('streak-val').textContent)||0;
-      document.getElementById('streak-val').textContent=cur+1;
+      dayStreak++;
       try{ localStorage.setItem('streakLastDate',_today); }catch(e){}
       save();
     }
@@ -3779,8 +3780,7 @@ function updateOverviewCards(){
     }
   }
   const streakOv=document.getElementById('ov-streak-val');
-  const streakSrc=document.getElementById('streak-val');
-  if(streakOv&&streakSrc) streakOv.textContent=streakSrc.textContent||'0';
+  if(streakOv) streakOv.textContent=dayStreak;
 }
 
 // ── MISSION COLLAPSE ──
@@ -3859,7 +3859,7 @@ function resetDay(){
   mealLog=[];
   renderMealLog();
   ['prot','hydro','kcal'].forEach(t=>updateMacroUI(t));
-  document.getElementById('streak-val').textContent='0';
+  dayStreak=0;
   updateScore();
   renderYesterday();
 }
@@ -4162,19 +4162,8 @@ const CYCLE_DNOO = [
 
 const CYCLE_TO_SHIFT_DNOO = ['ds','ns1','off','off'];
 
-// ── SCHOOL TERM OVERRIDE (fixed daytime schedule, ~Jul–Oct 2026) ──
-// During the term, weekdays auto-select the 'school' timeline, weekends fall back to 'off'.
-// The DNOO cycle keeps advancing underneath, so the rotation resumes correctly once term ends.
-const SCHOOL_TERM={start:'2026-07-09', end:'2026-10-10'};
 // Current split is day-of-week based (Wed/Sat = rest). Used to preselect today's session in the logger.
 const DOW_TO_SESSION={0:'Sun-Pull',1:'Mon-Push',2:'Tue-Legs',4:'Thu-Upper',5:'Fri-Lower'};
-function schoolTermToday(d){
-  d=d||new Date();
-  const iso=d.toISOString().slice(0,10);
-  if(iso<SCHOOL_TERM.start||iso>SCHOOL_TERM.end) return null;
-  const dow=d.getDay(); // 0=Sun … 6=Sat
-  return (dow>=1&&dow<=5)?'school':'off';
-}
 
 // Active cycle and mapping — swap based on date
 function getActiveCycle(){
@@ -4231,10 +4220,7 @@ function setShift(s, syncCycle=true){
   updateStreakMilestoneHint();
   renderDateCtxButtons();
   collapseShiftSelector(s);
-  // If this was a deliberate user pick (not an internal sync), remember it for today
-  // so auto-select doesn't override the choice on reload.
   if(syncCycle){
-    try{ localStorage.setItem('shiftSetFor_'+new Date().toISOString().slice(0,10),s); }catch(e){}
     save();
   }
 }
@@ -4507,7 +4493,7 @@ function renderFocusHero(){
   const footR=document.getElementById('focus-foot-r');
   const ql=document.getElementById('focus-quicklog');
   const quietStreak=document.getElementById('tracker-quiet-streak');
-  const _sv=parseInt(document.getElementById('streak-val')?.textContent)||0;
+  const _sv=dayStreak;
   updateTodayHeader();
   renderShiftTimeline();
   if(idx<0){
@@ -4940,7 +4926,7 @@ function updateBar(){
   // Surface streak on tracker
   const trackerStreak=document.getElementById('tracker-streak');
   if(trackerStreak){
-    const streakVal=parseInt(document.getElementById('streak-val')?.textContent)||0;
+    const streakVal=dayStreak;
     if(streakVal>0){
       trackerStreak.style.display='inline-flex';
       trackerStreak.innerHTML='<i class="ti ti-flame" style="font-size:13px"></i> '+streakVal+'-day streak';
@@ -5456,7 +5442,7 @@ function save(){
       date:biologicalToday(),shift,ticks,macros,history,
       mealLibrary,mealLog,weekHistory,sessionLog,
       cycleDay,cycleNum,cycleAnchorDate,completedDays,
-      streak:parseInt(document.getElementById('streak-val').textContent)||0,
+      streak:dayStreak,
       sleepRating,sleepHistory,yesterdayData,rsStock,
       bodyWeight,budgetOverrides,
       checkins,dismissedInsights,appliedInsights,lastWeeklyShown,
@@ -5477,12 +5463,8 @@ function load(){
     if(d.skippedToday) skippedToday=d.skippedToday;
     if(d.halfTicks) halfTicks=d.halfTicks;
     if(d.labelEdits) labelEdits=d.labelEdits;
-    // Restore the saved shift only if the user manually set it today (override flag present).
-    // Otherwise leave it for auto-select to fill from the rotation schedule.
-    if(d.shift){
-      const todayKey='shiftSetFor_'+new Date().toISOString().slice(0,10);
-      if(localStorage.getItem(todayKey)) shift=d.shift;
-    }
+    // Shift is fully manual — always restore whatever was last picked, no date-gating.
+    if(d.shift) shift=d.shift;
     cycleDay=d.cycleDay||0;
     if(d.cycleAnchorDate) cycleAnchorDate=d.cycleAnchorDate;
     cycleNum=d.cycleNum||1;
@@ -5504,7 +5486,7 @@ function load(){
     if(d.retroTicks) Object.assign(retroTicks,d.retroTicks);
     if(d.insightsLastRead) insightsLastRead=d.insightsLastRead;
     if(d._lastInsightCount) _lastInsightCount=d._lastInsightCount;
-    document.getElementById('streak-val').textContent=d.streak||0;
+    dayStreak=d.streak||0;
     if(d.date===biologicalToday()){
       Object.assign(macros,d.macros||{});
       if(d.history) Object.assign(history,d.history);
@@ -6552,7 +6534,7 @@ function recordJourneyEvent(type,title,sub,data){
 function checkMilestones(){
   const today=biologicalToday();
   const score=getScore();
-  const streakVal=parseInt(document.getElementById('streak-val')?.textContent)||0;
+  const streakVal=dayStreak;
 
   // First 100% day
   const prev100=journeyLog.filter(e=>e.type==='milestone'&&e.title==='First perfect day');
@@ -6601,7 +6583,7 @@ function renderJourney(){
       Math.floor((Date.now()-new Date(journeyLog[journeyLog.length-1].date).getTime())/(86400000))+1:0;
     const pbs=journeyLog.filter(e=>e.type==='pb').length;
     const milestones=journeyLog.filter(e=>e.type==='milestone'||e.type==='streak').length;
-    const streak=parseInt(document.getElementById('streak-val')?.textContent)||0;
+    const streak=dayStreak;
     sb.innerHTML=`
       <div class="journey-stat"><div class="journey-stat-val">${totalDays||'—'}</div><div class="journey-stat-lbl">Days</div></div>
       <div class="journey-stat"><div class="journey-stat-val">${streak}</div><div class="journey-stat-lbl">Streak</div></div>
@@ -6732,7 +6714,7 @@ function buildInfographic(){
   ctx.fillText('Progress Report · '+new Date().toLocaleDateString('en-SG',{day:'numeric',month:'long',year:'numeric'}),32,56);
 
   // Stats row
-  const streak=parseInt(document.getElementById('streak-val')?.textContent)||0;
+  const streak=dayStreak;
   const s=analyzeRecent();
   const pbs=journeyLog.filter(e=>e.type==='pb').length;
   const milestones=journeyLog.filter(e=>e.type==='milestone'||e.type==='streak').length;
@@ -7075,7 +7057,7 @@ function exportData(){
     date:biologicalToday(),shift,ticks,macros,history,
     mealLibrary,mealLog,weekHistory,sessionLog,
     cycleDay,cycleNum,cycleAnchorDate,completedDays,
-    streak:parseInt(document.getElementById('streak-val')?.textContent)||0,
+    streak:dayStreak,
     sleepRating,sleepHistory,yesterdayData,rsStock,
     bodyWeight,budgetOverrides,
     checkins,dismissedInsights,appliedInsights,lastWeeklyShown,
@@ -7138,7 +7120,7 @@ function importData(){
     if(d.bodyWeight) applyWeight(d.bodyWeight,false);
     if(d.cycleDay!==undefined) cycleDay=d.cycleDay;
     if(d.cycleNum) cycleNum=d.cycleNum;
-    if(d.streak!==undefined) document.getElementById('streak-val').textContent=d.streak;
+    if(d.streak!==undefined) dayStreak=d.streak;
     save();
     if(msg){msg.style.color='var(--teal)';msg.textContent='Import applied successfully.';}
     // Re-render
@@ -7203,7 +7185,7 @@ function updateStreakMilestoneHint(){
   const hint=document.getElementById('streak-milestone-hint');
   const txt=document.getElementById('streak-milestone-text');
   if(!hint||!txt) return;
-  const cur=parseInt(document.getElementById('streak-val')?.textContent)||0;
+  const cur=dayStreak;
   // Find next milestone
   const next=STREAK_MILESTONES.find(m=>m>cur);
   if(!next){hint.classList.remove('visible');return;}
@@ -7762,7 +7744,7 @@ function fireCelebration(){
   const toast=document.getElementById('celebrate-toast');
   const sub=document.getElementById('celebrate-sub');
   if(sub){
-    const streak=parseInt(document.getElementById('streak-val')?.textContent)||0;
+    const streak=dayStreak;
     sub.textContent=streak>0?`${streak}-day streak — keep it alive`:'Every essential, handled. Nothing left but rest.';
   }
   if(toast){
@@ -8206,15 +8188,10 @@ if(todayCheckin&&!todayCheckin.skipped&&todayCheckin.sleep&&todayCheckin.energy)
   // 'change' on the context strip re-opens it any time.
   collapseDayMode(dayMode||'ideal');
 }
-// Auto-roll the rotation forward for any days passed, then pre-select today's shift.
-// This only sets the shift if the user hasn't already chosen one for today.
+// Auto-roll the rotation forward for any days passed (cycle-day bookkeeping only — used by
+// Train's session suggestions. Shift itself is fully manual, see load()/setShift().)
 autoRollCycle();
-const todayKey='shiftSetFor_'+new Date().toISOString().slice(0,10);
-if(!localStorage.getItem(todayKey)){
-  const scheduledShift=schoolTermToday()||getActiveCycleToShift()[cycleDay]||'off';
-  setShift(scheduledShift,false);
-}
-renderCycle(); // re-render after auto-roll — keeps the cycle card honest (esp. across the DNOO boundary)
+renderCycle();
 // Collapse shift selector on load so the unified context strip can appear
 if(shift) collapseShiftSelector(shift);
 // Render the timeline + focus hero + progress now that shift is known
