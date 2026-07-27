@@ -1350,9 +1350,12 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .lift-card:focus-within{border-color:color-mix(in srgb,var(--teal) 25%,transparent)}
 .lift-card-name-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem}
 .lift-card-num{width:20px;height:20px;border-radius:50%;background:var(--s3);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--t3);flex-shrink:0}
-.lift-card-name{flex:1;font-size:15px;font-weight:600;color:var(--t1);background:transparent;border:none;padding:2px 0;outline:none;font-family:inherit;letter-spacing:-.01em}
+.lift-card-name{flex:1;min-width:0;font-size:15px;font-weight:600;color:var(--t1);background:transparent;border:none;padding:2px 0;outline:none;font-family:inherit;letter-spacing:-.01em}
 .lift-card-name::placeholder{color:var(--t3);font-weight:400;font-size:14px}
 .lift-card-del{width:36px;height:36px;border-radius:var(--r-md);border:none;background:transparent;color:var(--b3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:color .1s}
+.lift-card-move-stack{display:flex;flex-direction:column;flex-shrink:0}
+.lift-card-move{width:24px;height:18px;border-radius:4px;border:none;background:transparent;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;-webkit-tap-highlight-color:transparent;transition:color .1s}
+.lift-card-move:disabled{color:var(--b3);opacity:.4;cursor:default}
 .lift-card-del:active{color:var(--red)}
 .lift-card-fields{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
 .lift-shadow{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t3);margin:-2px 0 8px 30px;padding:5px 8px;background:rgba(212,255,71,.05);border-radius:6px;border-left:2px solid rgba(212,255,71,.35)}
@@ -5181,6 +5184,14 @@ function removeLiftRow(i){
   renderLiftRows();
 }
 
+// Reorder — e.g. a planned machine is occupied: move a substitute up, or push the blocked one down to retry later.
+function moveLiftRow(i,dir){
+  const j=i+dir;
+  if(j<0||j>=currentLifts.length) return;
+  [currentLifts[i],currentLifts[j]]=[currentLifts[j],currentLifts[i]];
+  renderLiftRows();
+}
+
 function renderLiftRows(){
   const el=document.getElementById('lift-rows');
   if(!el) return;
@@ -5200,6 +5211,10 @@ function renderLiftRows(){
         <div class="lift-card-num">${i+1}</div>
         <input class="lift-card-name" type="text" value="${l.name||''}" placeholder="Exercise name"
           oninput="currentLifts[${i}].name=this.value" onchange="renderLiftRows()" autocomplete="off" autocorrect="off" spellcheck="false">
+        <div class="lift-card-move-stack">
+          <button class="lift-card-move" onclick="moveLiftRow(${i},-1)" aria-label="Move exercise ${i+1} up" ${i===0?'disabled':''}><i class="ti ti-chevron-up" style="font-size:12px" aria-hidden="true"></i></button>
+          <button class="lift-card-move" onclick="moveLiftRow(${i},1)" aria-label="Move exercise ${i+1} down" ${i===currentLifts.length-1?'disabled':''}><i class="ti ti-chevron-down" style="font-size:12px" aria-hidden="true"></i></button>
+        </div>
         <button class="lift-card-del" onclick="removeLiftRow(${i})" aria-label="Remove exercise ${i+1}"><i class="ti ti-x" style="font-size:13px" aria-hidden="true"></i></button>
       </div>
       ${shadowHtml}
