@@ -1590,6 +1590,11 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
       </div>
     </div>
 
+    <div class="settings-section" id="removed-items-section" style="display:none">
+      <div class="settings-section-title">Removed timeline items</div>
+      <div id="removed-items-list"></div>
+    </div>
+
     <div class="settings-section">
       <div class="settings-section-title">Reset</div>
       <div class="settings-row">
@@ -1816,6 +1821,10 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
       <button class="as-btn supp-link" id="as-supp-link" onclick="closeActionSheet();go('supps')">
         <i class="ti ti-pill" style="font-size:15px;color:var(--purple)"></i>
         <span>View supplement details</span>
+      </button>
+      <button class="as-btn skip" id="as-remove-btn" onclick="actionSheetRemove()">
+        <i class="ti ti-trash" style="font-size:15px;color:var(--red)"></i>
+        <span>Remove from this shift — restore anytime in Settings</span>
       </button>
       <button class="as-btn cancel" onclick="closeActionSheet()">
         <i class="ti ti-x" style="font-size:14px"></i>Cancel
@@ -4193,8 +4202,9 @@ let customItems={}; // { shiftKey: [ {label,t,sub,type,tier,custom:true}, ... ] 
 
 // Unified accessor — ALWAYS use this instead of TIMELINE[shift] directly
 let labelEdits={}; // { shift+'__'+originalLabel: {label, sub} } — user renames layered over the protocol
+let hiddenBuiltIn={}; // { shift+'__'+originalLabel: true } — built-in items removed by the user, restorable in Settings
 function getTimeline(s){
-  const base=(TIMELINE[s]||[]).map(it=>{
+  const base=(TIMELINE[s]||[]).filter(it=>!hiddenBuiltIn[s+'__'+it.label]).map(it=>{
     const o=labelEdits[s+'__'+it.label];
     return o?{...it,custom:false,origLabel:it.label,label:o.label||it.label,sub:(o.sub!==undefined&&o.sub!==null)?o.sub:it.sub}:{...it,custom:false,origLabel:it.label};
   });
@@ -5312,7 +5322,7 @@ function save(){
       sleepRating,sleepHistory,yesterdayData,rsStock,
       bodyWeight,budgetOverrides,
       checkins,dismissedInsights,appliedInsights,lastWeeklyShown,
-      journeyLog,weightHistory,retroTicks,customItems,skippedToday,halfTicks,labelEdits,insightsLastRead,_lastInsightCount,
+      journeyLog,weightHistory,retroTicks,customItems,skippedToday,halfTicks,labelEdits,hiddenBuiltIn,insightsLastRead,_lastInsightCount,
       rhrHistory,hrvHistory,stepsHistory,
     }));
   }catch(e){}
@@ -5329,6 +5339,7 @@ function load(){
     if(d.skippedToday) skippedToday=d.skippedToday;
     if(d.halfTicks) halfTicks=d.halfTicks;
     if(d.labelEdits) labelEdits=d.labelEdits;
+    if(d.hiddenBuiltIn) hiddenBuiltIn=d.hiddenBuiltIn;
     // Shift is fully manual — always restore whatever was last picked, no date-gating.
     if(d.shift) shift=d.shift;
     cycleDay=d.cycleDay||0;
@@ -6928,7 +6939,7 @@ function exportData(){
     bodyWeight,budgetOverrides,
     checkins,dismissedInsights,appliedInsights,lastWeeklyShown,
     journeyLog,retroTicks,
-    customItems,skippedToday,halfTicks,labelEdits,
+    customItems,skippedToday,halfTicks,labelEdits,hiddenBuiltIn,
     weightHistory,rhrHistory,hrvHistory,stepsHistory,insightsLastRead,_lastInsightCount,
   };
   const json=JSON.stringify(payload,null,2);
@@ -6967,6 +6978,7 @@ function importData(){
     if(d.skippedToday) skippedToday=d.skippedToday;
     if(d.halfTicks) halfTicks=d.halfTicks;
     if(d.labelEdits) labelEdits=d.labelEdits;
+    if(d.hiddenBuiltIn) hiddenBuiltIn=d.hiddenBuiltIn;
     if(d.cycleAnchorDate) cycleAnchorDate=d.cycleAnchorDate;
     if(d.ticks) Object.assign(ticks,d.ticks);
     if(d.macros) Object.assign(macros,d.macros);
@@ -6993,6 +7005,7 @@ function importData(){
     renderRestock();renderMealLog();renderWeekStrip();
     renderSessionHistory();renderBudget();renderJourney();
     renderInsights();renderWeightChart();renderFitbit();
+    renderRemovedItems();render();updateBar();
     showToast('Everything restored ✓','action');
     setTimeout(()=>toggleImportArea(),1500);
   }catch(e){if(msg){msg.style.color='var(--red)';msg.textContent='Import failed: '+e.message;}}
@@ -7904,6 +7917,49 @@ function actionSheetSkip(){
   showToast((item?.label||'Item')+' skipped','action');
   _lpKey=null;
 }
+function actionSheetRemove(){
+  if(!_lpKey) return;
+  const parts=_lpKey.split('__');
+  const shiftKey=parts[1];
+  const item=getTimeline(shiftKey)?.[parseInt(parts[2])];
+  if(!item||item.custom) return;
+  closeActionSheet();
+  if(!confirm('Remove "'+item.label+'" from this shift\'s timeline? You can restore it anytime from Settings.')) return;
+  hiddenBuiltIn[shiftKey+'__'+item.origLabel]=true;
+  save();render();updateBar();renderRemovedItems();
+  showToast('Removed — restore anytime in Settings','action');
+  _lpKey=null;
+}
+
+// ── REMOVED ITEMS (Settings restore list) ──
+function renderRemovedItems(){
+  const wrap=document.getElementById('removed-items-list');
+  const section=document.getElementById('removed-items-section');
+  if(!wrap||!section) return;
+  const keys=Object.keys(hiddenBuiltIn).filter(k=>hiddenBuiltIn[k]);
+  if(!keys.length){ section.style.display='none'; wrap.innerHTML=''; return; }
+  const shiftNames={ds:'Day',ns1:'Night 1',ns2:'Night 2',off:'Off · Lift',leave:'Leave',xds:'Extra day',xns:'Extra night',school:'School',off_post_ns2:'Post-night'};
+  section.style.display='block';
+  wrap.innerHTML=keys.map(k=>{
+    const sep=k.indexOf('__');
+    const s=k.slice(0,sep),origLabel=k.slice(sep+2);
+    const baseItem=(TIMELINE[s]||[]).find(it=>it.label===origLabel);
+    const override=labelEdits[k];
+    const displayLabel=(override&&override.label)||origLabel;
+    return `<div class="settings-row">
+      <div>
+        <div class="settings-row-label">${displayLabel}</div>
+        <div class="settings-row-sub">${shiftNames[s]||s}${baseItem&&baseItem.t?' · '+baseItem.t:''}</div>
+      </div>
+      <button class="settings-btn" onclick="restoreBuiltInItem('${k}')">Restore</button>
+    </div>`;
+  }).join('');
+}
+function restoreBuiltInItem(key){
+  delete hiddenBuiltIn[key];
+  save();render();updateBar();renderRemovedItems();
+  showToast('Restored','action');
+}
 
 // ── INIT ──
 load();
@@ -7952,6 +8008,7 @@ renderWeekStrip();
 renderSessionHistory();
 renderBudget();
 renderCheckin();
+renderRemovedItems();
 renderInsights();
 renderJourney();
 attachMealValidation();
