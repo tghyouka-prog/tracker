@@ -92,7 +92,6 @@ html.theme-light body::before{background:
   radial-gradient(ellipse 70% 50% at 15% 0%, rgba(47,111,208,.06), transparent 60%),
   radial-gradient(ellipse 60% 45% at 90% 12%, rgba(14,159,100,.05), transparent 55%),
   radial-gradient(ellipse 80% 60% at 50% 100%, rgba(201,122,29,.04), transparent 60%)}
-html.theme-light .context-strip{background:rgba(255,255,255,.65);border-color:rgba(40,30,20,.1)}
 html.theme-light .custom-modal,html.theme-light .meal-modal{background:rgba(255,255,255,.85);border-color:rgba(40,30,20,.12);box-shadow:0 -8px 40px rgba(40,30,20,.18)}
 html.theme-light .focus-card{box-shadow:0 10px 26px -12px rgba(45,32,12,.16),0 2px 6px -4px rgba(45,32,12,.10)}
 html.theme-light .tl-item{border-bottom-color:rgba(40,30,20,.07)}
@@ -413,28 +412,6 @@ html.theme-light .bottom-nav{background:rgba(250,248,245,.94)}
 @keyframes page-fade{from{opacity:.4}to{opacity:1}}
 
 
-/* ── DAY MODE CARD ── */
-.day-mode-card{background:transparent;border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem 1rem;margin-bottom:.875rem}
-.dm-label{font-size:12px;font-weight:600;color:var(--t2);margin-bottom:.625rem}
-.dm-options{display:flex;flex-direction:column;gap:.375rem}
-.dm-btn{display:grid;grid-template-columns:20px 1fr;grid-template-rows:auto auto;gap:0 .625rem;align-items:center;padding:.625rem .75rem;border-radius:var(--r-md);border:1px solid var(--b2);background:var(--s2);cursor:pointer;text-align:left;transition:all .12s;-webkit-tap-highlight-color:transparent}
-.dm-btn:active{transform:scale(.98)}
-.dm-icon{grid-row:1/3;font-size:14px;display:flex;align-items:center;justify-content:center}
-.dm-name{font-size:13px;font-weight:600;color:var(--t1);line-height:1.2}
-.dm-desc{font-size:11px;color:var(--t3);line-height:1.3}
-.dm-btn.dm-ideal.active{border-color:color-mix(in srgb,var(--teal) 40%,transparent);background:color-mix(in srgb,var(--teal) 8%,transparent)}
-.dm-btn.dm-rough.active{border-color:rgba(232,151,58,.4);background:rgba(232,151,58,.08)}
-.dm-btn.dm-survival.active{border-color:rgba(220,53,69,.4);background:rgba(220,53,69,.08)}
-.dm-note{font-size:12px;color:var(--t2);margin-top:.625rem;line-height:1.55;display:none}
-.dm-note.show{display:block}
-.dm-collapsed{display:flex;align-items:center;gap:.625rem;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity .12s}
-.dm-collapsed:active{opacity:.7}
-.dm-collapsed-icon{font-size:16px;flex-shrink:0}
-.dm-collapsed-text{flex:1;display:flex;flex-direction:column;min-width:0}
-.dm-collapsed-name{font-size:13px;font-weight:600;color:var(--t1);line-height:1.2}
-.dm-collapsed-meta{font-size:11px;color:var(--teal);line-height:1.3}
-.dm-collapsed-change{font-size:11px;color:var(--t3);display:flex;align-items:center;gap:2px;flex-shrink:0}
-
 /* UX: Up Next remaining count + all-clear */
 .up-next-count{font-size:11px;color:var(--t3);margin-top:4px}
 .up-next-card.all-clear{border-color:color-mix(in srgb,var(--teal) 40%,transparent);background:linear-gradient(135deg,color-mix(in srgb,var(--teal) 10%,transparent),transparent)}
@@ -550,7 +527,7 @@ html{-webkit-text-size-adjust:100%;overscroll-behavior-y:none}
 body{-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
 /* Universal tap-highlight removal — replaced by deliberate :active states */
 *{-webkit-tap-highlight-color:transparent}
-button,a,[onclick],.cd,.collapsible-header,.tl-item,.check-item,.dm-btn,.shift-btn{-webkit-touch-callout:none;touch-action:manipulation}
+button,a,[onclick],.cd,.collapsible-header,.tl-item,.check-item,.shift-btn{-webkit-touch-callout:none;touch-action:manipulation}
 /* Keyboard focus — :focus-visible only fires for keyboard/switch nav, never for
    touch or mouse, so it adds zero visual noise on a phone while keeping the app
    usable with an external keyboard, switch control, or screen reader cursor. */
@@ -571,7 +548,7 @@ button,a,[onclick],.cd,.collapsible-header,.tl-item,.check-item,.dm-btn,.shift-b
 /* Smooth scroll-into-view for focused inputs (keyboard avoidance feel) */
 input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 /* Prevent text selection on UI chrome — feels native */
-.nav-btn,.cd,.collapsible-header,.tl-phase-label,.sec-label,.dm-btn,.shift-btn,.bs-btn,.as-btn{user-select:none;-webkit-user-select:none}
+.nav-btn,.cd,.collapsible-header,.tl-phase-label,.sec-label,.shift-btn,.bs-btn,.as-btn{user-select:none;-webkit-user-select:none}
 /* Active state for nav gets a subtle press */
 .nav-btn:active{transform:scale(.9);opacity:.7}
 /* Buttons feel springy not linear */
@@ -579,8 +556,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
 /* ═══ TRACKER IMPROVEMENTS ═══ */
 .shift-selector-wrap{display:flex;flex-direction:column;gap:6px;margin-bottom:.875rem}
-.context-strip{display:flex;align-items:center;gap:.75rem;background:rgba(15,15,15,.75);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid rgba(255,248,240,.1);border-radius:var(--r-lg);padding:.75rem .875rem;margin-bottom:.875rem;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity .12s}
-.context-strip:active{opacity:.7}
 .ctx-seg{display:flex;align-items:center;gap:.5rem;min-width:0}
 .ctx-seg-icon{width:28px;height:28px;border-radius:50%;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--t2);flex-shrink:0}
 .ctx-seg-dot{font-size:13px;flex-shrink:0}
@@ -1508,8 +1483,7 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
    Targeted overrides rather than a blanket --b1/--b2 token change, since those tokens are also used for
    functional dividers (footer stat-strips, input borders) that should stay visible. */
 .card,.stat-card,.up-next-card,.supp-timing-table,.pb-chart-wrap,.weight-history-strip,
-.day-mode-card,.focus-card,.macro-card,.fuel-sec,.fuel-wt-card,.score-row,.insight-card,.cs-card,
-.context-strip{
+.focus-card,.macro-card,.fuel-sec,.fuel-wt-card,.score-row,.insight-card,.cs-card{
   border:none!important;
 }
 .reset-btn,.fb-btn,.fb-connect-btn,.fb-mini,.add-custom-btn,.mb,.wt-btn,.cf-pill,.eod-btn,
@@ -1936,20 +1910,6 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
     <button onclick="setDateCtx('today')" style="font-size:11px;color:var(--t3);background:var(--s3);border:1px solid var(--b2);border-radius:var(--r-sm);padding:3px 9px;cursor:pointer;flex-shrink:0">← Today</button>
   </div>
 
-  <!-- Unified context strip — shows when both shift + mode are set -->
-  <div class="context-strip" id="context-strip" style="display:none" onclick="expandContext()">
-    <div class="ctx-seg">
-      <span class="ctx-seg-icon" id="ctx-shift-icon"><i class="ti ti-sun"></i></span>
-      <span class="ctx-seg-name" id="ctx-shift-name">Day</span>
-    </div>
-    <span class="ctx-divider"></span>
-    <div class="ctx-seg">
-      <span class="ctx-seg-dot" id="ctx-mode-dot"><i class="ti ti-circle-filled" style="color:var(--teal);font-size:11px" aria-hidden="true"></i></span>
-      <span class="ctx-seg-name" id="ctx-mode-name">On track</span>
-    </div>
-    <span class="ctx-change"><i class="ti ti-chevron-down" style="font-size:13px"></i>change</span>
-  </div>
-
   <div class="shift-selector-wrap" id="shift-selector-wrap">
     <!-- Collapsed chip — shown after selection -->
     <div class="shift-collapsed" id="shift-collapsed" style="display:none" onclick="expandShiftSelector()">
@@ -1996,41 +1956,6 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
         </div>
         <button class="bridge-dismiss" onclick="dismissBridge()">Not post-shift →</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Day mode selector -->
-  <div class="day-mode-card" id="day-mode-card">
-    <!-- Collapsed status row — shown when mode derived from check-in -->
-    <div class="dm-collapsed" id="dm-collapsed" style="display:none" onclick="expandDayMode()">
-      <span class="dm-collapsed-icon" id="dm-collapsed-icon"><i class="ti ti-circle-filled" style="color:var(--teal)" aria-hidden="true"></i></span>
-      <div class="dm-collapsed-text">
-        <span class="dm-collapsed-name" id="dm-collapsed-name">On track</span>
-        <span class="dm-collapsed-meta" id="dm-collapsed-meta">from your check-in</span>
-      </div>
-      <span class="dm-collapsed-change"><i class="ti ti-chevron-down" style="font-size:13px"></i>change</span>
-    </div>
-    <!-- Expanded selector -->
-    <div class="dm-expanded" id="dm-expanded">
-      <div class="dm-label">How are you going into today?</div>
-      <div class="dm-options">
-        <button class="dm-btn dm-ideal active" id="dm-ideal" onclick="setDayMode('ideal')">
-          <span class="dm-icon"><i class="ti ti-mood-smile" style="color:var(--teal)" aria-hidden="true"></i></span>
-          <span class="dm-name">On track</span>
-          <span class="dm-desc">Slept well · feeling good</span>
-        </button>
-        <button class="dm-btn dm-rough" id="dm-rough" onclick="setDayMode('rough')">
-          <span class="dm-icon"><i class="ti ti-mood-neutral" style="color:var(--amber)" aria-hidden="true"></i></span>
-          <span class="dm-name">Rough night</span>
-          <span class="dm-desc">Under 6 hrs or poor quality</span>
-        </button>
-        <button class="dm-btn dm-survival" id="dm-survival" onclick="setDayMode('survival')">
-          <span class="dm-icon"><i class="ti ti-mood-sad" style="color:var(--red)" aria-hidden="true"></i></span>
-          <span class="dm-name">Running on empty</span>
-          <span class="dm-desc">Consecutive bad nights · very fatigued</span>
-        </button>
-      </div>
-      <div class="dm-note" id="dm-note"></div>
     </div>
   </div>
 
@@ -2890,7 +2815,6 @@ function go(id){
 
 // ── STATE ──
 let shift='ds';
-let dayMode='ideal'; // 'ideal' | 'rough' | 'survival'
 let ticks={};
 let halfTicks={}; // fractional completion — item counts 0.5, promoted to full on tap
 
@@ -3747,8 +3671,7 @@ function updateScore(){
   let _allHandled=_sItems.length>0;
   _sItems.forEach((it,i)=>{
     const _tier=it.tier||'default';
-    const _eff=(dayMode==='rough'&&(it.label.includes('Training session')||it.label.includes('Gym —')))?'optional':_tier;
-    if(_eff==='optional') return;
+    if(_tier==='optional') return;
     const _k=tlKey(shift,i);
     if(!(ticks[_k]||halfTicks[_k]||skippedToday[focusSkipKey(i)])) _allHandled=false;
   });
@@ -4253,54 +4176,6 @@ function collapseShiftSelector(s){
   if(nameEl) nameEl.textContent=m.name;
   collapsed.style.display='flex';
   expanded.style.display='none';
-  updateContextStrip();
-}
-
-// Unified context strip — merges shift + day-mode into one row when both resolved
-function updateContextStrip(){
-  const strip=document.getElementById('context-strip');
-  const selectorWrap=document.getElementById('shift-selector-wrap');
-  const dmCard=document.getElementById('day-mode-card');
-  if(!strip||!selectorWrap||!dmCard) return;
-  // Both are "resolved" when shift collapsed is showing AND day-mode collapsed is showing
-  const shiftCollapsed=document.getElementById('shift-collapsed')?.style.display==='flex';
-  const dmCollapsed=document.getElementById('dm-collapsed')?.style.display==='flex';
-  if(shiftCollapsed&&dmCollapsed){
-    // Populate unified strip
-    const shiftMeta={
-      ds:{icon:'ti-sun',name:'Day'},ns1:{icon:'ti-barbell',name:'Night 1'},
-      ns2:{icon:'ti-moon',name:'Night 2'},off:{icon:'ti-barbell',name:'Off · Lift'},
-      leave:{icon:'ti-palm-tree',name:'Leave'},xds:{icon:'ti-sun-2',name:'Extra day'},
-      xns:{icon:'ti-moon-stars',name:'Extra night'},school:{icon:'ti-school',name:'School'},off_post_ns2:{icon:'ti-sunrise',name:'Post-night'},
-    };
-    const modeMeta={ideal:{color:'var(--teal)',name:'On track'},rough:{color:'var(--amber)',name:'Rough night'},survival:{color:'var(--red)',name:'Running on empty'}};
-    const sm=shiftMeta[shift]||shiftMeta.ds;
-    const mm=modeMeta[dayMode]||modeMeta.ideal;
-    document.getElementById('ctx-shift-icon').innerHTML='<i class="ti '+sm.icon+'"></i>';
-    document.getElementById('ctx-shift-name').textContent=sm.name;
-    document.getElementById('ctx-mode-dot').innerHTML='<i class="ti ti-circle-filled" style="color:'+mm.color+';font-size:11px" aria-hidden="true"></i>';
-    document.getElementById('ctx-mode-name').textContent=mm.name;
-    // Show unified, hide both individual collapsed cards
-    strip.style.display='flex';
-    selectorWrap.style.display='none';
-    dmCard.style.display='none';
-  } else {
-    strip.style.display='none';
-    selectorWrap.style.display='flex';
-    dmCard.style.display='block';
-  }
-}
-
-function expandContext(){
-  // Expand both selectors when user taps the unified strip
-  const strip=document.getElementById('context-strip');
-  const selectorWrap=document.getElementById('shift-selector-wrap');
-  const dmCard=document.getElementById('day-mode-card');
-  if(strip) strip.style.display='none';
-  if(selectorWrap) selectorWrap.style.display='flex';
-  if(dmCard) dmCard.style.display='block';
-  // Expand the shift grid for re-pick
-  expandShiftSelector();
 }
 
 function expandShiftSelector(){
@@ -4466,9 +4341,7 @@ function renderFocusHero(){
       const isWD=(items[i].phase==='Wind-down'||items[i].phase==='Sleep');
       if(wantWindDown!==isWD) continue;
       const tier=items[i].tier||'default';
-      const eff=(dayMode==='rough'&&(items[i].label.includes('Training')||items[i].label.includes('Gym')))?'optional':tier;
-      if(eff==='optional') continue;
-      if(dayMode==='survival'&&(items[i].label.includes('Training')||items[i].label.includes('Gym'))) continue;
+      if(tier==='optional') continue;
       if(skippedToday[focusSkipKey(i)]) continue;
       if(halfTicks[tlKey(shift,i)]) continue;
       if(!ticks[tlKey(shift,i)]) return i;
@@ -4481,9 +4354,7 @@ function renderFocusHero(){
   } else {
   for(let i=0;i<items.length;i++){
     const tier=items[i].tier||'default';
-    const eff=(dayMode==='rough'&&(items[i].label.includes('Training')||items[i].label.includes('Gym')))?'optional':tier;
-    if(eff==='optional') continue;
-    if(dayMode==='survival'&&(items[i].label.includes('Training')||items[i].label.includes('Gym'))) continue;
+    if(tier==='optional') continue;
     if(skippedToday[focusSkipKey(i)]) continue; // skipped for today — pass over
     if(halfTicks[tlKey(shift,i)]) continue; // half-done — handled for now
     if(!ticks[tlKey(shift,i)]){idx=i;break;}
@@ -4723,14 +4594,7 @@ function render(){
     }
     const isPriority=['Vault','Magnesium','Blue-block','Supplement stack','Post-gym flask','Morning transporter','Blue-blocks on'].some(p=>item.label.includes(p));
     const tier=item.tier||'default';
-    // In survival mode, hide training items (unless already done)
-    const hiddenInSurvival=dayMode==='survival'&&!done&&(item.label.includes('Training session')||item.label.includes('Gym —')||item.label.includes('Zone 2'));
-    // In rough mode, demote gym to optional
-    const roughOptional=dayMode==='rough'&&(item.label.includes('Training session')||item.label.includes('Gym —'));
-    const effectiveTier=roughOptional?'optional':tier;
-    // Survival — promote recovery items
-    const survivalPromoted=dayMode==='survival'&&(item.label.includes('Sleep')||item.label.includes('Aircon')||item.label.includes('Blue-block')||item.label.includes('Vault'));
-    html+=`<div class="tl-item${done?' done':''}${half?' half':''}${isNext?' next-item':''}${isPriority&&!done?' priority-item':''}${hiddenInSurvival?' survival-removed':''} tier-${effectiveTier}${survivalPromoted?' survival-promoted':''}${item.custom?' is-custom':''}" onclick="tlTick('${k}')" oncontextmenu="openActionSheet(event,'${k}');return false" ontouchstart="startLongPress(event,'${k}')" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()">
+    html+=`<div class="tl-item${done?' done':''}${half?' half':''}${isNext?' next-item':''}${isPriority&&!done?' priority-item':''} tier-${tier}${item.custom?' is-custom':''}" onclick="tlTick('${k}')" oncontextmenu="openActionSheet(event,'${k}');return false" ontouchstart="startLongPress(event,'${k}')" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()">
       <div class="tl-dot ${item.type}"></div>
       <div class="tl-body">
         <div class="tl-main">${item.label}</div>
@@ -4858,12 +4722,9 @@ function updateBar(){
 
   items.forEach((item,i)=>{
     const tier=item.tier||'default';
-    const effectiveTier=(dayMode==='rough'&&(item.label.includes('Training session')||item.label.includes('Gym —')))?'optional':tier;
+    const effectiveTier=tier;
     const done=!!ticks[tlKey(shift,i)];
     const t=item.type||'action';
-
-    // Survival — skip uncompleted training from counts
-    if(dayMode==='survival'&&!done&&(item.label.includes('Training session')||item.label.includes('Gym —'))) return;
 
     if(effectiveTier==='optional'){
       optTotal++;if(done) optDone++;
@@ -7574,74 +7435,6 @@ function _fbSelfCheck(){
 
 
 
-// ── DAY MODE ──
-function setDayMode(mode, autoDerived=false){
-  dayMode=mode;
-  // Record check-in silently so coach + This Week strip stay fed
-  const _td=biologicalToday();
-  if(!checkins[_td]||!checkins[_td].ts){
-    const _sl=mode==='survival'?1:mode==='rough'?3:4;
-    const _en=mode==='survival'?1:mode==='rough'?2:4;
-    checkins[_td]={energy:_en,sleep:_sl,sore:mode==='survival'?4:mode==='rough'?3:1,ts:Date.now(),derived:true};
-    sleepRating=_sl;
-  }
-  // Update button states
-  ['ideal','rough','survival'].forEach(m=>{
-    const btn=document.getElementById('dm-'+m);
-    if(btn) btn.className='dm-btn dm-'+m+(m===mode?' active':'');
-  });
-  // Contextual notes
-  const notes={
-    ideal:'Full protocol active. All items count toward your score.',
-    rough:'Recovery mode — training is optional today. Sleep quality takes priority over performance. Score recalibrated.',
-    survival:'Survival mode — gym removed, recovery items promoted. Score measures damage control, not performance. A good survival day scores well.'
-  };
-  const note=document.getElementById('dm-note');
-  if(note){
-    const prefix=autoDerived?'<span style="font-size:11px;color:var(--teal);font-weight:600;display:block;margin-bottom:3px"><i class="ti ti-wand" style="font-size:11px"></i> Suggested from your check-in — tap another if it doesn\'t feel right</span>':'';
-    note.innerHTML=prefix+notes[mode];
-    note.className='dm-note show';
-  }
-  // Collapse to status row on every explicit selection, not just auto-derived ones —
-  // a manual tap is just as "done" as a suggested one (matches setShift's always-collapse behavior).
-  collapseDayMode(mode);
-  // Re-render timeline with mode applied
-  render();
-  updateBar();
-}
-
-function collapseDayMode(mode){
-  const collapsed=document.getElementById('dm-collapsed');
-  const expanded=document.getElementById('dm-expanded');
-  if(!collapsed||!expanded) return;
-  const meta={
-    ideal:{color:'var(--teal)',name:'On track'},
-    rough:{color:'var(--amber)',name:'Rough night'},
-    survival:{color:'var(--red)',name:'Running on empty'},
-  };
-  const m=meta[mode]||meta.ideal;
-  document.getElementById('dm-collapsed-icon').innerHTML='<i class="ti ti-circle-filled" style="color:'+m.color+'" aria-hidden="true"></i>';
-  document.getElementById('dm-collapsed-name').textContent=m.name;
-  collapsed.style.display='flex';
-  expanded.style.display='none';
-  updateContextStrip();
-}
-
-function expandDayMode(){
-  const strip=document.getElementById('context-strip');
-  const dmCard=document.getElementById('day-mode-card');
-  const selectorWrap=document.getElementById('shift-selector-wrap');
-  if(strip&&strip.style.display==='flex'){
-    strip.style.display='none';
-    if(selectorWrap) selectorWrap.style.display='flex';
-    if(dmCard) dmCard.style.display='block';
-  }
-  const collapsed=document.getElementById('dm-collapsed');
-  const expanded=document.getElementById('dm-expanded');
-  if(collapsed) collapsed.style.display='none';
-  if(expanded) expanded.style.display='block';
-}
-
 // Mode-aware score calculation
 
 
@@ -7653,11 +7446,7 @@ function getTrackerPctWeighted(){
   let foundDone=0,foundTotal=0,defDone=0,defTotal=0;
   items.forEach((item,i)=>{
     const tier=item.tier||'default';
-    // Survival mode — skip uncompleted training
-    if(dayMode==='survival'&&!ticks[tlKey(shift,i)]&&
-      (item.label.includes('Training session')||item.label.includes('Gym —'))) return;
-    // Rough mode — training counts as optional
-    const effectiveTier=(dayMode==='rough'&&(item.label.includes('Training session')||item.label.includes('Gym —')))?'optional':tier;
+    const effectiveTier=tier;
     if(effectiveTier==='optional') return; // optionals excluded from base score
     const _k=tlKey(shift,i);const _v=ticks[_k]?1:(halfTicks[_k]?0.5:0);
     if(effectiveTier==='foundation'){foundTotal++;foundDone+=_v;}
@@ -7679,8 +7468,7 @@ function getOptionalBonus(){
   let done=0,total=0;
   items.forEach((item,i)=>{
     const tier=item.tier||'default';
-    const effectiveTier=(dayMode==='rough'&&(item.label.includes('Training session')||item.label.includes('Gym —')))?'optional':tier;
-    if(effectiveTier==='optional'){total++;if(ticks[tlKey(shift,i)]) done++;}
+    if(tier==='optional'){total++;if(ticks[tlKey(shift,i)]) done++;}
   });
   return {done,total};
 }
@@ -7826,8 +7614,7 @@ function markDayComplete(){
   // Only mark foundation and default items — optionals remain user choice
   items.forEach((item,i)=>{
     const tier=item.tier||'default';
-    const effectiveTier=(dayMode==='rough'&&(item.label.includes('Training session')||item.label.includes('Gym —')))?'optional':tier;
-    if(effectiveTier!=='optional') ticks[tlKey(shift,i)]=true;
+    if(tier!=='optional') ticks[tlKey(shift,i)]=true;
   });
   syncMacrosFromTimeline();render();updateBar();save();
   showToast('All the essentials — done','action');
@@ -7895,8 +7682,7 @@ function updateContextHint(){
   let coreDone=0,coreTotal=0;
   items.forEach((item,i)=>{
     const tier=item.tier||'default';
-    const eff=(dayMode==='rough'&&(item.label.includes('Training session')||item.label.includes('Gym —')))?'optional':tier;
-    if(eff!=='optional'){coreTotal++;const _hk=tlKey(shift,i);coreDone+=ticks[_hk]?1:(halfTicks[_hk]?0.5:0);}
+    if(tier!=='optional'){coreTotal++;const _hk=tlKey(shift,i);coreDone+=ticks[_hk]?1:(halfTicks[_hk]?0.5:0);}
   });
   const remaining=coreTotal-coreDone;
   if(hint){
@@ -8178,25 +7964,13 @@ setTimeout(()=>{renderHeatmap();renderWeightChart();renderPBChart();},100);
 syncTrackerHydro();
 renderDateCtxButtons();
 setTimeout(applyBridgeState, 200);
-// Apply day mode from existing check-in if already logged today
 // Update rotation label
 const rotLabel=document.getElementById('rotation-label');
 if(rotLabel) rotLabel.textContent=getActiveRotation()==='DNOO'?'DNOO':'1D–2N–3O';
-const todayCheckin=checkins[biologicalToday()];
-if(todayCheckin&&!todayCheckin.skipped&&todayCheckin.sleep&&todayCheckin.energy){
-  const sl=todayCheckin.sleep,en=todayCheckin.energy;
-  const derivedMode=sl<=2||en<=1?'survival':sl<=3||en<=2?'rough':'ideal';
-  setDayMode(derivedMode, true);
-} else {
-  // No check-in yet — assume On track quietly; the big picker stays out of the way.
-  // 'change' on the context strip re-opens it any time.
-  collapseDayMode(dayMode||'ideal');
-}
 // Auto-roll the rotation forward for any days passed (cycle-day bookkeeping only — used by
 // Train's session suggestions. Shift itself is fully manual, see load()/setShift().)
 autoRollCycle();
 renderCycle();
-// Collapse shift selector on load so the unified context strip can appear
 if(shift) collapseShiftSelector(shift);
 // Render the timeline + focus hero + progress now that shift is known
 render();
