@@ -7602,8 +7602,9 @@ function setDayMode(mode, autoDerived=false){
     note.innerHTML=prefix+notes[mode];
     note.className='dm-note show';
   }
-  // Collapse to status row when auto-derived from check-in
-  if(autoDerived) collapseDayMode(mode);
+  // Collapse to status row on every explicit selection, not just auto-derived ones —
+  // a manual tap is just as "done" as a suggested one (matches setShift's always-collapse behavior).
+  collapseDayMode(mode);
   // Re-render timeline with mode applied
   render();
   updateBar();
