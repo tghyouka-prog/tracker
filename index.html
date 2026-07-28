@@ -3057,15 +3057,21 @@ function renderWhyTiles(){
 }
 function openWhySheet(i){
   const card=WHY_CARDS[i];
-  if(!card) return;
+  const overlay=document.getElementById('why-overlay');
+  // The why-overlay modal lived in the now-deleted dashboard — this is currently unreachable
+  // (its trigger pills are inside a hidden section) but guarded so it fails safely, not crashes,
+  // if that section is ever brought back without also restoring the modal markup.
+  if(!card||!overlay) return;
   document.getElementById('why-q').textContent=card.q;
   document.getElementById('why-a').textContent=card.a;
-  document.getElementById('why-overlay').classList.add('show');
+  overlay.classList.add('show');
   if(navigator.vibrate) navigator.vibrate(4);
 }
 function closeWhySheet(e){
-  if(e&&e.target!==document.getElementById('why-overlay')) return;
-  document.getElementById('why-overlay').classList.remove('show');
+  const overlay=document.getElementById('why-overlay');
+  if(!overlay) return;
+  if(e&&e.target!==overlay) return;
+  overlay.classList.remove('show');
 }
 
 
