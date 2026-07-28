@@ -548,7 +548,7 @@ button,a,[onclick],.cd,.collapsible-header,.tl-item,.check-item,.shift-btn{-webk
 /* Smooth scroll-into-view for focused inputs (keyboard avoidance feel) */
 input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 /* Prevent text selection on UI chrome — feels native */
-.nav-btn,.cd,.collapsible-header,.tl-phase-label,.sec-label,.shift-btn,.bs-btn,.as-btn{user-select:none;-webkit-user-select:none}
+.nav-btn,.cd,.collapsible-header,.tl-phase-label,.sec-label,.shift-btn,.bs-btn,.as-btn,.tl-item{user-select:none;-webkit-user-select:none}
 /* Active state for nav gets a subtle press */
 .nav-btn:active{transform:scale(.9);opacity:.7}
 /* Buttons feel springy not linear */
@@ -1654,7 +1654,11 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
 </div>
 
 
-  <!-- Camera quick-log button — top right corner -->
+  <!-- Settings + camera quick-log buttons — top right corner, side by side -->
+<button id="settings-fab" onclick="openSettings()" aria-label="Settings"
+  style="position:fixed;top:14px;right:68px;z-index:150;width:44px;height:44px;background:var(--s2);border:1px solid var(--b2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s cubic-bezier(.34,1.4,.5,1),background .12s">
+  <i class="ti ti-settings" style="font-size:17px;color:var(--t2)" aria-hidden="true"></i>
+</button>
 <button id="camera-fab" onclick="openCameraLogger()" aria-label="Log a meal from a photo"
   style="position:fixed;top:14px;right:16px;z-index:150;width:44px;height:44px;background:var(--s2);border:1px solid var(--b2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s cubic-bezier(.34,1.4,.5,1),background .12s">
   <i class="ti ti-camera" style="font-size:17px;color:var(--t2)" aria-hidden="true"></i>
@@ -1895,9 +1899,6 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
     <div>
       <div id="today-greet" style="font-size:13px;color:var(--t2)">Good evening</div>
       <div id="today-shift" style="font-size:26px;font-weight:300;color:var(--t1);letter-spacing:-.02em;line-height:1.1;margin-top:1px">Today</div>
-    </div>
-    <div style="display:flex;align-items:center;gap:.875rem;padding-top:5px">
-      <button onclick="openSettings()" style="background:none;border:none;cursor:pointer;color:var(--t2);padding:2px;display:flex;-webkit-tap-highlight-color:transparent" aria-label="Settings"><i class="ti ti-settings" style="font-size:18px"></i></button>
     </div>
   </div>
 
