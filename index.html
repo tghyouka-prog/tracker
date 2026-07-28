@@ -2190,7 +2190,6 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
   <div class="weight-history-strip" id="weight-history-strip">
     <div class="wh-header">
       <span class="wh-label">Weight history</span>
-      <span class="wh-current" id="wh-current">74 kg</span>
     </div>
     <canvas id="wh-canvas" class="wh-canvas" height="48"></canvas>
     <span class="wh-note" id="wh-note">Tap − / + above to log weight changes</span>
@@ -7354,8 +7353,6 @@ function recordWeightHistory(kg){
 function renderWeightChart(){
   const canvas=document.getElementById('wh-canvas');
   const noteEl=document.getElementById('wh-note');
-  const curEl=document.getElementById('wh-current');
-  if(curEl) curEl.textContent=bodyWeight+' kg';
   if(!canvas) return;
   if(weightHistory.length<2){canvas.style.display='none';if(noteEl) noteEl.textContent='Tap − / + above to log weight changes';return;}
   canvas.style.display='block';
