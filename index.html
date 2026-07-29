@@ -1665,6 +1665,30 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
 </button>
 <input type="file" id="camera-file-input" style="display:none" onchange="handleCameraCapture(event)">
 
+<!-- In-app live camera viewfinder -->
+<div id="camera-view-overlay" style="display:none;position:fixed;inset:0;z-index:400;background:#000;flex-direction:column;align-items:center;justify-content:center;overflow:hidden">
+  <video id="camera-live-video" autoplay playsinline muted style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000"></video>
+  <canvas id="camera-capture-canvas" style="display:none"></canvas>
+  <div style="position:absolute;inset:16% 8%;border:1.5px solid rgba(255,255,255,.35);border-radius:20px;pointer-events:none"></div>
+  <div style="position:absolute;top:0;left:0;right:0;padding:calc(1rem + env(safe-area-inset-top)) 1rem 1rem;display:flex;justify-content:space-between;align-items:center">
+    <button onclick="closeCameraView()" aria-label="Cancel"
+      style="width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.45);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent">
+      <i class="ti ti-x" style="font-size:19px" aria-hidden="true"></i>
+    </button>
+    <button onclick="flipCameraFacing()" aria-label="Switch camera"
+      style="width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.45);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent">
+      <i class="ti ti-camera-rotate" style="font-size:19px" aria-hidden="true"></i>
+    </button>
+  </div>
+  <div id="camera-view-hint" style="position:absolute;top:calc(4.5rem + env(safe-area-inset-top));left:0;right:0;text-align:center;font-size:12px;color:rgba(255,255,255,.7);padding:0 1.5rem"></div>
+  <div style="position:absolute;bottom:0;left:0;right:0;padding:1.25rem 1rem calc(1.75rem + env(safe-area-inset-bottom));display:flex;justify-content:center;align-items:center">
+    <button id="camera-shutter-btn" onclick="captureCameraFrame()" aria-label="Capture photo"
+      style="width:72px;height:72px;border-radius:50%;background:transparent;border:4px solid #fff;cursor:pointer;padding:0;position:relative;-webkit-tap-highlight-color:transparent">
+      <span style="position:absolute;inset:4px;border-radius:50%;background:#fff"></span>
+    </button>
+  </div>
+</div>
+
 <!-- Meal logger modal -->
   <div id="meal-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)" onclick="closeMealLogger()"></div>
   <div id="meal-modal" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:201;background:rgba(20,20,20,.92);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border-top:1px solid rgba(255,255,255,.1);border-radius:20px 20px 0 0;padding:1.25rem 1.25rem 2rem;max-width:860px;margin:0 auto;max-height:90vh;overflow-y:auto">
@@ -3164,16 +3188,64 @@ function openMealLogger(){
 
 
 // ── CAMERA & PHOTO CAPTURE ──
-// Creates a fresh input element on each tap — most reliable way to get
-// rear camera on Android. `capture="environment"` on a fresh element is
-// respected by Android Chrome; a reused element often isn't.
+// Live in-app viewfinder (getUserMedia) is the primary path; a native file-picker
+// with capture="environment" is the fallback when getUserMedia is unavailable/denied
+// (desktop browsers with no camera, insecure context, permission refusal, etc).
 let _mealPhotoBase64 = null;
 let _mealPhotoMime   = 'image/jpeg';
+let _cameraStream = null;
+let _cameraFacingMode = 'environment';
 
 function openCameraLogger(){
   openMealLogger();
-  // Short delay so modal is visible first, then trigger picker
-  setTimeout(triggerCameraPicker, 350);
+  // Short delay so modal is visible first, then open the viewfinder
+  setTimeout(openCameraView, 350);
+}
+
+async function openCameraView(){
+  if(!navigator.mediaDevices?.getUserMedia){ triggerCameraPicker(); return; }
+  const overlay=document.getElementById('camera-view-overlay');
+  const video=document.getElementById('camera-live-video');
+  const hint=document.getElementById('camera-view-hint');
+  try{
+    _cameraStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:_cameraFacingMode},audio:false});
+    if(video) video.srcObject = _cameraStream;
+    if(overlay) overlay.style.display = 'flex';
+    if(hint) hint.textContent = 'Frame the plate, then tap the shutter';
+  }catch(e){
+    // No camera, permission denied, insecure context — fall back to the OS picker.
+    // Release the stream if it was acquired but wiring it up failed, so the camera isn't left running.
+    if(_cameraStream){ try{ _cameraStream.getTracks().forEach(t=>t.stop()); }catch(_e){} _cameraStream=null; }
+    triggerCameraPicker();
+  }
+}
+
+function closeCameraView(){
+  const overlay=document.getElementById('camera-view-overlay');
+  if(overlay) overlay.style.display = 'none';
+  if(_cameraStream){ _cameraStream.getTracks().forEach(t=>t.stop()); _cameraStream = null; }
+}
+
+function flipCameraFacing(){
+  _cameraFacingMode = _cameraFacingMode==='environment' ? 'user' : 'environment';
+  if(_cameraStream){ _cameraStream.getTracks().forEach(t=>t.stop()); _cameraStream = null; }
+  openCameraView();
+}
+
+function captureCameraFrame(){
+  const video=document.getElementById('camera-live-video');
+  const canvas=document.getElementById('camera-capture-canvas');
+  if(!video||!canvas||!video.videoWidth) return;
+  // Cap the long edge so the base64 payload stays reasonable for the Gemini request
+  const MAX_DIM=1280;
+  let w=video.videoWidth, h=video.videoHeight;
+  if(w>=h && w>MAX_DIM){ h=Math.round(h*MAX_DIM/w); w=MAX_DIM; }
+  else if(h>w && h>MAX_DIM){ w=Math.round(w*MAX_DIM/h); h=MAX_DIM; }
+  canvas.width=w; canvas.height=h;
+  canvas.getContext('2d').drawImage(video,0,0,w,h);
+  const dataUrl=canvas.toDataURL('image/jpeg',0.85);
+  closeCameraView();
+  _attachMealPhoto(dataUrl,'image/jpeg');
 }
 
 function triggerCameraPicker(){
@@ -3193,19 +3265,20 @@ function triggerCameraPicker(){
 function handleCameraCapture(event){
   const file = event.target.files?.[0];
   if(!file) return;
-  _mealPhotoMime = file.type || 'image/jpeg';
   const reader  = new FileReader();
-  reader.onload = (e)=>{
-    const dataUrl = e.target.result;
-    const preview = document.getElementById('meal-photo-preview');
-    const img     = document.getElementById('meal-photo-img');
-    if(img)     img.src = dataUrl;
-    if(preview) preview.style.display = 'block';
-    _mealPhotoBase64 = dataUrl.split(',')[1];
-    setTimeout(()=>document.getElementById('meal-desc-main')?.focus(), 120);
-    showToast('Photo attached — describe the portion for accuracy','action');
-  };
+  reader.onload = (e)=>_attachMealPhoto(e.target.result, file.type||'image/jpeg');
   reader.readAsDataURL(file);
+}
+
+function _attachMealPhoto(dataUrl, mime){
+  _mealPhotoMime = mime || 'image/jpeg';
+  _mealPhotoBase64 = dataUrl.split(',')[1];
+  const preview = document.getElementById('meal-photo-preview');
+  const img     = document.getElementById('meal-photo-img');
+  if(img)     img.src = dataUrl;
+  if(preview) preview.style.display = 'block';
+  setTimeout(()=>document.getElementById('meal-desc-main')?.focus(), 120);
+  showToast('Photo attached — describe the portion for accuracy','action');
 }
 
 function clearMealPhoto(){
@@ -3376,6 +3449,7 @@ Rules:
 }
 
 function closeMealLogger(){
+  closeCameraView();
   document.getElementById('meal-modal-overlay').style.display='none';
   document.getElementById('meal-modal').style.display='none';
   // Clear form
