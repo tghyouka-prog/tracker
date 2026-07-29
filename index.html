@@ -3331,7 +3331,7 @@ Rules:
             ...(photoData?[{inline_data:{mime_type:photoMime,data:photoData}}]:[]),
             {text:prompt}
           ]}],
-          generationConfig:{temperature:0.1,maxOutputTokens:512}
+          generationConfig:{temperature:0.1,maxOutputTokens:512,responseMimeType:'application/json'}
         })
       }
     );
