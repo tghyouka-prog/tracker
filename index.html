@@ -174,11 +174,9 @@ html.theme-light .bottom-nav{background:rgba(250,248,245,.94)}
 .reset-btn:hover{color:var(--red);border-color:rgba(232,100,90,.3)}
 
 /* PHYSICS */
-.mb,.rs-btn,.shift-btn,.cycle-adv,.check-item,.reset-btn,.star-btn,.rs-item,.rem-btn,.budget-edit-btn,.budget-modal-save,.tab{-webkit-tap-highlight-color:transparent;user-select:none}
+.mb,.shift-btn,.cycle-adv,.check-item,.reset-btn,.star-btn,.rem-btn,.tab{-webkit-tap-highlight-color:transparent;user-select:none}
 .mb{transition:transform .07s cubic-bezier(.34,1.56,.64,1),background .12s,border-color .12s,color .12s}
 .mb:active{transform:scale(.91)}
-.rs-btn{transition:transform .07s cubic-bezier(.34,1.56,.64,1),background .12s}
-.rs-btn:active{transform:scale(.86)}
 .shift-btn{transition:transform .07s cubic-bezier(.34,1.56,.64,1),background .12s,border-color .12s,color .12s,box-shadow .12s}
 .shift-btn:active{transform:scale(.93)}
 .cycle-adv{transition:transform .07s cubic-bezier(.34,1.56,.64,1),border-color .12s,color .12s}
@@ -747,30 +745,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .rule-ic.a{color:var(--amber)}.rule-ic.t{color:var(--teal)}.rule-ic.r{color:var(--red)}.rule-ic.b{color:var(--blue)}.rule-ic.p{color:var(--purple)}
 .rule-body{color:var(--t2)}.rule-body strong{color:var(--t1)}
 
-/* RESTOCK */
-.rs-section-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin:1.25rem 0 .625rem;padding-bottom:.375rem;border-bottom:1px solid var(--b1)}
-.rs-section-label:first-child{margin-top:0}
-.rs-item{display:grid;grid-template-columns:1fr auto auto;gap:.75rem;align-items:center;background:transparent;border:1px solid var(--b1);border-radius:var(--r-lg);padding:.75rem 1rem;margin-bottom:.375rem;transition:border-color .12s}
-.rs-item.low{border-color:rgba(232,100,90,.3);background:rgba(232,100,90,.03)}
-.rs-item.ok{border-color:rgba(38,201,138,.18)}
-.rs-name{font-size:13px;font-weight:500;color:var(--t1)}
-.rs-detail{font-size:11px;color:var(--t3);margin-top:1px}
-.rs-badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
-.rs-badge.low{background:var(--red-dim);color:var(--red);border:1px solid rgba(232,100,90,.25)}
-.rs-badge.ok{background:var(--s2);color:var(--t2);border:1px solid var(--b2)}
-.rs-badge.warn{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(240,160,32,.25)}
-.rs-controls{display:flex;align-items:center;gap:4px}
-.rs-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--b2);background:var(--s2);color:var(--t2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;font-weight:600;flex-shrink:0}
-.rs-btn:hover{background:var(--s3);color:var(--t1)}
-.rs-count{font-size:13px;font-weight:600;color:var(--t1);min-width:22px;text-align:center}
-.rs-summary{background:transparent;border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem 1.125rem;margin-bottom:1rem}
-.rs-summary-title{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:.625rem}
-.rs-alert{display:flex;align-items:flex-start;gap:.625rem;padding:.4rem 0;border-bottom:1px solid var(--b1);font-size:12px;line-height:1.4}
-.rs-alert:last-child{border-bottom:none}
-.rs-alert-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px}
-.rs-alert-dot.red{background:var(--red)}.rs-alert-dot.amber{background:var(--amber)}
-.rs-empty{font-size:12px;color:var(--t3);padding:.25rem 0}
-@media(max-width:600px){.feedback-grid{grid-template-columns:1fr}.rs-item{grid-template-columns:1fr auto}.cycle-days{grid-template-columns:repeat(3,1fr)}.score-row{grid-template-columns:1fr}.score-ring-wrap{display:none}}
+@media(max-width:600px){.feedback-grid{grid-template-columns:1fr}.cycle-days{grid-template-columns:repeat(3,1fr)}.score-row{grid-template-columns:1fr}.score-ring-wrap{display:none}}
 
 /* WEEKLY STRIP */
 .week-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:.625rem}
@@ -834,31 +809,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .reminder-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:.375rem}
 .rem-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;font-size:12px;font-weight:500;border-radius:20px;border:1px solid var(--b2);background:var(--s2);color:var(--t2);cursor:pointer;transition:transform .07s cubic-bezier(.34,1.56,.64,1),border-color .12s,color .12s,background .12s}
 .rem-btn:active{transform:scale(.93)}.rem-btn:hover{color:var(--t1);border-color:var(--b3);background:var(--s3)}
-
-/* BUDGET MODAL */
-.budget-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s}
-.budget-modal-overlay.open{opacity:1;pointer-events:all}
-.budget-modal{background:var(--s1);border:1px solid var(--b2);border-radius:var(--r-xl) var(--r-xl) 0 0;padding:1.25rem 1.25rem 2rem;width:100%;max-width:480px;transform:translateY(100%);transition:transform .22s cubic-bezier(.4,0,.2,1)}
-.budget-modal-overlay.open .budget-modal{transform:translateY(0)}
-.budget-modal-title{font-size:14px;font-weight:600;color:var(--t1);margin-bottom:1rem}
-.budget-field{margin-bottom:.75rem}
-.budget-field label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);display:block;margin-bottom:.375rem}
-.budget-field input{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r-md);padding:8px 12px;font-size:13px;color:var(--t1);outline:none;transition:border-color .12s}
-.budget-field input:focus{border-color:var(--teal)}
-.budget-modal-btns{display:flex;gap:.5rem;margin-top:1rem}
-.budget-modal-save{flex:1;padding:10px;border-radius:var(--r-md);border:none;background:var(--teal);color:#0a0a0a;font-size:13px;font-weight:600;cursor:pointer;transition:transform .07s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;justify-content:center;gap:6px}
-.budget-modal-save:active{transform:scale(.96)}
-.budget-modal-cancel{padding:10px 16px;border-radius:var(--r-md);border:1px solid var(--b2);background:transparent;color:var(--t2);font-size:13px;cursor:pointer}
-.budget-item-card{background:transparent;border:1px solid var(--b1);border-radius:var(--r-lg);padding:.75rem 1rem;margin-bottom:.375rem}
-.budget-item-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.25rem;gap:.5rem}
-.budget-item-name{font-size:13px;font-weight:500;color:var(--t1);flex:1}
-.budget-item-total{font-size:13px;font-weight:700;color:var(--t1);flex-shrink:0;font-variant-numeric:tabular-nums}
-.budget-item-meta{display:flex;flex-wrap:wrap;gap:.375rem;align-items:center;margin-bottom:.5rem}
-.budget-location-tag{font-size:11px;color:var(--blue);background:var(--blue-dim);padding:2px 8px;border-radius:12px;border:1px solid rgba(91,156,246,.18)}
-.budget-price-tag{font-size:11px;color:var(--t2)}.budget-note-tag{font-size:11px;color:var(--t3)}
-.budget-item-controls{display:flex;align-items:center;gap:.5rem}
-.budget-edit-btn{font-size:11px;padding:8px 12px;border-radius:var(--r-sm);border:1px solid var(--b2);background:transparent;color:var(--t3);cursor:pointer;margin-left:auto;display:flex;align-items:center;gap:4px;transition:all .12s;flex-shrink:0}
-.budget-edit-btn:hover{color:var(--teal);border-color:rgba(38,201,138,.3)}
 
 /* ═══ PRIORITY 5–8 ═══ */
 
@@ -1197,9 +1147,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .stat-sub{font-size:11px;color:var(--t3);margin-top:2px;line-height:1.3}
 .teal-val{color:var(--teal)}.amber-val{color:var(--amber)}.blue-val{color:var(--blue)}
 
-/* Bar track (for budget bar) */
-.bar-track{height:5px;background:var(--s3);border-radius:3px;overflow:hidden}
-.bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--teal),var(--amber));transition:width .3s}
 
 /* Action button */
 .action-btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--teal);background:var(--teal-dim);border:1px solid rgba(38,201,138,.25);border-radius:var(--r-md);padding:6px 14px;cursor:pointer;margin-top:.625rem;transition:transform .07s cubic-bezier(.34,1.56,.64,1),background .12s}
@@ -1298,7 +1245,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
   /* Lift inputs need to stay visually small but be 16px */
   .lift-input,
   .lift-name,
-  .budget-field input,
   .sel-input {
     font-size: 16px !important;
   }
@@ -1503,7 +1449,7 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
    automatically" stays (the mock's weight card had an equivalent one-liner). */
 #kcal-gap-nut,#hydro-gap-nut,#hydro-pace-nut,#nut-calc-line,#nut-note{display:none!important}
 .fuel-sec>.page-note{display:none!important}
-/* Every reference/lookup collapsible app-wide (Meal & hydration, Stock & budget, Progress chart,
+/* Every reference/lookup collapsible app-wide (Meal & hydration, Progress chart,
    Exercise/Protocol reference, Full cycle detail, What the coach watches for) — none appear in the mock. */
 .collapsible-header,.collapsible-body{display:none!important}
 /* Coach's "Why it works" marquee — same reasoning, scoped so Train's unrelated .db-section is untouched. */
@@ -1876,28 +1822,6 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
   </div>
 </div>
 
-<!-- Budget edit modal -->
-<div class="budget-modal-overlay" id="budget-modal-overlay" onclick="closeBudgetModal(event)">
-  <div class="budget-modal">
-    <div class="budget-modal-title" id="budget-modal-item-name">Edit item</div>
-    <div class="budget-field">
-      <label for="budget-edit-price">Price per unit (SGD)</label>
-      <input type="text" inputmode="decimal" pattern="[0-9.]*" id="budget-edit-price" step="0.01" min="0" placeholder="e.g. 4.48">
-    </div>
-    <div class="budget-field">
-      <label for="budget-edit-location">Store / location</label>
-      <input type="text" id="budget-edit-location" placeholder="e.g. FairPrice, Cold Storage, iHerb">
-    </div>
-    <div class="budget-field">
-      <label for="budget-edit-qty">Monthly quantity</label>
-      <input type="text" inputmode="decimal" pattern="[0-9.]*" id="budget-edit-qty" step="0.5" min="0" placeholder="e.g. 2.5">
-    </div>
-    <div class="budget-modal-btns">
-      <button class="budget-modal-cancel" onclick="closeBudgetModal()">Cancel</button>
-      <button class="budget-modal-save" onclick="saveBudgetEdit()"><i class="ti ti-check" style="font-size:13px"></i> Save</button>
-    </div>
-  </div>
-</div>
 <div class="shell">
 <!-- ===== BOTTOM NAV ===== -->
 <nav class="bottom-nav" id="bottom-nav">
@@ -2073,7 +1997,6 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
 
 </div>
 
-<!-- ===== RESTOCK ===== -->
 <!-- ===== NUTRITION ===== -->
 <div class="page" id="page-nutrition">
 
@@ -2255,87 +2178,6 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
   </div>
   </div>
 
-
-  <!-- Stock & Budget (merged from Supply) -->
-  <div class="collapsible-header" onclick="toggleCollapse('supply-section')">
-    <span><i class="ti ti-shopping-cart" style="font-size:13px;margin-right:6px"></i>Stock & budget</span>
-    <i class="ti ti-chevron-down" id="chev-supply-section"></i>
-  </div>
-  <div class="collapsible-body" id="supply-section">
-
-
-  <!-- Inner tabs for Supply -->
-  <div class="inner-tabs">
-    <button id="supply-tab-restock" class="inner-tab active" onclick="switchSupplyTab('restock')">
-      <i class="ti ti-shopping-cart"></i>Restock
-    </button>
-    <button id="supply-tab-budget" class="inner-tab" onclick="switchSupplyTab('budget')">
-      <i class="ti ti-cash"></i>Budget
-    </button>
-  </div>
-
-  <div id="supply-restock-section">
-<!-- Alert summary -->
-  <div class="rs-summary" id="rs-summary">
-    <div class="rs-summary-title">Stock alerts</div>
-    <div id="rs-alert-list"><div class="rs-empty">All stocked up — nothing critical.</div></div>
-  </div>
-
-  <div class="rs-section-label">Daily food</div>
-
-  <div id="rs-items-food"></div>
-
-  <div class="rs-section-label">Supplements</div>
-
-  <div id="rs-items-supps"></div>
-
-  <div class="rs-section-label">Sleep & tools</div>
-
-  <div id="rs-items-tools"></div>
-
-  <div class="page-note" style="margin-top:1rem"><span style="color:var(--red)">Red</span> = restock now · <span style="color:var(--amber)">Amber</span> = buy this week · <span style="color:var(--t2)">Grey</span> = stocked</div>
-  </div>
-
-  <div id="supply-budget-section" style="display:none">
-<div class="page-note" style="margin-bottom:1rem">Monthly spend tracker · Tap + / − to adjust · All SGD</div>
-
-  <!-- Monthly summary -->
-  <div class="card" style="margin-bottom:1rem">
-    <div class="card-header"><div class="card-title">Monthly total</div></div>
-    <div class="grid4" style="margin-bottom:.75rem">
-      <div class="stat-card"><div class="stat-val" style="color:var(--teal);font-size:17px" id="budget-food-total">$250</div><div class="stat-lbl">Food</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:var(--amber);font-size:17px" id="budget-takeout-total">$367</div><div class="stat-lbl">Takeout</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:var(--purple);font-size:17px" id="budget-supps-total">$71</div><div class="stat-lbl">Supps</div></div>
-      <div class="stat-card"><div class="stat-val" style="font-size:17px" id="budget-grand-total">$718</div><div class="stat-lbl">Total</div></div>
-    </div>
-    <div class="bar-track"><div id="budget-bar" class="bar-fill" style="width:100%"></div></div>
-    <div class="page-note" style="margin-top:.5rem">Takeout is 51% of total spend — the primary financial lever.</div>
-  </div>
-
-  <!-- Food items -->
-  <div class="sec-label" style="margin-top:0">Groceries</div>
-  <div id="budget-food-items"></div>
-
-  <!-- Takeout -->
-  <div class="sec-label">Takeout</div>
-  <div id="budget-takeout-items"></div>
-
-  <!-- Supplements (budget only — full stack lives in Supps tab) -->
-  <div class="sec-label">Supplement spend</div>
-  <div id="budget-supp-items"></div>
-
-  <!-- Cost reduction notes -->
-  <div class="card" style="margin-top:1rem">
-    <div class="card-header"><div class="card-title">Cost levers</div></div>
-    <div class="row-kv"><span class="kv-key" style="color:var(--teal)">Rokeby 6-pack</span><span class="kv-val">FairPrice $26.90 vs $5.80 singles — saves ~$4/cycle, ~$24/month</span></div>
-    <div class="row-kv"><span class="kv-key" style="color:var(--teal)">iHerb consolidate</span><span class="kv-val">Order every 2–3 months — free shipping above USD $40</span></div>
-    <div class="row-kv"><span class="kv-key" style="color:var(--amber)">Shift Stuff'd/GYG days</span><span class="kv-val">Replace 2× Soup Spoon per cycle with Stuff'd — saves ~$35/month</span></div>
-    <div class="row-kv"><span class="kv-key" style="color:var(--amber)">Hawker swap</span><span class="kv-val">1× hawker chicken rice per cycle (~$5) vs Soup Spoon (~$14.50) — saves ~$45/month if used 3×/week</span></div>
-    <div class="row-kv"><span class="kv-key" style="color:var(--t3)">Omega-3 downgrade</span><span class="kv-val">Standard LE Super Omega-3 vs Plus — saves ~$5 USD/month, lignans retained</span></div>
-  </div>
-  </div>
-
-  </div>
 
   <div style="height:80px"></div>
 </div>
@@ -2790,26 +2632,6 @@ function gotoRejected(itemId){
     void el.offsetWidth; // force reflow
     el.classList.add('flash');
   },180);
-}
-
-// ── SUPPLY TAB INNER SWITCHER ──
-function switchSupplyTab(tab){
-  const rs=document.getElementById('supply-restock-section');
-  const bg=document.getElementById('supply-budget-section');
-  const bt1=document.getElementById('supply-tab-restock');
-  const bt2=document.getElementById('supply-tab-budget');
-  if(tab==='restock'){
-    if(rs) rs.style.display='block';
-    if(bg) bg.style.display='none';
-    if(bt1){bt1.classList.add('active');}
-    if(bt2){bt2.classList.remove('active');}
-  } else {
-    if(rs) rs.style.display='none';
-    if(bg) bg.style.display='block';
-    if(bt1){bt1.classList.remove('active');}
-    if(bt2){bt2.classList.add('active');}
-    renderBudget();
-  }
 }
 
 // ── TAB NAV ──
@@ -3943,93 +3765,10 @@ function renderYesterday(){
   if(noteEl&&sleepRating) noteEl.textContent='Sleep '+sleepRating+'/5 — '+SLEEP_NOTES[sleepRating];
 }
 
-// ── RESTOCK ──
-const RS_ITEMS={
-  food:[
-    {id:'rokebyfc',name:'Rokeby Fitmilk Full Cream',detail:'Daily transporter + post-gym flask — 900ml Cold Storage or FairPrice',unit:'cartons',low:1,warn:2,def:3},
-    {id:'chobani',name:'Farmers Union High Protein 500g',detail:'270g nightly vault — primary. Chobani 907g as backup.',unit:'tubs',low:2,warn:4,def:6},
-    {id:'honey',name:'Raw honey',detail:'1 tbsp per night in vault',unit:'jars',low:1,warn:1,def:2},
-    {id:'kiwi',name:'Kiwis',detail:'1 per night pre-sleep',unit:'pieces',low:2,warn:5,def:7},
-    {id:'banana',name:'Fast carbs (bananas, oats, bread)',detail:'Morning carb anchor — any fast-digesting option',unit:'portions',low:2,warn:4,def:7},
-    {id:'ricecakes',name:'Rice cakes',detail:'Night shift afternoon wake',unit:'packs',low:1,warn:2,def:3},
-    {id:'eggs',name:'Eggs',detail:'2 boiled on rest days — protein gap fill',unit:'eggs',low:4,warn:8,def:12},
-  ],
-  supps:[
-    {id:'isolate',name:'Protein Isolate',detail:'Post-gym 2 scoops · rest days ½ scoop',unit:'scoops',low:10,warn:20,def:40},
-    {id:'creatine',name:'Creatine Monohydrate',detail:'5g daily',unit:'servings',low:7,warn:14,def:30},
-    {id:'lemulti',name:'LE Two-Per-Day',detail:'2 capsules (full serving) with mid-shift meal',unit:'caps',low:7,warn:14,def:60},
-    {id:'fishoil',name:'LE Super Omega-3 Plus',detail:'4 softgels (full serving) with mid-shift meal',unit:'softgels',low:14,warn:30,def:60},
-    {id:'magglycinate',name:'Magnesium Glycinate',detail:'60–90 min before sleep nightly',unit:'caps',low:7,warn:14,def:30},
-    {id:'melatonin',name:'Melatonin 0.5mg',detail:'Post-night shift days only',unit:'tabs',low:2,warn:4,def:10},
-  ],
-  tools:[
-    {id:'earplugs',name:'Earplugs (NRR 33dB+)',detail:'Post-night and day shift sleep',unit:'pairs',low:2,warn:4,def:6},
-    {id:'blueglass',name:'Blue-block glasses',detail:'On before exiting at 08:30 AM',unit:'pairs',low:1,warn:1,def:1},
-    {id:'sleepmask',name:'Contoured sleep mask',detail:'Worn throughout post-night sleep',unit:'masks',low:1,warn:1,def:1},
-  ],
-};
-let rsStock={};
-
-function initStock(){
-  RS_ITEMS.food.concat(RS_ITEMS.supps,RS_ITEMS.tools).forEach(item=>{
-    if(rsStock[item.id]===undefined) rsStock[item.id]=item.def;
-  });
-}
-
-function rsStatus(item){
-  const n=rsStock[item.id]??item.def;
-  if(n<=item.low) return 'low';
-  if(n<=item.warn) return 'warn';
-  return 'ok';
-}
-
-function rsStatusLabel(item){
-  const s=rsStatus(item), n=rsStock[item.id]??item.def;
-  return {low:`Restock now — ${n} ${item.unit} left`,warn:`Buy this week — ${n} ${item.unit} left`,ok:`Stocked — ${n} ${item.unit}`}[s];
-}
-
-function adjustStock(id,delta){
-  rsStock[id]=Math.max(0,(rsStock[id]??0)+delta);
-  renderRestock();
-  save();
-}
-
-function renderRestock(){
-  ['food','supps','tools'].forEach(cat=>{
-    const el=document.getElementById('rs-items-'+cat);
-    if(!el) return;
-    el.innerHTML=RS_ITEMS[cat].map(item=>{
-      const st=rsStatus(item), n=rsStock[item.id]??item.def;
-      return `<div class="rs-item ${st}">
-        <div class="rs-left"><div class="rs-name">${item.name}</div><div class="rs-detail">${item.detail}</div></div>
-        <div class="rs-badge ${st}">${rsStatusLabel(item)}</div>
-        <div class="rs-controls">
-          <button class="rs-btn" onclick="adjustStock('${item.id}',-1)" aria-label="Decrease ${item.name} stock">−</button>
-          <span class="rs-count">${n}</span>
-          <button class="rs-btn" onclick="adjustStock('${item.id}',1)" aria-label="Increase ${item.name} stock">+</button>
-        </div>
-      </div>`;
-    }).join('');
-  });
-  const alertEl=document.getElementById('rs-alert-list');
-  if(!alertEl) return;
-  const all=RS_ITEMS.food.concat(RS_ITEMS.supps,RS_ITEMS.tools);
-  const lows=all.filter(i=>rsStatus(i)==='low');
-  const warns=all.filter(i=>rsStatus(i)==='warn');
-  if(!lows.length&&!warns.length){
-    alertEl.innerHTML='<div class="rs-empty">All stocked up — nothing critical.</div>';
-    return;
-  }
-  alertEl.innerHTML=
-    lows.map(i=>`<div class="rs-alert"><div class="rs-alert-dot red"></div><div><strong>${i.name}</strong> — restock now. ${rsStock[i.id]??i.def} ${i.unit} remaining.</div></div>`).join('')+
-    warns.map(i=>`<div class="rs-alert"><div class="rs-alert-dot amber"></div><div><strong>${i.name}</strong> — buy this week. ${rsStock[i.id]??i.def} ${i.unit} remaining.</div></div>`).join('');
-}
-
 // ── TRACKER ──
 // Single unified timeline per shift.
 // type: 'food' | 'supp' | 'action' | 'sleep'
 // Generic building-block descriptions — the target is the nutrient/timing, not a mandated brand.
-// Buy whatever's convenient; the Restock/Budget pages track your actual bulk-buy picks separately.
 const _SUB_TRANSPORTER='Fast-digesting protein + 5g creatine + a fast carb (banana, oats, toast, honey, dates, or juice) — whatever\'s on hand.';
 const _SUB_POUCH='Multivitamin + Omega-3, your usual dose, packed for later. Mag and Melatonin stay home.';
 const _SUB_STACK='Multivitamin + Omega-3 with food.';
@@ -5400,8 +5139,8 @@ function save(){
       mealLibrary,mealLog,weekHistory,sessionLog,
       cycleDay,cycleNum,cycleAnchorDate,completedDays,
       streak:dayStreak,
-      sleepRating,sleepHistory,yesterdayData,rsStock,
-      bodyWeight,budgetOverrides,
+      sleepRating,sleepHistory,yesterdayData,
+      bodyWeight,
       checkins,dismissedInsights,appliedInsights,lastWeeklyShown,
       journeyLog,weightHistory,retroTicks,customItems,skippedToday,halfTicks,labelEdits,hiddenBuiltIn,insightsLastRead,_lastInsightCount,
       rhrHistory,hrvHistory,stepsHistory,
@@ -5429,9 +5168,7 @@ function load(){
     completedDays=d.completedDays||[];
     sleepHistory=d.sleepHistory||[];
     yesterdayData=d.yesterdayData||null;
-    if(d.rsStock) Object.assign(rsStock,d.rsStock);
     if(d.bodyWeight) bodyWeight=d.bodyWeight;
-    if(d.budgetOverrides) Object.assign(budgetOverrides,d.budgetOverrides);
     if(d.checkins) Object.assign(checkins,d.checkins);
     if(d.dismissedInsights) Object.assign(dismissedInsights,d.dismissedInsights);
     if(d.appliedInsights) Object.assign(appliedInsights,d.appliedInsights);
@@ -5472,133 +5209,6 @@ const _advanceDay=advanceDay; advanceDay=function(){_advanceDay();save();};
 const _resetCycle=resetCycle; resetCycle=function(){_resetCycle();save();};
 const _resetDay=resetDay; resetDay=function(){_resetDay();save();};
 const _setSleep=setSleep; setSleep=function(n){_setSleep(n);};
-const _adjustStock=adjustStock; adjustStock=function(id,d){_adjustStock(id,d);};
-
-// ── BUDGET ──
-const BUDGET_ITEMS={
-  food:[
-    {id:'rokeby',name:'Rokeby Fitmilk Full Cream',unit:'6-pack',unitCost:26.90,monthlyQty:2.5,location:'FairPrice',note:'~3 bottles/cycle × 5 cycles'},
-    {id:'fuhy',name:'Farmers Union High Protein 500g',unit:'tub',unitCost:6.50,monthlyQty:8.5,location:'FairPrice / Cold Storage',note:'270g/night'},
-    {id:'honey',name:'Raw honey',unit:'jar',unitCost:8.00,monthlyQty:0.5,location:'FairPrice',note:'1 tbsp/night'},
-    {id:'kiwi',name:'Kiwi fruits',unit:'piece',unitCost:0.70,monthlyQty:30,location:'FairPrice',note:'1/night'},
-    {id:'banana',name:'Bananas / oats',unit:'portion',unitCost:0.50,monthlyQty:20,location:'FairPrice',note:'Day shift + off days'},
-    {id:'ricecake',name:'Rice cakes',unit:'pack',unitCost:1.50,monthlyQty:10,location:'FairPrice',note:'NS1 + NS2 afternoons'},
-    {id:'eggs',name:'Eggs',unit:'egg',unitCost:0.35,monthlyQty:25,location:'FairPrice',note:'Rest day protein gap fill'},
-    {id:'isolate',name:'Protein Isolate',unit:'month',unitCost:30.00,monthlyQty:1,location:'iHerb',note:'~10 scoops/cycle'},
-  ],
-  takeout:[
-    {id:'gyg',name:'GYG Burrito Bowl',unit:'meal',unitCost:11.20,monthlyQty:10,location:'GYG',note:'~⅓ rotation'},
-    {id:'stuffd',name:"Stuff'd Double Chicken Bowl",unit:'meal',unitCost:11.00,monthlyQty:10,location:"Stuff'd",note:'~⅓ rotation'},
-    {id:'soup',name:'Soup Spoon Chicken + egg + pesto rice',unit:'meal',unitCost:14.50,monthlyQty:10,location:'The Soup Spoon',note:'~⅓ rotation'},
-  ],
-  supps:[
-    {id:'le2pd',name:'LE Two-Per-Day 120 caps',unit:'bottle',unitCost:12.90,monthlyQty:0.5,location:'iHerb',note:'2 months per bottle'},
-    {id:'omega',name:'LE Super Omega-3 Plus 120 softgels',unit:'bottle',unitCost:44.55,monthlyQty:1,location:'iHerb',note:'1 month per bottle'},
-    {id:'mag',name:'Magnesium Glycinate 90 caps',unit:'bottle',unitCost:8.10,monthlyQty:0.33,location:'iHerb',note:'3 months per bottle'},
-    {id:'creatine',name:'NOW Creatine Caps 240ct',unit:'bottle',unitCost:43.00,monthlyQty:0.5,location:'iHerb',note:'~34 days per bottle'},
-    {id:'mel',name:'Melatonin 0.5mg 200 tabs',unit:'bottle',unitCost:0.68,monthlyQty:0.05,location:'iHerb',note:'~20 months per bottle'},
-  ],
-};
-
-// budgetOverrides: {itemId: {price, location, qty}} — user-edited values
-let budgetOverrides={};
-let _budgetEditId=null;
-let _budgetEditCat=null;
-
-function _budgetGet(id){
-  return budgetOverrides[id]||{};
-}
-function _budgetItem(cat,id){
-  return BUDGET_ITEMS[cat].find(i=>i.id===id);
-}
-function _budgetPrice(item){return _budgetGet(item.id).price??item.unitCost;}
-function _budgetQty(item){return _budgetGet(item.id).qty??item.monthlyQty;}
-function _budgetLocation(item){return _budgetGet(item.id).location??item.location;}
-function _budgetTotal(item){return (_budgetPrice(item)*_budgetQty(item)).toFixed(2);}
-
-function openBudgetModal(cat,id){
-  const item=_budgetItem(cat,id);
-  if(!item) return;
-  _budgetEditId=id; _budgetEditCat=cat;
-  document.getElementById('budget-modal-item-name').textContent=item.name;
-  document.getElementById('budget-edit-price').value=_budgetPrice(item);
-  document.getElementById('budget-edit-location').value=_budgetLocation(item);
-  document.getElementById('budget-edit-qty').value=_budgetQty(item);
-  document.getElementById('budget-modal-overlay').classList.add('open');
-}
-
-function closeBudgetModal(e){
-  if(e&&e.target!==document.getElementById('budget-modal-overlay')) return;
-  document.getElementById('budget-modal-overlay').classList.remove('open');
-  _budgetEditId=null; _budgetEditCat=null;
-}
-
-function saveBudgetEdit(){
-  if(!_budgetEditId) return;
-  if(!validateBudgetEdit()) return; // validation gate
-  const price=parseFloat(document.getElementById('budget-edit-price').value)||0;
-  const location=document.getElementById('budget-edit-location').value.trim();
-  const qty=parseFloat(document.getElementById('budget-edit-qty').value)||0;
-  budgetOverrides[_budgetEditId]={price,location,qty};
-  document.getElementById('budget-modal-overlay').classList.remove('open');
-  showToast('Updated — '+(_budgetItem(_budgetEditCat,_budgetEditId)||{name:''}).name,'action');
-  _budgetEditId=null; _budgetEditCat=null;
-  renderBudget(); save();
-}
-
-function adjustBudgetQty(cat,id,delta){
-  const item=_budgetItem(cat,id);
-  if(!item) return;
-  const cur=_budgetQty(item);
-  const next=Math.max(0,Math.round((cur+delta)*10)/10);
-  budgetOverrides[id]=Object.assign({},_budgetGet(id),{qty:next});
-  renderBudget(); save();
-}
-
-function renderBudget(){
-  ['food','takeout','supps'].forEach(cat=>{
-    const el=document.getElementById('budget-'+cat+'-items');
-    if(!el) return;
-    el.innerHTML=BUDGET_ITEMS[cat].map(item=>{
-      const price=_budgetPrice(item);
-      const qty=_budgetQty(item);
-      const loc=_budgetLocation(item);
-      const total=_budgetTotal(item);
-      return `<div class="budget-item-card">
-        <div class="budget-item-top">
-          <div class="budget-item-name">${item.name}</div>
-          <div class="budget-item-total">$${total}/mo</div>
-        </div>
-        <div class="budget-item-meta">
-          <span class="budget-location-tag"><i class="ti ti-map-pin" style="font-size:11px"></i> ${loc}</span>
-          <span class="budget-price-tag">$${price.toFixed(2)} / ${item.unit}</span>
-          <span class="budget-note-tag">${item.note}</span>
-        </div>
-        <div class="budget-item-controls">
-          <button class="rs-btn" onclick="adjustBudgetQty('${cat}','${item.id}',-0.5)" aria-label="Decrease ${item.name} monthly quantity">−</button>
-          <span class="rs-count">${qty} <span style="font-size:11px;color:var(--t3)">${item.unit}s/mo</span></span>
-          <button class="rs-btn" onclick="adjustBudgetQty('${cat}','${item.id}',0.5)" aria-label="Increase ${item.name} monthly quantity">+</button>
-          <button class="budget-edit-btn" onclick="openBudgetModal('${cat}','${item.id}')"><i class="ti ti-pencil" style="font-size:11px" aria-hidden="true"></i> Edit</button>
-        </div>
-      </div>`;
-    }).join('');
-  });
-  updateBudgetTotals();
-}
-
-function updateBudgetTotals(){
-  let food=0,takeout=0,supps=0;
-  BUDGET_ITEMS.food.forEach(i=>food+=parseFloat(_budgetTotal(i)));
-  BUDGET_ITEMS.takeout.forEach(i=>takeout+=parseFloat(_budgetTotal(i)));
-  BUDGET_ITEMS.supps.forEach(i=>supps+=parseFloat(_budgetTotal(i)));
-  const grand=food+takeout+supps;
-  const fmt=n=>'$'+Math.round(n);
-  const e=id=>document.getElementById(id);
-  if(e('budget-food-total')) e('budget-food-total').textContent=fmt(food);
-  if(e('budget-takeout-total')) e('budget-takeout-total').textContent=fmt(takeout);
-  if(e('budget-supps-total')) e('budget-supps-total').textContent=fmt(supps);
-  if(e('budget-grand-total')) e('budget-grand-total').textContent=fmt(grand);
-}
 
 // ── BIOLOGICAL DAY BOUNDARY ──
 // Daily tracker resets at midnight by default — but on night shifts
@@ -6463,17 +6073,6 @@ function validateSession(sel,lifts){
   return true;
 }
 
-// Validate budget edit before saving
-function validateBudgetEdit(){
-  const price=document.getElementById('budget-edit-price')?.value;
-  const qty=document.getElementById('budget-edit-qty')?.value;
-  const pr=V.price(price);
-  const qr=V.qty(qty);
-  if(!pr.ok){showToast('Price: '+pr.msg,'action');return false;}
-  if(!qr.ok){showToast('Quantity: '+qr.msg,'action');return false;}
-  return true;
-}
-
 // ═══ JOURNEY ═══
 let journeyLog=[]; // persisted: [{type,title,sub,date,data,ts}]
 // types: 'milestone','pb','streak','coach','recovery','session','log'
@@ -7016,8 +6615,8 @@ function exportData(){
     mealLibrary,mealLog,weekHistory,sessionLog,
     cycleDay,cycleNum,cycleAnchorDate,completedDays,
     streak:dayStreak,
-    sleepRating,sleepHistory,yesterdayData,rsStock,
-    bodyWeight,budgetOverrides,
+    sleepRating,sleepHistory,yesterdayData,
+    bodyWeight,
     checkins,dismissedInsights,appliedInsights,lastWeeklyShown,
     journeyLog,retroTicks,
     customItems,skippedToday,halfTicks,labelEdits,hiddenBuiltIn,
@@ -7070,8 +6669,6 @@ function importData(){
     if(d.rhrHistory) rhrHistory=d.rhrHistory;
     if(d.hrvHistory) hrvHistory=d.hrvHistory;
     if(d.stepsHistory) stepsHistory=d.stepsHistory;
-    if(d.rsStock) Object.assign(rsStock,d.rsStock);
-    if(d.budgetOverrides) Object.assign(budgetOverrides,d.budgetOverrides);
     if(d.checkins) Object.assign(checkins,d.checkins);
     if(d.retroTicks) Object.assign(retroTicks,d.retroTicks);
     if(d.insightsLastRead) insightsLastRead=d.insightsLastRead;
@@ -7083,8 +6680,8 @@ function importData(){
     save();
     if(msg){msg.style.color='var(--teal)';msg.textContent='Import applied successfully.';}
     // Re-render
-    renderRestock();renderMealLog();renderWeekStrip();
-    renderSessionHistory();renderBudget();renderJourney();
+    renderMealLog();renderWeekStrip();
+    renderSessionHistory();renderJourney();
     renderInsights();renderWeightChart();renderFitbit();
     renderRemovedItems();render();updateBar();
     showToast('Everything restored ✓','action');
@@ -8044,7 +7641,6 @@ function restoreBuiltInItem(key){
 
 // ── INIT ──
 load();
-initStock();
 
 // ── CYCLE ANCHOR — June 17 2026 = DNOO Off Day 2 (index 3) ──
 // Seeds cycleDay + cycleAnchorDate so autoRollCycle() rolls correctly from here.
@@ -8079,7 +7675,6 @@ syncMacrosFromTimeline();
 updateScore();
 renderSleepStars();
 renderYesterday();
-renderRestock();
 renderRules();
 renderWhyTiles();
 initGeminiKeyField();
@@ -8087,7 +7682,6 @@ renderMealLog();
 renderFitbit();
 renderWeekStrip();
 renderSessionHistory();
-renderBudget();
 renderCheckin();
 renderRemovedItems();
 renderInsights();
