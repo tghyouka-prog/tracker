@@ -2032,7 +2032,7 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
   <div class="fuel-sec mo-rise">
     <div class="fuel-sec-top">
       <span class="fuel-sec-name">Water</span>
-      <span class="fuel-sec-nums"><span id="hydro-cur-nut">0</span><span class="u">ml</span> <span class="u" id="hydro-target-label-nut">/ 2,000ml</span></span>
+      <span class="fuel-sec-nums"><span id="hydro-cur-nut">0</span><span class="u">ml</span> <span class="u" id="hydro-target-label-nut">/ 1,750ml</span></span>
     </div>
     <div class="macro-bar-wrap"><div class="macro-bar-fill hydro" id="hydro-bar-nut" style="width:0%"></div></div>
     <div id="hydro-pace-nut" style="margin:.25rem 0;font-size:11px"></div>
@@ -2062,7 +2062,7 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
     <div class="fuel-tgt-strip">
       <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-prot-target">148–163g</div><span class="fuel-tgt-lbl">Protein</span></div>
       <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-kcal-target">~2,590</div><span class="fuel-tgt-lbl">Kcal</span></div>
-      <div class="fuel-tgt-col"><div class="fuel-tgt-val">~2–2.5L</div><span class="fuel-tgt-lbl">Water</span></div>
+      <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-hydro-target">~1.8L</div><span class="fuel-tgt-lbl">Water</span></div>
     </div>
     <div class="page-note" id="nut-calc-line" style="margin-top:.625rem;padding-top:.5rem;border-top:1px solid var(--b1)"><span id="nut-prot-calc">2.0–2.2g / kg</span> · <span id="nut-hydro-calc">+800ml from food</span></div>
     <div class="page-note" id="nut-note" style="margin-top:.25rem"></div>
@@ -2171,7 +2171,7 @@ html.theme-light .why-sheet{background:rgba(255,255,255,.88);border-color:rgba(4
     <div class="row-kv"><span class="kv-key">Post-gym</span><span class="kv-val">500ml across 30 min alongside flask</span></div>
     <div class="row-kv"><span class="kv-key">Pre-vault</span><span class="kv-val">200–300ml</span></div>
     <div class="divider"></div>
-    <div class="row-kv"><span class="kv-key" style="font-weight:600">Plain water daily</span><span class="kv-val hi">~2–2.5L</span></div>
+    <div class="row-kv"><span class="kv-key" style="font-weight:600">Plain water daily</span><span class="kv-val hi">~1.75L</span></div>
     <div class="row-kv"><span class="kv-key">Food sources</span><span class="kv-val" style="color:var(--t2)">~800ml (Rokeby, vault, fruit, takeout)</span></div>
     <div class="row-kv"><span class="kv-key">Total fluid</span><span class="kv-val" style="color:var(--t2)">~2.8–3.3L combined</span></div>
     <div class="page-note" style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--b1)">Training days: add 500ml extra — target 2.5L plain water on gym days.</div>
@@ -2730,12 +2730,14 @@ function applyWeight(kg,save_=true){
   const wd=document.getElementById('nut-weight-display');
   const pd=document.getElementById('nut-prot-target');
   const kd=document.getElementById('nut-kcal-target');
+  const hd=document.getElementById('nut-hydro-target');
   const pc=document.getElementById('nut-prot-calc');
   const hc=document.getElementById('nut-hydro-calc');
   const note=document.getElementById('nut-note');
   if(wd) wd.textContent=kg;
   if(pd) pd.textContent=t.protLow+'–'+t.protHigh+'g';
   if(kd) kd.textContent='~'+t.kcal.toLocaleString();
+  if(hd) hd.textContent='~'+Math.round(t.hydro/100)/10+'L';
   if(pc) pc.textContent='2.0–2.2g / kg · '+kg+'kg';
   if(hc) hc.textContent='~'+Math.round(t.hydro/100)/10+'L + ~800ml from food';
   if(note) note.textContent='2.0–2.2g protein/kg · ~35 kcal/kg maintenance · recomp phase — hold weight, drop fat, keep protein high. Recalculates when you update weight ±2kg.';
@@ -2754,9 +2756,9 @@ function applyWeight(kg,save_=true){
 
   // Overview macro bar water note
   const hydroNote=document.querySelector('[data-hydro-note]');
-  if(hydroNote) hydroNote.textContent=`Plain water only — food and Rokeby add ~800ml on top.`;
+  if(hydroNote) hydroNote.textContent=`Plain water only — food and shakes add ~800ml on top.`;
 
-  // Macro bar span in water tracker "/ 2,000ml plain water"
+  // Macro bar span in water tracker "/ Xml plain water"
   const hydroSpan=document.querySelector('#hydro-bar')?.closest('.macro-card')?.querySelector('.macro-nums span:last-child');
   if(hydroSpan) hydroSpan.textContent='/ '+t.hydro+'ml';
 
@@ -2808,7 +2810,7 @@ const WHY_CARDS=[
  {q:'Why deload every 4th cycle?',a:'Fatigue accumulates faster than fitness fades. Every 4th cycle, weights drop 40–50% — not lost progress, but a planned step back that prevents a forced one. Joints, tendons, and a shift-stressed nervous system recover; you come back and the bar feels lighter than before.'},
  {q:'Why RPE 7–8 instead of training to failure?',a:'Leaving 2–3 reps in reserve drives nearly the same growth as failure with far less recovery cost and intact form — both of which matter doubly with scoliosis and shift-disrupted sleep. Grinding to failure spends recovery you cannot spare for a margin you will not notice.'},
  {q:'Why creatine every day, not just gym days?',a:'Creatine works by saturation — keeping muscle stores full — not by acute timing. The daily 5g maintains saturation; missing gym days and skipping it just drains the tank. It is also one of the few supplements with cognitive evidence under sleep deprivation, which is your actual life.'},
- {q:'Why ~2–2.5L of plain water?',a:'Food and the Rokeby already contribute around 800ml, so the plain-water target covers the genuine gap. Pacing beats chugging — absorption is rate-limited, and a litre at once mostly becomes a bathroom trip mid-shift. Hence the +250ml logging rhythm.'},
+ {q:'Why ~1.75L of plain water?',a:'Food and shakes already contribute around 800ml, so the plain-water target covers the genuine gap on top of that — total fluid need is ~35ml/kg. Pacing beats chugging — absorption is rate-limited, and a litre at once mostly becomes a bathroom trip mid-shift. Hence the +250ml logging rhythm.'},
  {q:'Why do half-done items still count?',a:'Adherence research is blunt: consistency beats intensity, and all-or-nothing scoring kills consistency. A half-eaten vault on a wrecked night is a genuinely better outcome than nothing — scoring it 0.5 keeps the record honest and the momentum alive. Perfect is not the standard; present is.'},
  {q:'What is the full stack — and why only 5 items?',a:'LE Two-Per-Day multi, Omega-3, creatine, magnesium glycinate, and melatonin (post-night only). Every item has to earn its place with evidence and a job the diet cannot do; everything else was rejected. A bigger stack mostly buys interactions and cost, not results.'},
  {q:'Why the multi + Omega-3 with the mid-shift meal?',a:'Fat-soluble vitamins and omega-3 absorb dramatically better with a real meal — and mid-shift is your most reliable one. Kept away from dairy deliberately: calcium competes with the multi\\u2019s zinc and iron for absorption. One meal, one pouch, no thinking required at 02:00.'},
@@ -2991,7 +2993,7 @@ function resetCycle(){
 // ── MACROS ──
 // Protein and kcal base values are derived from Tracker ticks.
 // kcal also has a manual top-up store for snacks/extras.
-const TARGETS={prot:163,hydro:2000,kcal:2590};
+const TARGETS={prot:163,hydro:1750,kcal:2590};
 const macros={prot:0,hydro:0,kcal:0};
 // ── MEAL LOGGER ──
 let mealLibrary=[];    // [{id, name, prot, kcal}] — persisted across days
@@ -3656,7 +3658,7 @@ function updateHydroPace(){
   const h=now.getHours(), m=now.getMinutes();
   const nowMins=h*60+m;
   const current=macros.hydro;
-  const target=TARGETS.hydro; // 2000ml
+  const target=TARGETS.hydro; // plain-water target, set by calcTargets() — scales with bodyweight
 
   // Shift windows: day/extra-day 08:30–20:30, night/extra-night 20:30–08:30, off/leave spread over waking day
   let shiftStartMins, shiftEndMins, shiftDuration=720; // 12hrs
