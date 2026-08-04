@@ -3212,7 +3212,15 @@ Rules:
 - Match the described portion and cooking method
 - Confidence high = well-known dish standard prep, low = vague or unusual`;
 
-  try {
+  // Gemini 2.5 models spend part of maxOutputTokens on internal "thinking" before writing the
+  // reply — at a low token budget that can eat the whole response, leaving nothing (or a
+  // truncated fragment) for the actual JSON, which looks like "returned plain text" but is
+  // really just cut off. Disable thinking (flash models support turning it off entirely) and
+  // give a generous token budget, with one silent retry at an even higher budget if it still
+  // comes back truncated or unparseable — this is what was causing the inconsistent failures.
+  async function callGemini(maxTokens){
+    const generationConfig={temperature:0.1,maxOutputTokens:maxTokens,responseMimeType:'application/json'};
+    if(_geminiModel.includes('flash')) generationConfig.thinkingConfig={thinkingBudget:0};
     const res = await fetch(
       'https://generativelanguage.googleapis.com/v1beta/models/' + _geminiModel + ':generateContent?key=' + _geminiKey,
       {
@@ -3223,7 +3231,7 @@ Rules:
             ...(photoData?[{inline_data:{mime_type:photoMime,data:photoData}}]:[]),
             {text:prompt}
           ]}],
-          generationConfig:{temperature:0.1,maxOutputTokens:512,responseMimeType:'application/json'}
+          generationConfig
         })
       }
     );
@@ -3232,14 +3240,29 @@ Rules:
       throw new Error(err?.error?.message || 'API error ' + res.status);
     }
     const data = await res.json();
-    const raw  = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const cand = data.candidates?.[0];
+    const raw  = cand?.content?.parts?.[0]?.text || '';
+    const truncated = cand?.finishReason==='MAX_TOKENS';
 
     // Robust extraction — find the JSON object even if wrapped in text
     let jsonStr = raw.replace(/```json|```/g,'').trim();
-    // If Gemini added prose around the JSON, extract just the object
     const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
-    if(!jsonMatch) throw new Error('NO_JSON: ' + raw.slice(0,120));
-    const parsed = JSON.parse(jsonMatch[0]);
+    if(!jsonMatch) throw new Error(truncated ? 'TRUNCATED' : ('NO_JSON: ' + raw.slice(0,120)));
+    return JSON.parse(jsonMatch[0]);
+  }
+
+  try {
+    let parsed;
+    try {
+      parsed = await callGemini(1024);
+    } catch(e1){
+      if(e1.message==='TRUNCATED' || e1.message.startsWith('NO_JSON')){
+        if(lbl()) lbl().textContent='Retrying…';
+        parsed = await callGemini(2048); // let the retry's own error surface if this also fails
+      } else {
+        throw e1;
+      }
+    }
 
     // Re-query fields after async (modal may have re-rendered)
     const pe=document.getElementById('meal-prot-input');
@@ -3256,7 +3279,8 @@ Rules:
 
   } catch(e) {
     let msg=e.message||'Something went wrong.';
-    if(msg.includes('NO_JSON'))   msg='AI returned plain text instead of JSON. Try again — this is usually a one-off.';
+    if(msg==='TRUNCATED')         msg='AI response got cut off twice in a row — try a shorter description, or switch model in Settings.';
+    else if(msg.includes('NO_JSON')) msg='AI returned plain text instead of JSON after retrying. Try again, or try a different model in Settings.';
     else if(msg.includes('JSON')) msg='Parse error: '+msg.slice(0,80);
     if(msg.includes('401')||msg.includes('API_KEY_INVALID')||msg.includes('403')) msg='Invalid API key — check Settings → AI Food Analysis.';
     if(msg.includes('Failed to fetch')||msg.includes('NetworkError')) msg='Network error — check your connection.';
@@ -3392,17 +3416,15 @@ function undoKcalTopup(){
 
 function syncMacrosFromTimeline(){
   let prot=0, kcal=0, hydro=0;
+  // Protein/kcal come ONLY from actually-logged meals (mealLog) — ticking a food item no
+  // longer adds its own fixed estimate on top. Ticking still drives completion/score via
+  // ticks[] elsewhere; this just stops double-counting a meal you already logged for real.
   const items=getTimeline(shift);
   items.forEach((item,i)=>{
     const _k=tlKey(shift,i);
     const mult=ticks[_k]?1:(halfTicks[_k]?0.5:0);
-    if(mult){
-      if(item.prot) prot+=Math.round(item.prot*mult);
-      if(item.kcal) kcal+=Math.round(item.kcal*mult);
-      if(item.hydro) hydro+=Math.round(item.hydro*mult);
-    }
+    if(mult&&item.hydro) hydro+=Math.round(item.hydro*mult);
   });
-  // Add manually logged meals on top
   mealLog.forEach(m=>{
     if(m.prot) prot+=m.prot;
     if(m.kcal) kcal+=m.kcal;
@@ -4396,7 +4418,7 @@ function render(){
         ${item.sub?`<div class="tl-sub">${item.sub}</div>`:''}
         <div class="tl-meta">
           ${item.t?`<span class="tl-time">${item.t}</span>`:''}
-          ${item.prot?`<span class="tl-prot">+${item.prot}g</span>`:''}
+          ${item.prot?`<span class="tl-prot">~${item.prot}g</span>`:''}
         </div>
       </div>
       <div class="tl-check">${done?'✓':''}</div>
@@ -4435,11 +4457,9 @@ function tlTick(k){
     const idx=parseInt(k.split('__')[2]);
     if(!isNaN(idx)&&items[idx]){
       const item=items[idx];
-      let msg=item.label+' ✓';
-      if(item.prot&&item.kcal) msg=`+${item.prot}g protein · +${item.kcal} kcal`;
-      else if(item.prot) msg=`+${item.prot}g protein logged`;
-      else if(item.kcal) msg=`+${item.kcal} kcal logged`;
-      showToast(msg, item.type);
+      // No "+Xg protein" claim here — macros come only from what you actually log in Fuel,
+      // so a tick alone shouldn't imply a macro credit that wasn't really added.
+      showToast(item.label+' ✓', item.type);
     }
   }
   syncMacrosFromTimeline();
