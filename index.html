@@ -2033,9 +2033,9 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
           <optgroup label="Current split">
             <option value="Sun-Pull">Sun · Pull — Lat width + triceps</option>
             <option value="Mon-Push">Mon · Push — Upper chest + delts + biceps</option>
-            <option value="Tue-Legs">Tue · Legs — Quads (HBL)</option>
+            <option value="Tue-Legs">Tue · Delts/Arms + Legs (HBL)</option>
             <option value="Thu-Upper">Thu · Upper — Back width + chest</option>
-            <option value="Fri-Lower">Fri · Lower — Ham/glute + arms</option>
+            <option value="Fri-Lower">Fri · Delts/Arms + Lower — Ham/glute</option>
           </optgroup>
           <optgroup label="Conditioning">
             <option value="Cardio">Cardio — Zone 2 (Wed/Sat)</option>
@@ -4267,12 +4267,14 @@ function updateSessType(){
     'Push B':[{name:'Seated DB Shoulder Press',sets:'4'},{name:'Incline Machine Press',sets:'3'},{name:'Cable Lateral Raises',sets:'4'},{name:'Pec Deck Flyes',sets:'3'},{name:'Close-Grip Machine Press',sets:'3'}],
     'Pull B':[{name:'Seated Cable Rows',sets:'4'},{name:'Neutral-Grip Lat Pulldowns',sets:'3'},{name:'Single-Arm Cable Pullover',sets:'3'},{name:'Reverse Pec Deck',sets:'4'},{name:'EZ-Bar Preacher Curls',sets:'3'}],
     'Legs B':[{name:'Single-Leg RDL DB',sets:'4'},{name:'Bulgarian Split Squats',sets:'3'},{name:'Leg Press',sets:'3'},{name:'Seated Leg Curls',sets:'3'},{name:'Seated Calf Raises',sets:'4'}],
-    // Current aesthetic-priority split (day-of-week based) — priority lifts listed first
-    'Sun-Pull':[{name:'Wide-Grip Lat Pulldown',sets:'4'},{name:'Straight-Arm Cable Pullover',sets:'3'},{name:'Chest-Supported Row',sets:'4'},{name:'Overhead Cable Triceps Extension',sets:'3'},{name:'Triceps Pushdown',sets:'3'}],
-    'Mon-Push':[{name:'Incline Smith Press',sets:'4'},{name:'DB Lateral Raises',sets:'4'},{name:'Machine Shoulder Press',sets:'3'},{name:'Incline DB Curls',sets:'4'},{name:'Cable Fly',sets:'2'}],
-    'Tue-Legs':[{name:'Leg Press',sets:'4'},{name:'Leg Extensions',sets:'3'},{name:'Seated Leg Curls',sets:'3'},{name:'Hip Thrust',sets:'3'},{name:'Standing Calf Raises',sets:'4'}],
-    'Thu-Upper':[{name:'Lat Pulldown (alt grip)',sets:'4'},{name:'Flat DB Press',sets:'4'},{name:'Single-Arm Cable Row',sets:'3'},{name:'Seated DB Shoulder Press',sets:'3'},{name:'Cable Lateral Raises',sets:'4'}],
-    'Fri-Lower':[{name:'Lying Leg Curls',sets:'4'},{name:'Bulgarian Split Squats',sets:'3'},{name:'45° Back Extension',sets:'3'},{name:'Reverse Pec Deck',sets:'3'},{name:'Cable Curls',sets:'3'}],
+    // Current aesthetic-priority split (day-of-week based) — priority lifts listed FIRST.
+    // Side/rear delts lead Tue and Fri deliberately: legs run at maintenance, so the priority
+    // muscle gets the fresh slot. Keys are unchanged so older logged sessions still match.
+    'Sun-Pull':[{name:'Pull-Up / Lat Pulldown',sets:'4'},{name:'Chest-Supported Row',sets:'4'},{name:'Straight-Arm Cable Pullover',sets:'3'},{name:'Reverse Pec Deck',sets:'4'},{name:'Overhead Cable Triceps Extension',sets:'3'},{name:'Triceps Pushdown',sets:'2'}],
+    'Mon-Push':[{name:'Incline Barbell / Smith Press',sets:'4'},{name:'DB Lateral Raise',sets:'5'},{name:'Machine Shoulder Press',sets:'3'},{name:'Deep Cable Fly',sets:'3'},{name:'Incline DB Curl',sets:'3'},{name:'Hanging Knee Raise',sets:'3'},{name:'Dead Bug',sets:'2'}],
+    'Tue-Legs':[{name:'Cable Lateral Raise',sets:'4'},{name:'Face Pull',sets:'3'},{name:'Cable Hammer Curl',sets:'3'},{name:'Leg Press / Hack Squat',sets:'4'},{name:'Seated Leg Curl',sets:'3'},{name:'Standing Calf Raise',sets:'2'}],
+    'Thu-Upper':[{name:'Lat Pulldown (alt grip)',sets:'4'},{name:'Single-Arm Cable Row',sets:'3'},{name:'Cable Lateral Raise',sets:'4'},{name:'Cable Reverse Fly',sets:'3'},{name:'Flat DB Press',sets:'4'},{name:'Pallof Press',sets:'3'}],
+    'Fri-Lower':[{name:'DB Lateral Raise',sets:'5'},{name:'Incline DB / Cable Curl',sets:'3'},{name:'Lying Leg Curl',sets:'3'},{name:'Bulgarian Split Squat',sets:'3'},{name:'45° Back Extension',sets:'3'},{name:'Seated Calf Raise',sets:'2'},{name:'Overhead Cable Triceps Extension',sets:'3'}],
     'Cardio':[{name:'Zone 2 run / walk / cycle',sets:'',reps:'',weight:''}],
   };
 
