@@ -1084,7 +1084,9 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .rem-btn.accent-teal,.rem-btn.accent-amber{color:var(--t2);border-color:var(--b2)}
 
 /* Select input */
-.sel-input{font-size:11px;padding:5px 8px;border-radius:var(--r-md);border:1px solid var(--b2);background:var(--s2);color:var(--t2);cursor:pointer;outline:none}
+/* flex:1 + min-width:0 so the select fills its row and can never size to its widest
+   option — without this a long session label pushes the whole page into h-scroll. */
+.sel-input{font-size:11px;padding:5px 8px;border-radius:var(--r-md);border:1px solid var(--b2);background:var(--s2);color:var(--t2);cursor:pointer;outline:none;flex:1;min-width:0;box-sizing:border-box;text-overflow:ellipsis}
 .sel-input:focus{border-color:var(--teal)}
 
 /* Detail list (sleep failure mode fixes etc) */
@@ -1266,6 +1268,10 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .lift-field-input::-webkit-outer-spin-button,.lift-field-input::-webkit-inner-spin-button{-webkit-appearance:none}
 .lift-field-input::placeholder{color:var(--b2);font-size:13px;font-weight:400}
 .lift-field-input.rpe-filled{border-color:color-mix(in srgb,var(--teal) 30%,transparent);color:var(--teal)}
+/* Weight steppers — sit under the weight input only, so the 4-col grid stays aligned */
+.lift-step-row{display:flex;gap:4px;margin-top:5px;width:100%}
+.lift-step{flex:1;min-height:34px;border-radius:var(--r-sm);border:1px solid var(--b2);background:var(--s1);color:var(--t2);font-size:16px;font-weight:700;line-height:1;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;transition:transform .07s cubic-bezier(.34,1.56,.64,1),background .12s,color .12s}
+.lift-step:active{transform:scale(.9);background:var(--s3);color:var(--t1)}
 .sess-notes-input{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r-md);padding:10px 12px;font-size:14px;color:var(--t1);outline:none;font-family:inherit;box-sizing:border-box}
 .sess-notes-input:focus{border-color:var(--teal)}
 .last-sess-ref{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-md);padding:.5rem .75rem;margin:.375rem 0;font-size:11px}
@@ -4279,7 +4285,7 @@ function updateSessType(){
   };
 
   if(sessType&&DEFAULTS[sessType]){
-    currentLifts=DEFAULTS[sessType].map(d=>({name:d.name,weight:'',sets:'',reps:'',rpe:'',_defaultSets:d.sets}));
+    currentLifts=DEFAULTS[sessType].map(d=>_prefillLift({name:d.name,weight:'',sets:'',reps:'',rpe:'',_defaultSets:d.sets}));
   } else {
     currentLifts=[];
   }
@@ -4345,7 +4351,9 @@ function renderLiftRows(){
   }
   const isCardio=document.getElementById('sess-type-select')?.value==='Cardio';
   const wLbl=isCardio?'Distance':'Weight', wPh=isCardio?'km':'kg', wStep=isCardio?'0.1':'0.5';
-  const rLbl=isCardio?'Duration':'Reps', rPh=isCardio?'min':'—';
+  // "Top reps" not "Reps" — one row is one exercise, so this is the top set, not an average.
+  const rLbl=isCardio?'Duration':'Top reps', rPh=isCardio?'min':'—';
+  const stepBy=isCardio?0.1:2.5;
   el.innerHTML=currentLifts.map((l,i)=>{
     const shadow=lastLiftFor(l.name);
     const shadowHtml=shadow?`<div class="lift-shadow">${shadow.html}</div>`:'';
@@ -4354,7 +4362,7 @@ function renderLiftRows(){
       <div class="lift-card-name-row">
         <div class="lift-card-num">${i+1}</div>
         <input class="lift-card-name" type="text" value="${l.name||''}" placeholder="Exercise name"
-          oninput="currentLifts[${i}].name=this.value" onchange="renderLiftRows()" autocomplete="off" autocorrect="off" spellcheck="false">
+          oninput="currentLifts[${i}].name=this.value" onchange="_prefillLift(currentLifts[${i}]);renderLiftRows()" autocomplete="off" autocorrect="off" spellcheck="false">
         <div class="lift-card-move-stack">
           <button class="lift-card-move" onclick="moveLiftRow(${i},-1)" aria-label="Move exercise ${i+1} up" ${i===0?'disabled':''}><i class="ti ti-chevron-up" style="font-size:12px" aria-hidden="true"></i></button>
           <button class="lift-card-move" onclick="moveLiftRow(${i},1)" aria-label="Move exercise ${i+1} down" ${i===currentLifts.length-1?'disabled':''}><i class="ti ti-chevron-down" style="font-size:12px" aria-hidden="true"></i></button>
@@ -4368,6 +4376,10 @@ function renderLiftRows(){
           <input class="lift-field-input" type="number" inputmode="decimal"
             value="${l.weight||''}" placeholder="${wPh}"
             min="0" step="${wStep}" oninput="currentLifts[${i}].weight=this.value">
+          <div class="lift-step-row">
+            <button class="lift-step" onclick="stepLiftWeight(${i},-${stepBy})" aria-label="Decrease ${wLbl.toLowerCase()} for exercise ${i+1}">−</button>
+            <button class="lift-step" onclick="stepLiftWeight(${i},${stepBy})" aria-label="Increase ${wLbl.toLowerCase()} for exercise ${i+1}">+</button>
+          </div>
         </div>
         <div class="lift-field"${isCardio?' style="opacity:.4"':''}>
           <span class="lift-field-label">Sets</span>
@@ -4379,16 +4391,48 @@ function renderLiftRows(){
           <span class="lift-field-label">${rLbl}</span>
           <input class="lift-field-input" type="number" inputmode="numeric"
             value="${l.reps||''}" placeholder="${rPh}"
-            min="0" oninput="currentLifts[${i}].reps=this.value">
+            min="0" oninput="currentLifts[${i}].reps=this.value" onchange="if(this.value)_autoRest()">
         </div>
         <div class="lift-field">
-          <span class="lift-field-label">RPE</span>
+          <span class="lift-field-label">RIR</span>
           <input class="lift-field-input${l.rpe?' rpe-filled':''}" type="number" inputmode="numeric"
             value="${l.rpe||''}" placeholder="—"
-            min="1" max="10" oninput="currentLifts[${i}].rpe=this.value;this.className='lift-field-input'+(this.value?' rpe-filled':'')">
+            min="0" max="5" oninput="currentLifts[${i}].rpe=this.value;this.className='lift-field-input'+(this.value?' rpe-filled':'')">
         </div>
       </div>
     </div>`;}).join('');
+}
+
+// Seed a lift row from the last time this exercise was logged, so a normal session is
+// "edit the one number that changed" instead of retyping ~28 fields. Only fills BLANK
+// fields — never overwrites something already typed. RIR is deliberately NOT pre-filled:
+// it's a reading of how the set actually felt, and copying last week's defeats the point.
+function _prefillLift(lift){
+  const prev=lastLiftFor(lift.name);
+  if(!prev) return lift;
+  if(!lift.weight&&prev.match.weight) lift.weight=prev.match.weight;
+  if(!lift.sets&&prev.match.sets)     lift.sets=prev.match.sets;
+  if(!lift.reps&&prev.match.reps)     lift.reps=prev.match.reps;
+  return lift;
+}
+
+// Weight stepper — ±2.5kg for lifts, ±0.1km for cardio. One tap instead of the keyboard.
+function stepLiftWeight(i,delta){
+  const l=currentLifts[i];
+  if(!l) return;
+  const cur=parseFloat(l.weight)||0;
+  const next=Math.max(0,Math.round((cur+delta)*100)/100);
+  l.weight=String(next);
+  renderLiftRows();
+  if(navigator.vibrate) navigator.vibrate(3);
+}
+
+// Logging a set IS the moment rest starts — auto-start so it stops getting skipped when tired.
+// 120s is the middle of the programme's range (compounds 2–3 min, isolations 1–2 min); the
+// preset buttons still override, and an already-running timer is never restarted mid-rest.
+function _autoRest(){
+  if(_rtInterval) return;
+  startRestTimer(120);
 }
 
 // Find the most recent logged instance of a given exercise (for the progressive-overload shadow)
@@ -4404,7 +4448,7 @@ function lastLiftFor(name){
       const isCardio=sess.type==='Cardio';
       const w=match.weight?`${match.weight}${isCardio?'km':'kg'}`:'';
       const sr=(match.sets&&match.reps)?`${match.sets}×${match.reps}`:(match.reps?`${match.reps}${isCardio?' min':' reps'}`:'');
-      const rpe=match.rpe?` @${match.rpe}`:'';
+      const rpe=match.rpe?` · RIR ${match.rpe}`:'';
       const parts=[w,sr].filter(Boolean).join(' · ');
       return {
         match, when,
@@ -4572,7 +4616,7 @@ function renderSessionHistory(){
       const prevBest=prev.length?Math.max(...prev.map(ll=>parseFloat(ll.weight)||0)):0;
       const isPB=l.weight&&parseFloat(l.weight)>prevBest&&prevBest>0;
       const sets=(l.sets&&!isCardio)?l.sets+'×':'';
-      const rpe=l.rpe?` · RPE ${l.rpe}`:'';
+      const rpe=l.rpe?` · RIR ${l.rpe}`:'';
       const wVal=l.weight?l.weight+(isCardio?'km ':'kg '):'';
       const rVal=l.reps?l.reps+(isCardio?' min':'r'):'';
       return `<div class="thr-lift"><span class="thr-lift-name">${l.name}${isPB?' <span class="pb-badge">PB</span>':''}</span><span class="thr-lift-val">${wVal}${sets}${rVal}${rpe}</span></div>`;
