@@ -314,11 +314,37 @@ html.theme-light .bottom-nav{background:rgba(250,248,245,.94)}
 .qm-macro{font-size:11px;color:var(--teal);font-weight:500}
 /* Heatmap */
 .sec-label-inline{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin:1.25rem 0 .5rem;display:block}
-.heatmap-wrap{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:.5rem}
-.hm-cell{aspect-ratio:1;border-radius:3px}
-.hm-none{background:var(--s3)}.hm-low{background:rgba(232,151,58,.35)}.hm-mid{background:color-mix(in srgb,var(--teal) 40%,transparent)}.hm-high{background:var(--teal)}
-.heatmap-legend{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t3);margin-bottom:1rem;flex-wrap:wrap}
-.hm-swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+/* ── PROGRESS: calendar heatmap + stats + milestones ── */
+.prog-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:.75rem}
+.prog-stat{background:var(--s2);border-radius:var(--r-md);padding:.625rem .375rem;text-align:center}
+.prog-stat-val{font-size:19px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums;line-height:1.1}
+.prog-stat-lbl{font-size:9.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;margin-top:3px}
+.cal-wrap{background:var(--s2);border-radius:var(--r-lg);padding:.75rem .875rem .875rem}
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:5px}
+.cal-dow span{font-size:9.5px;color:var(--t3);text-align:center;font-weight:600}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-cell{aspect-ratio:1;border-radius:4px;border:none;padding:0;cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent;transition:transform .1s cubic-bezier(.34,1.56,.64,1)}
+.cal-cell:active{transform:scale(.85)}
+.cal-none{background:var(--s4,rgba(255,255,255,.06))}
+.cal-low{background:rgba(232,151,58,.4)}
+.cal-mid{background:color-mix(in srgb,var(--teal) 45%,transparent)}
+.cal-high{background:var(--teal)}
+.cal-future{background:transparent;cursor:default;pointer-events:none}
+/* trained-that-day marker — a dot in the corner, readable on every fill colour */
+.cal-cell.has-session::after{content:'';position:absolute;right:2px;bottom:2px;width:4px;height:4px;border-radius:50%;background:var(--t1);opacity:.85}
+.cal-cell.is-today{box-shadow:0 0 0 2px var(--focus-ac)}
+.cal-legend{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3);margin-top:.75rem;flex-wrap:wrap}
+.cal-swatch{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.cal-legend-dot{width:5px;height:5px;border-radius:50%;background:var(--t1);opacity:.85;flex-shrink:0;margin-left:5px}
+.cal-detail{font-size:12px;color:var(--t2);line-height:1.5;margin-top:.75rem;padding:.625rem .75rem;background:var(--s2);border-radius:var(--r-md);min-height:38px;box-sizing:border-box}
+.cal-detail strong{color:var(--t1);font-weight:700}
+.prog-empty{font-size:12px;color:var(--t3);line-height:1.55;padding:.75rem .875rem;background:var(--s2);border-radius:var(--r-md)}
+.prog-ms{display:flex;align-items:flex-start;gap:.625rem;padding:.625rem .75rem;background:var(--s2);border-radius:var(--r-md);margin-bottom:5px}
+.prog-ms-ic{font-size:15px;color:var(--focus-ac);flex-shrink:0;margin-top:1px}
+.prog-ms-body{flex:1;min-width:0}
+.prog-ms-title{font-size:12.5px;font-weight:600;color:var(--t1);line-height:1.3}
+.prog-ms-sub{font-size:11px;color:var(--t3);line-height:1.4;margin-top:2px}
+.prog-ms-date{font-size:10.5px;color:var(--t3);flex-shrink:0;white-space:nowrap;font-variant-numeric:tabular-nums}
 /* Weight sparkline */
 .weight-history-strip{background:transparent;border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem 1rem;margin-bottom:.875rem}
 .wh-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
@@ -1750,7 +1776,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     <i class="ti ti-barbell"></i><span>Train</span>
   </button>
   <button class="nav-btn" id="nav-insights" onclick="go('insights')">
-    <i class="ti ti-bulb"></i><span>Coach</span>
+    <i class="ti ti-calendar-stats"></i><span>Progress</span>
   </button>
 </nav>
 </div>
@@ -2092,8 +2118,25 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
   </div>
 
-</div>
+  <!-- Shift-timing reference. Lives inside Train so it renders on one page only — it was
+       previously a body-level sibling and leaked onto every tab. -->
+  <div class="db-section" style="margin-top:1.25rem">
+    <div class="db-label" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between" onclick="toggleCycleDetail()">
+      Full cycle detail
+      <span id="cycle-detail-chevron" style="font-size:12px;color:var(--t3);transition:transform .2s">▼</span>
+    </div>
+    <div id="cycle-detail-wrap" style="display:none">
+      <div class="grid4" style="margin-bottom:1rem">
+        <div class="stat-card"><div class="stat-val">8:30</div><div class="stat-lbl">Shift start &amp; end</div></div>
+        <div class="stat-card"><div class="stat-val">~1 hr</div><div class="stat-lbl">Home ↔ work</div></div>
+        <div class="stat-card"><div class="stat-val">9:30</div><div class="stat-lbl">Home post-shift</div></div>
+        <div class="stat-card"><div class="stat-val">6:30–7</div><div class="stat-lbl">Day shift wake AM</div></div>
+      </div>
+    </div>
+  </div>
 
+  <div style="height:80px"></div>
+</div>
 
 
 <!-- Export infographic modal -->
@@ -2115,48 +2158,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
   </div>
 </div>
 
-  <!-- Full microcycle detail — consolidated from Microcycle tab -->
-  <div class="db-section">
-    <div class="db-label" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between" onclick="toggleCycleDetail()">
-      Full cycle detail
-      <span id="cycle-detail-chevron" style="font-size:12px;color:var(--t3);transition:transform .2s">▼</span>
-    </div>
-    <div id="cycle-detail-wrap" style="display:none">
-<div class="grid4" style="margin-bottom:1rem">
-    <div class="stat-card"><div class="stat-val">8:30</div><div class="stat-lbl">Shift start & end</div></div>
-    <div class="stat-card"><div class="stat-val">~1 hr</div><div class="stat-lbl">Home ↔ work</div></div>
-    <div class="stat-card"><div class="stat-val">9:30</div><div class="stat-lbl">Home post-shift</div></div>
-    <div class="stat-card"><div class="stat-val">6:30–7</div><div class="stat-lbl">Day shift wake AM</div></div>
-  </div>
-
-
-  </div>
-</div>
-
-
-<!-- ===== JOURNEY ===== -->
-<div class="page" id="page-journey">
-
-  <div class="journey-stats-bar" id="journey-stats"></div>
-
-  <div class="sec-label-inline">Consistency — last 10 weeks</div>
-  <div class="heatmap-wrap" id="journey-heatmap"></div>
-  <div class="heatmap-legend">
-    <span class="hm-swatch hm-none"></span><span>No data</span>
-    <span class="hm-swatch hm-low"></span><span>&lt;50%</span>
-    <span class="hm-swatch hm-mid"></span><span>50–89%</span>
-    <span class="hm-swatch hm-high"></span><span>90%+</span>
-  </div>
-
-  <div class="sec-label" style="margin-top:.5rem">Journey log</div>
-  <div id="journey-log-list"></div>
-
-  <div style="display:flex;align-items:center;gap:.75rem;margin-top:1rem">
-    <div class="page-note" id="journey-since">Starting out</div>
-    <button class="action-btn" onclick="downloadInfographic()" style="margin-left:auto;font-size:12px;padding:6px 12px"><i class="ti ti-download" style="font-size:12px"></i>Export</button>
-  </div>
-
-</div>
 
 <script>
 // ── CYCLE DETAIL TOGGLE (Overview) ──
@@ -2172,19 +2173,13 @@ function toggleCycleDetail(){
 // ── TAB NAV ──
 function go(id){
   const ids=['dashboard','tracker','nutrition','sleep','training','insights','journey','supps'];
-  // Clear insights badge and re-render when insights tab is visited
   if(id==='insights'){
-    insightsLastRead=new Date().toISOString();
-    _lastInsightCount=0;
-    clearInsightsBadge();
-    save();
-    setTimeout(()=>{renderInsights();_playTabEntrance('page-insights','coach-score-wrap');},50);
+    setTimeout(()=>{renderProgress();_playTabEntrance('page-insights',null);},50);
   }
   // Render training check-in flag when Training tab is opened
   if(id==='nutrition'){_renderFuelHero();renderMealLog();setTimeout(()=>_playTabEntrance('page-nutrition','fuel-hero-wrap'),50);}
   if(id==='training'){renderTrainingCheckinFlag();renderSessionHistory();setTimeout(()=>_playTabEntrance('page-training',null),50);}
   if(id==='tracker') setTimeout(applyBridgeState,100);
-  if(id==='journey') setTimeout(renderHeatmap,50);
   // Activate the correct nav button
   ids.forEach(navId=>{
     const btn=document.getElementById('nav-'+navId);
@@ -4637,7 +4632,26 @@ function renderSessionHistory(){
 const _saveOrig=typeof save==='function'?save:null;
 const STORE='op_protocol_v3';
 
+// Stamp today's numbers into weekHistory on every save. Nothing wrote `score` before this —
+// weekHistory only ever received hasSession/recoveryDay, so every consumer reading .score
+// (heatmap, week strip, Coach's avgScore) silently saw undefined forever. save() is the right
+// hook: it already fires on every mutation, so the day's row is always current.
+function _stampToday(){
+  try{
+    const k=biologicalToday();
+    if(!weekHistory[k]) weekHistory[k]={};
+    const row=weekHistory[k];
+    row.score=getScore();
+    row.tracker=getTrackerPct();
+    row.prot=macros.prot;
+    row.kcal=macros.kcal;
+    row.hydro=macros.hydro;
+    if(sleepRating) row.sleep=sleepRating;
+  }catch(e){}
+}
+
 function save(){
+  _stampToday();
   try{
     localStorage.setItem(STORE,JSON.stringify({
       date:biologicalToday(),shift,ticks,macros,history,
@@ -5606,98 +5620,6 @@ function checkPBMilestones(session){
   });
 }
 
-// Hook: called from coach apply actions
-
-
-function renderJourney(){
-  // Stats bar
-  const sb=document.getElementById('journey-stats');
-  if(sb){
-    const totalDays=journeyLog.length?
-      Math.floor((Date.now()-new Date(journeyLog[journeyLog.length-1].date).getTime())/(86400000))+1:0;
-    const pbs=journeyLog.filter(e=>e.type==='pb').length;
-    const milestones=journeyLog.filter(e=>e.type==='milestone'||e.type==='streak').length;
-    const streak=dayStreak;
-    sb.innerHTML=`
-      <div class="journey-stat"><div class="journey-stat-val">${totalDays||'—'}</div><div class="journey-stat-lbl">Days</div></div>
-      <div class="journey-stat"><div class="journey-stat-val">${streak}</div><div class="journey-stat-lbl">Streak</div></div>
-      <div class="journey-stat"><div class="journey-stat-val">${pbs}</div><div class="journey-stat-lbl">PBs</div></div>
-      <div class="journey-stat"><div class="journey-stat-val">${milestones}</div><div class="journey-stat-lbl">Milestones</div></div>`;
-  }
-
-  // Since label
-  const sinceEl=document.getElementById('journey-since');
-  if(sinceEl&&journeyLog.length){
-    const first=journeyLog[journeyLog.length-1];
-    const d=new Date(first.date);
-    sinceEl.textContent='Since '+d.toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'});
-  }
-  // Disable export when nothing logged yet
-  const exportBtn=document.querySelector('[onclick="downloadInfographic()"]');
-  if(exportBtn){
-    const empty=journeyLog.length===0;
-    exportBtn.disabled=empty;
-    exportBtn.style.opacity=empty?'0.4':'1';
-    exportBtn.style.pointerEvents=empty?'none':'auto';
-  }
-
-  // Milestone timeline (major events only)
-  const milestoneBox=document.getElementById('journey-milestones');
-  if(milestoneBox){
-    const major=journeyLog.filter(e=>['milestone','pb','streak','coach','recovery'].includes(e.type));
-    if(!major.length){
-      milestoneBox.innerHTML=`<div class="tl-empty">
-        <i class="ti ti-trophy"></i>
-        <div class="tl-empty-title">Your story starts today</div>
-        <div class="tl-empty-sub">Hit 100% on the Tracker for your first milestone. Log a session for your first PB. Each action builds the timeline above.</div>
-        <button class="tl-empty-cta" onclick="go('tracker')"><i class="ti ti-checklist" style="font-size:12px"></i>Go to Tracker</button>
-      </div>`;
-    } else {
-      const nodeIcon={milestone:'ti-trophy',pb:'ti-medal',streak:'ti-flame',coach:'ti-bulb',recovery:'ti-zzz',log:'ti-point'};
-      milestoneBox.innerHTML=major.slice(0,20).map(e=>{
-        const d=new Date(e.date);
-        const dateStr=d.toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'});
-        return `<div class="tl-entry">
-          <div class="tl-node ${e.type}"><i class="ti ${nodeIcon[e.type]||'ti-point'}" aria-hidden="true"></i></div>
-          <div class="tl-content ${e.type}">
-            <div class="tl-entry-badge ${e.type}">${e.type}</div>
-            <div class="tl-entry-title">${e.title}</div>
-            ${e.sub?`<div class="tl-entry-sub">${e.sub}</div>`:''}
-            <div class="tl-entry-date">${dateStr}</div>
-          </div>
-        </div>`;
-      }).join('');
-    }
-  }
-
-  // Recent activity (compressed)
-  const actList=document.getElementById('journey-activity-list');
-  if(actList){
-    const recent=journeyLog.filter(e=>e.type==='log'||e.type==='session').slice(0,15);
-    const allRecent=Object.entries(weekHistory||{}).slice(-14).reverse();
-    if(!allRecent.length){
-      actList.innerHTML=`<div class="tl-empty" style="padding:1.25rem">
-      <i class="ti ti-calendar-stats"></i>
-      <div class="tl-empty-title">Nothing logged yet</div>
-      <div class="tl-empty-sub">Activity appears here as you log meals, sessions, and complete daily check-ins.</div>
-    </div>`;
-    } else {
-      actList.innerHTML=allRecent.map(([date,data])=>{
-        const d=new Date(date);
-        const dateStr=d.toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short'});
-        const score=data.score!==undefined?data.score+'%':'—';
-        const sleep=data.sleep?'★'.repeat(data.sleep):'';
-        const session=data.hasSession?'<span style="color:var(--teal);font-size:11px">●</span>':'';
-        return `<div class="tl-activity-row">
-          <span class="tl-activity-date">${dateStr}</span>
-          <span class="tl-activity-main">${sleep} ${session}</span>
-          <span class="tl-activity-val">${score}</span>
-        </div>`;
-      }).join('');
-    }
-  }
-}
-
 // ═══ EXPORT INFOGRAPHIC ═══
 
 
@@ -6158,8 +6080,8 @@ function importData(){
     if(msg){msg.style.color='var(--teal)';msg.textContent='Import applied successfully.';}
     // Re-render
     renderMealLog();renderWeekStrip();
-    renderSessionHistory();renderJourney();
-    renderInsights();renderWeightChart();renderFitbit();
+    renderSessionHistory();renderProgress();
+    renderWeightChart();renderFitbit();
     renderRemovedItems();render();updateBar();
     showToast('Everything restored ✓','action');
     setTimeout(()=>toggleImportArea(),1500);
@@ -6272,28 +6194,123 @@ function factoryReset(){
 function gotoNutrition(){go('nutrition');}
 
 // ── STREAK HEATMAP ──
-function renderHeatmap(){
-  const el=document.getElementById('journey-heatmap');
+// ═══ PROGRESS ═══
+// Be-your-own-coach view: shows the recorded facts, draws no conclusions.
+
+// Step whole days off a stored date key. Deliberately does the arithmetic in UTC and
+// formats via toISOString, because that's how today()/biologicalToday() build their keys —
+// doing it in local time would produce keys that never match what's actually stored.
+function _calKey(baseKey,offsetDays){
+  const d=new Date(baseKey+'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate()+offsetDays);
+  return d.toISOString().slice(0,10);
+}
+
+const _CAL_WEEKS=12;
+
+function renderProgCalendar(){
+  const el=document.getElementById('prog-calendar');
   if(!el) return;
-  const today=new Date();
-  const start=new Date(today);
-  start.setDate(today.getDate()-69);
-  const dow=start.getDay();
-  start.setDate(start.getDate()+(dow===0?-6:1-dow));
+  const todayKey=biologicalToday();
+  const todayDate=new Date(todayKey+'T12:00:00Z');
+  const monOffset=(todayDate.getUTCDay()+6)%7;          // 0 = Monday
+  const firstOffset=-monOffset-(_CAL_WEEKS-1)*7;        // Monday of the earliest week shown
   let html='';
-  for(let d=0;d<70;d++){
-    const date=new Date(start);date.setDate(start.getDate()+d);
-    const key=date.toISOString().slice(0,10);
-    const data=weekHistory[key];
-    const isFuture=date>today;
-    let cls='hm-cell ';
-    if(isFuture||!data) cls+='hm-none';
-    else if(data.score>=90) cls+='hm-high';
-    else if(data.score>=50) cls+='hm-mid';
-    else cls+='hm-low';
-    html+=`<div class="${cls}" title="${key+(data?' · '+data.score+'%':'')}"></div>`;
+  for(let i=0;i<_CAL_WEEKS*7;i++){
+    const key=_calKey(todayKey,firstOffset+i);
+    const row=weekHistory[key];
+    const future=key>todayKey;
+    let cls='cal-cell';
+    if(future) cls+=' cal-future';
+    else if(!row||row.score===undefined) cls+=' cal-none';
+    else if(row.score>=90) cls+=' cal-high';
+    else if(row.score>=50) cls+=' cal-mid';
+    else cls+=' cal-low';
+    if(row&&row.hasSession) cls+=' has-session';
+    if(key===todayKey) cls+=' is-today';
+    html+=`<button class="${cls}" onclick="showProgDay('${key}')" aria-label="${key}"></button>`;
   }
   el.innerHTML=html;
+}
+
+function showProgDay(key){
+  const el=document.getElementById('prog-detail');
+  if(!el) return;
+  const row=weekHistory[key];
+  const d=new Date(key+'T12:00:00Z');
+  const label=d.toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
+  if(!row||row.score===undefined){
+    el.innerHTML=`<strong>${label}</strong> — nothing logged.`;
+    return;
+  }
+  const sess=sessionLog.find(s=>s.date===key);
+  const bits=[
+    `<strong>${row.score}%</strong> day score`,
+    row.prot!==undefined?`${row.prot}g protein`:null,
+    row.kcal!==undefined?`${row.kcal.toLocaleString()} kcal`:null,
+    sess?`trained — ${sess.type}`:(row.hasSession?'trained':null),
+  ].filter(Boolean);
+  el.innerHTML=`<strong>${label}</strong> · `+bits.join(' · ');
+}
+
+function renderProgStats(){
+  const el=document.getElementById('prog-stats');
+  if(!el) return;
+  const todayKey=biologicalToday();
+  let scored=0,sum=0,logged=0;
+  for(let i=0;i<30;i++){
+    const row=weekHistory[_calKey(todayKey,-i)];
+    if(row&&row.score!==undefined){ scored++; sum+=row.score; }
+  }
+  logged=Object.keys(weekHistory).filter(k=>weekHistory[k]&&weekHistory[k].score!==undefined).length;
+  const cutoff=_calKey(todayKey,-29);
+  const sessions=sessionLog.filter(s=>s.date>=cutoff).length;
+  const avg=scored?Math.round(sum/scored):0;
+  const cell=(v,l)=>`<div class="prog-stat"><div class="prog-stat-val">${v}</div><div class="prog-stat-lbl">${l}</div></div>`;
+  el.innerHTML=cell(dayStreak,'Streak')+cell(logged,'Days logged')+cell(sessions,'Sessions 30d')+cell(avg?avg+'%':'—','Avg 30d');
+}
+
+function renderProgMilestones(){
+  const el=document.getElementById('prog-milestones');
+  if(!el) return;
+  const major=journeyLog.filter(e=>['milestone','pb','streak','recovery'].includes(e.type));
+  if(!major.length){
+    el.innerHTML=`<div class="prog-empty">No milestones yet. Hit 100% on the Tracker for your first, or log a session to start banking PBs.</div>`;
+    return;
+  }
+  const icon={milestone:'ti-trophy',pb:'ti-medal',streak:'ti-flame',recovery:'ti-zzz'};
+  el.innerHTML=major.slice(0,15).map(e=>{
+    const d=new Date(e.date+'T12:00:00Z');
+    const when=d.toLocaleDateString('en-SG',{day:'numeric',month:'short',timeZone:'UTC'});
+    return `<div class="prog-ms">
+      <i class="ti ${icon[e.type]||'ti-point'} prog-ms-ic" aria-hidden="true"></i>
+      <div class="prog-ms-body">
+        <div class="prog-ms-title">${e.title}</div>
+        ${e.sub?`<div class="prog-ms-sub">${e.sub}</div>`:''}
+      </div>
+      <div class="prog-ms-date">${when}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderProgress(){
+  renderProgStats();
+  renderProgCalendar();
+  renderProgMilestones();
+  // "Since <first logged day>" + disable Export until there's something worth exporting
+  const sinceEl=document.getElementById('prog-since');
+  if(sinceEl&&journeyLog.length){
+    const first=journeyLog[journeyLog.length-1];
+    sinceEl.textContent='Since '+new Date(first.date+'T12:00:00Z')
+      .toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'});
+  }
+  const exportBtn=document.querySelector('[onclick="downloadInfographic()"]');
+  if(exportBtn){
+    const empty=journeyLog.length===0;
+    exportBtn.disabled=empty;
+    exportBtn.style.opacity=empty?'0.4':'1';
+    exportBtn.style.pointerEvents=empty?'none':'auto';
+  }
 }
 
 // Resolve the current accent (--teal) to rgb/rgba for canvas (canvas can't read CSS vars/color-mix)
@@ -6490,7 +6507,7 @@ async function fitbitSync(silent){
   save();
   if(typeof renderWeightChart==='function') renderWeightChart();
   if(typeof renderSleepHistory==='function') renderSleepHistory();
-  if(typeof renderInsights==='function') renderInsights();
+  if(typeof renderProgress==='function') renderProgress();
   renderFitbit();
   if(!silent) showToast('Synced'+(n?' · '+n+' updates':' · up to date'),'action');
 }
@@ -7095,15 +7112,14 @@ renderWeekStrip();
 renderSessionHistory();
 renderCheckin();
 renderRemovedItems();
-renderInsights();
-renderJourney();
+renderProgress();
 attachMealValidation();
 updateShiftChip();
 updateStreakMilestoneHint();
 renderTrainingCheckinFlag();
 updateContextHint();
 renderDateCtxButtons();
-setTimeout(()=>{renderHeatmap();renderWeightChart();},100);
+setTimeout(()=>{renderWeightChart();},100);
 syncTrackerHydro();
 renderDateCtxButtons();
 setTimeout(applyBridgeState, 200);
@@ -7138,39 +7154,38 @@ go('tracker');
 <!-- ===== INSIGHTS ===== -->
 <div class="page" id="page-insights">
 
-  <div style="padding:.5rem 0 0"><div class="coach-eyebrow">Coach</div><div class="coach-h1">Analysis</div></div>
+  <div style="padding:.5rem 0 0"><div class="coach-eyebrow">Progress</div><div class="coach-h1">Consistency</div></div>
 
-  <!-- Score record card — populated by renderInsights() -->
-  <div id="coach-score-wrap"></div>
+  <!-- Headline numbers — populated by renderProgress() -->
+  <div class="prog-stats mo-rise" id="prog-stats"></div>
 
-  <!-- Filter pills -->
-  <div class="coach-filter-pills mo-rise">
-    <button class="cf-pill active" onclick="setCoachFilter('all',this)">All</button>
-    <button class="cf-pill" onclick="setCoachFilter('recovery',this)">Recovery</button>
-    <button class="cf-pill" onclick="setCoachFilter('fuel',this)">Fuel</button>
-    <button class="cf-pill" onclick="setCoachFilter('train',this)">Train</button>
+  <!-- Calendar heatmap -->
+  <div class="sec-label" style="margin-top:1.125rem">Last 12 weeks</div>
+  <div class="cal-wrap mo-rise">
+    <div class="cal-dow"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+    <div class="cal-grid" id="prog-calendar"></div>
+    <div class="cal-legend">
+      <span class="cal-swatch cal-none"></span><span>none</span>
+      <span class="cal-swatch cal-low"></span><span>&lt;50%</span>
+      <span class="cal-swatch cal-mid"></span><span>50–89%</span>
+      <span class="cal-swatch cal-high"></span><span>90%+</span>
+      <span class="cal-legend-dot"></span><span>trained</span>
+    </div>
   </div>
 
-  <!-- Unified insight feed — populated by _renderCoachFeed() -->
-  <div id="coach-insight-feed"></div>
+  <!-- Tapped-day readout -->
+  <div class="cal-detail" id="prog-detail">Tap any day to see its numbers.</div>
 
-  <!-- Training trends (progressive overload) — filter-gated to All / Train -->
-  <div class="sec-label" id="overload-label" style="display:none;margin-top:1.25rem">Training trends</div>
-  <div id="insights-overload"></div>
+  <!-- Milestones from the journey log -->
+  <div class="sec-label" style="margin-top:1.25rem">Milestones</div>
+  <div id="prog-milestones"></div>
 
-  <!-- Calibration card — shown when baseline building -->
-  <div class="data-progress-card" id="data-progress" style="display:none">
-    <div class="dp-header">
-      <span class="dp-title"><i class="ti ti-brain" style="font-size:13px;margin-right:5px;color:var(--teal)"></i>Calibrating</span>
-      <span class="dp-count" id="data-progress-count">0 / 5 days</span>
-    </div>
-    <div class="data-progress-bar">
-      <div class="data-progress-fill" id="data-progress-fill" style="width:0%"></div>
-    </div>
-    <div class="dp-note" id="data-progress-note">Complete your first check-in and tick through today's tracker. Coach activates after 5 days of data.</div>
+  <div style="display:flex;align-items:center;gap:.75rem;margin-top:1rem">
+    <div class="page-note" id="prog-since">Starting out</div>
+    <button class="action-btn" onclick="downloadInfographic()" style="margin-left:auto;font-size:12px;padding:6px 12px"><i class="ti ti-download" style="font-size:12px"></i>Export</button>
   </div>
 
-
+  <div style="height:80px"></div>
 </div>
 
 
