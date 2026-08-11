@@ -1212,6 +1212,11 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .lift-card-fields{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
 .lift-shadow{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t3);margin:-2px 0 8px 30px;padding:5px 8px;background:rgba(212,255,71,.05);border-radius:6px;border-left:2px solid rgba(212,255,71,.35)}
 .lift-shadow strong{color:var(--teal);font-weight:600}
+/* Live "did you beat it" verdict, sits at the end of the shadow line */
+.lift-verdict{margin-left:auto;font-size:10.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap;flex-shrink:0}
+.lift-verdict.up{color:var(--focus-ac)}
+.lift-verdict.same{color:var(--t3)}
+.lift-verdict.down{color:var(--amber)}
 .overload-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.5rem .25rem}
 .ovl-row{display:flex;align-items:center;gap:.625rem;padding:.5rem .75rem}
 .ovl-name{font-size:13px;font-weight:600;color:var(--t1);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -4317,7 +4322,10 @@ function renderLiftRows(){
   const stepBy=isCardio?0.1:2.5;
   el.innerHTML=currentLifts.map((l,i)=>{
     const shadow=lastLiftFor(l.name);
-    const shadowHtml=shadow?`<div class="lift-shadow">${shadow.html}</div>`:'';
+    const v=_liftVerdict(l);
+    const shadowHtml=shadow
+      ?`<div class="lift-shadow">${shadow.html}<span class="lift-verdict${v?' '+v.cls:''}" id="lv-${i}">${v?v.txt:''}</span></div>`
+      :'';
     return `
     <div class="lift-card">
       <div class="lift-card-name-row">
@@ -4336,7 +4344,7 @@ function renderLiftRows(){
           <span class="lift-field-label">${wLbl}</span>
           <input class="lift-field-input" type="number" inputmode="decimal"
             value="${l.weight||''}" placeholder="${wPh}"
-            min="0" step="${wStep}" oninput="currentLifts[${i}].weight=this.value">
+            min="0" step="${wStep}" oninput="currentLifts[${i}].weight=this.value;_updateVerdict(${i})">
           <div class="lift-step-row">
             <button class="lift-step" onclick="stepLiftWeight(${i},-${stepBy})" aria-label="Decrease ${wLbl.toLowerCase()} for exercise ${i+1}">−</button>
             <button class="lift-step" onclick="stepLiftWeight(${i},${stepBy})" aria-label="Increase ${wLbl.toLowerCase()} for exercise ${i+1}">+</button>
@@ -4352,7 +4360,7 @@ function renderLiftRows(){
           <span class="lift-field-label">${rLbl}</span>
           <input class="lift-field-input" type="number" inputmode="numeric"
             value="${l.reps||''}" placeholder="${rPh}"
-            min="0" oninput="currentLifts[${i}].reps=this.value" onchange="if(this.value)_autoRest()">
+            min="0" oninput="currentLifts[${i}].reps=this.value;_updateVerdict(${i})" onchange="if(this.value)_autoRest()">
         </div>
         <div class="lift-field">
           <span class="lift-field-label">RIR</span>
@@ -4362,6 +4370,8 @@ function renderLiftRows(){
         </div>
       </div>
     </div>`;}).join('');
+  _initDraftWatch();
+  _saveDraft();
 }
 
 // Seed a lift row from the last time this exercise was logged, so a normal session is
@@ -4386,6 +4396,88 @@ function stepLiftWeight(i,delta){
   l.weight=String(next);
   renderLiftRows();
   if(navigator.vibrate) navigator.vibrate(3);
+}
+
+// ── IN-PROGRESS SESSION DRAFT ──
+// currentLifts lived only in memory, so backgrounding the tab mid-workout (a message, a call,
+// iOS evicting the tab) lost everything entered so far. Persisted separately from the main
+// STORE so a corrupt/stale draft can never take the real save payload down with it.
+const DRAFT_KEY='op_session_draft';
+const DRAFT_MAX_AGE=18*60*60*1000; // a session spans hours, not days — expire overnight
+
+function _saveDraft(){
+  try{
+    const sel=document.getElementById('sess-type-select');
+    const type=sel?sel.value:'';
+    const notes=document.getElementById('sess-notes')?.value||'';
+    // nothing worth keeping — drop any stale draft rather than storing an empty shell
+    const hasContent=currentLifts.some(l=>l.name&&(l.weight||l.reps||l.sets||l.rpe));
+    if(!type&&!hasContent){ localStorage.removeItem(DRAFT_KEY); return; }
+    localStorage.setItem(DRAFT_KEY,JSON.stringify({type,notes,lifts:currentLifts,ts:Date.now()}));
+  }catch(e){}
+}
+
+function _clearDraft(){ try{ localStorage.removeItem(DRAFT_KEY); }catch(e){} }
+
+function _restoreDraft(){
+  try{
+    const raw=localStorage.getItem(DRAFT_KEY);
+    if(!raw) return false;
+    const d=JSON.parse(raw);
+    if(!d||!Array.isArray(d.lifts)) return false;
+    if(Date.now()-(d.ts||0)>DRAFT_MAX_AGE){ _clearDraft(); return false; }
+    const hasContent=d.lifts.some(l=>l&&l.name&&(l.weight||l.reps||l.sets||l.rpe));
+    if(!hasContent&&!d.type) return false;
+    currentLifts=d.lifts;
+    const sel=document.getElementById('sess-type-select');
+    if(sel&&d.type) sel.value=d.type;
+    const notesEl=document.getElementById('sess-notes');
+    if(notesEl&&d.notes) notesEl.value=d.notes;
+    renderLiftRows();
+    if(d.type) showLastSessionRef(d.type);
+    // reveal the logger, otherwise the restored work sits behind a collapsed card
+    const card=document.getElementById('sess-card-logger');
+    if(card) card.style.display='block';
+    setTimeout(()=>showToast('Unsaved session restored','action'),600);
+    return true;
+  }catch(e){ return false; }
+}
+
+// One delegated listener per container — the container survives innerHTML replacement,
+// so this keeps working across re-renders without rebinding.
+function _initDraftWatch(){
+  const rows=document.getElementById('lift-rows');
+  if(rows&&!rows._draftWatch){ rows._draftWatch=true; rows.addEventListener('input',_saveDraft); }
+  const notes=document.getElementById('sess-notes');
+  if(notes&&!notes._draftWatch){ notes._draftWatch=true; notes.addEventListener('input',_saveDraft); }
+}
+
+// ── DID YOU BEAT IT? ──
+// Double-progression verdict: more load wins; same load with more reps wins.
+function _liftVerdict(l){
+  if(!l||!l.name) return null;
+  const prev=lastLiftFor(l.name);
+  if(!prev) return null;
+  const pw=parseFloat(prev.match.weight), pr=parseFloat(prev.match.reps);
+  const cw=parseFloat(l.weight), cr=parseFloat(l.reps);
+  if(isNaN(cw)&&isNaN(cr)) return null;
+  if(!isNaN(cw)&&!isNaN(pw)&&cw>pw) return {cls:'up',txt:'↑ beat'};
+  if(!isNaN(cw)&&!isNaN(pw)&&cw<pw) return {cls:'down',txt:'↓ lighter'};
+  // same load (or load not comparable) — reps decide
+  if(!isNaN(cr)&&!isNaN(pr)){
+    if(cr>pr) return {cls:'up',txt:'↑ beat'};
+    if(cr===pr) return {cls:'same',txt:'= matched'};
+    return {cls:'down',txt:'↓ down'};
+  }
+  return null;
+}
+
+function _updateVerdict(i){
+  const el=document.getElementById('lv-'+i);
+  if(!el) return;
+  const v=_liftVerdict(currentLifts[i]);
+  el.className='lift-verdict'+(v?' '+v.cls:'');
+  el.textContent=v?v.txt:'';
 }
 
 // Logging a set IS the moment rest starts — auto-start so it stops getting skipped when tired.
@@ -4463,6 +4555,10 @@ function saveSession(){
   const notes=document.getElementById('sess-notes')?.value?.trim()||'';
   if(!validateSession(sel,currentLifts)) return;
   const filledLifts=currentLifts.filter(l=>l.name&&(l.weight||l.reps));
+  // Verdict vs last time — computed BEFORE the session is unshifted into sessionLog,
+  // otherwise lastLiftFor() would match the set we're currently saving.
+  let beaten=0, comparable=0;
+  filledLifts.forEach(l=>{ const v=_liftVerdict(l); if(v){ comparable++; if(v.cls==='up') beaten++; } });
   const session={date:today(),type:sel.value,lifts:filledLifts,notes,ts:Date.now()};
   sessionLog.unshift(session);
   if(sessionLog.length>30) sessionLog=sessionLog.slice(0,30);
@@ -4480,7 +4576,10 @@ function saveSession(){
   renderWeekStrip();
   checkPBMilestones(session);
   recordJourneyEvent('session',session.type+' session','Logged training session',{type:session.type,lifts:filledLifts.length});
-  showToast(session.type+' logged ✓','action');
+  showToast(comparable
+    ? `${session.type} logged ✓ · ${beaten}/${comparable} beaten`
+    : `${session.type} logged ✓`, 'action');
+  _clearDraft();
   save();
   updateOverviewCards();
 }
@@ -5903,7 +6002,13 @@ function clearSessionLog(){
 }
 function factoryReset(){
   if(!confirm('FACTORY RESET: wipe all data? This cannot be undone.')) return;
-  localStorage.removeItem('protocol_v2');
+  // Was only clearing the legacy 'protocol_v2' key — which the app stopped using when the
+  // store became op_protocol_v3, so this silently wiped nothing. Clear every key we own.
+  // Gemini API key and the Health-sync credentials are deliberately included: "wipes
+  // everything" should mean it.
+  ['protocol_v2',STORE,DRAFT_KEY,'streakLastDate','themeMode','fitbitMeta',
+   'geminiApiKey','geminiModel','ghWorker','ghRefresh']
+    .forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
   showToast('Reset complete — reloading…','action');
   setTimeout(()=>window.location.reload(),1000);
 }
@@ -6846,6 +6951,8 @@ renderWeekStrip();
 renderSessionHistory();
 renderRemovedItems();
 renderProgress();
+_initDraftWatch();
+_restoreDraft();
 attachMealValidation();
 updateShiftChip();
 updateStreakMilestoneHint();
