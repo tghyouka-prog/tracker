@@ -1010,7 +1010,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .validation-msg.err{color:var(--red)}.validation-msg.ok{color:var(--teal)}.validation-msg.hint{color:var(--t3)}
 /* Daily check-in */
 
-.checkin-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at top right,rgba(38,201,138,.05),transparent 60%);pointer-events:none}
 
 
 .checkin-title i{color:var(--teal);font-size:14px}
@@ -1019,11 +1018,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
 .checkin-q i{font-size:12px}
 
-.checkin-dot{flex:1;aspect-ratio:1;max-width:36px;border-radius:50%;border:1px solid var(--b2);background:var(--s2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--t3);transition:all .15s}
-.checkin-dot:hover{border-color:var(--b3);color:var(--t2)}
-.checkin-dot.selected{background:var(--teal);color:#0a0a0a;border-color:var(--teal);transform:scale(1.05)}
-.checkin-dot.selected.warn{background:var(--amber);border-color:var(--amber)}
-.checkin-dot.selected.alert{background:var(--red);border-color:var(--red);color:#fff}
 .checkin-submit{width:100%;padding:8px;border-radius:var(--r-md);border:none;background:var(--teal);color:#0a0a0a;font-size:12px;font-weight:600;cursor:pointer;transition:transform .07s cubic-bezier(.34,1.56,.64,1)}
 .checkin-submit:active{transform:scale(.97)}
 .checkin-submit:disabled{background:var(--s3);color:var(--t3);cursor:not-allowed}
@@ -1038,11 +1032,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .coach-hint strong{color:var(--t1);font-weight:600}
 
 /* Insights cards */
-.insight-card{background:transparent;border:1px solid var(--b1);border-radius:var(--r-lg);padding:1rem 1.125rem;margin-bottom:.625rem;position:relative}
-.insight-card.pattern{border-left:3px solid var(--blue)}
-.insight-card.suggestion{border-left:3px solid var(--teal)}
-.insight-card.warning{border-left:3px solid var(--amber)}
-.insight-card.recovery{border-left:3px solid var(--red);background:linear-gradient(135deg,var(--s1),rgba(232,100,90,.04))}
 .insight-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem}
 .insight-icon{width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
 .insight-icon.pattern{background:var(--blue-dim);color:var(--blue)}
@@ -1050,13 +1039,10 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .insight-icon.warning{background:var(--amber-dim);color:var(--amber)}
 .insight-icon.recovery{background:var(--red-dim);color:var(--red)}
 .insight-title{font-size:13px;font-weight:600;color:var(--t1);flex:1}
-.insight-conf{font-size:11px;font-weight:600;color:var(--t3);letter-spacing:.05em;text-transform:uppercase}
 .insight-body{font-size:12px;color:var(--t2);line-height:1.5}
 .insight-body strong{color:var(--t1)}
 .insight-data{font-size:11px;color:var(--t3);background:var(--s2);border-radius:var(--r-sm);padding:.5rem .625rem;margin-top:.5rem;font-variant-numeric:tabular-nums;line-height:1.5}
 .insight-actions{display:flex;gap:.5rem;margin-top:.625rem}
-.insight-apply{flex:1;font-size:12px;font-weight:600;padding:6px 12px;border-radius:var(--r-sm);border:none;background:var(--teal);color:#0a0a0a;cursor:pointer;transition:transform .07s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;justify-content:center;gap:5px}
-.insight-apply:active{transform:scale(.96)}
 .insight-dismiss{padding:6px 12px;font-size:12px;color:var(--t3);background:transparent;border:1px solid var(--b2);border-radius:var(--r-sm);cursor:pointer}
 .insight-dismiss:hover{color:var(--t1);border-color:var(--b3)}
 .insights-empty{background:var(--s1);border:1px dashed var(--b2);border-radius:var(--r-lg);padding:1.5rem;text-align:center;color:var(--t3);font-size:12px;line-height:1.5}
@@ -1166,19 +1152,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .insights-sub{font-size:11px;color:var(--t3)}
 
 /* Data progress indicator (baseline building) */
-.data-progress{background:var(--s1);border:1px solid var(--b1);border-left:2px solid var(--blue);border-radius:var(--r-md);padding:.875rem 1rem;margin-bottom:1rem}
-.data-progress-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;gap:.5rem;flex-wrap:wrap}
-.data-progress-title{font-size:12px;font-weight:600;color:var(--t1);display:flex;align-items:center;gap:5px}
-.data-progress-count{font-size:11px;font-weight:600;color:var(--blue);font-variant-numeric:tabular-nums}
-.data-progress-card{background:linear-gradient(135deg,rgba(107,163,245,.08),color-mix(in srgb,var(--teal) 6%,transparent));border:1px solid color-mix(in srgb,var(--teal) 20%,transparent);border-radius:var(--r-lg);padding:1rem 1.125rem;margin-bottom:1rem}
-.dp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.625rem}
-.dp-title{font-size:13px;font-weight:600;color:var(--t1);display:flex;align-items:center}
-.dp-count{font-size:12px;font-weight:700;color:var(--teal);font-variant-numeric:tabular-nums}
-.dp-note{font-size:12px;color:var(--t2);line-height:1.6;margin-top:.5rem}
-.dp-note strong{color:var(--t1)}
-.data-progress-bar{height:6px;background:var(--s3);border-radius:3px;overflow:hidden;margin-bottom:.5rem}
-.data-progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--teal));transition:width .4s cubic-bezier(.4,0,.2,1)}
-.data-progress-note{font-size:11px;color:var(--t3);line-height:1.45}
 
 /* Category breakdown chips under progress bar */
 .progress-breakdown{display:flex;flex-wrap:wrap;gap:6px;margin-top:.5rem}
@@ -1333,32 +1306,13 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .cs-fv small{font-size:9px;color:var(--t3);font-weight:400}
 
 /* Filter pills */
-.coach-filter-pills{display:flex;gap:6px;margin-bottom:.875rem;flex-wrap:wrap}
-.cf-pill{font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;border:1px solid var(--b2);color:var(--t3);background:transparent;cursor:pointer;transition:background .18s,border-color .18s,color .18s;-webkit-tap-highlight-color:transparent}
-.cf-pill.active{background:color-mix(in srgb,var(--focus-ac) 14%,transparent);border-color:color-mix(in srgb,var(--focus-ac) 42%,transparent);color:var(--focus-ac)}
 
 /* Insight record cards (FocusFlight) */
-.insight-card{background:var(--s1) !important;border:1px solid var(--b1) !important;border-radius:var(--r-lg) !important;padding:.8rem .95rem .7rem !important;margin-bottom:.5rem !important;position:relative}
-.insight-card.recovery{background:var(--s1) !important}
-.ic-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem}
 .ic-cat{font-size:10px;color:var(--t3);letter-spacing:.02em}
-.ic-pill{font-size:8.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:5px}
-.ic-pill.ac{background:color-mix(in srgb,var(--focus-ac) 16%,transparent);color:var(--focus-ac)}
-.ic-pill.w{background:var(--amber-dim);color:var(--amber)}
-.ic-pill.r{background:var(--red-dim,rgba(204,68,56,.12));color:var(--red,#cc4438)}
-.ic-h{font-size:14px;font-weight:600;color:var(--t1);line-height:1.3;margin-bottom:4px}
-.ic-b{font-size:12px;color:var(--t2);line-height:1.45}
-.ic-b strong{color:var(--t1)}
-.ic-data{font-size:11px;color:var(--t3);margin-top:.5rem;font-variant-numeric:tabular-nums;line-height:1.5}
 .ic-actions{display:flex;gap:.5rem;margin-top:.7rem}
 .insight-applied-chip{font-size:11px;color:var(--focus-ac);margin-top:.5rem;display:flex;align-items:center;gap:5px}
-.insight-apply-ghost{flex:1;font-size:12px;font-weight:600;padding:7px 12px;border-radius:var(--r-sm);border:1px solid var(--b2);background:transparent;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:border-color .12s,color .12s}
-.insight-apply-ghost:active{transform:scale(.96)}
 
 /* Dismiss + show-more + calibration */
-@keyframes _iDismiss{to{opacity:0;transform:translateX(-28px)}}
-.insight-card.dismissing{animation:_iDismiss .3s ease-out forwards;pointer-events:none}
-.coach-show-more{font-size:12px;color:var(--focus-ac);background:transparent;border:none;cursor:pointer;padding:.625rem 0;text-align:center;width:100%;display:block;-webkit-tap-highlight-color:transparent}
 .coach-empty{padding:1rem .5rem .25rem;text-align:center}
 .coach-empty-title{font-size:13px;font-weight:600;color:var(--t2);margin:.25rem 0}
 .coach-empty-sub{font-size:12px;color:var(--t3);line-height:1.5}
@@ -1375,10 +1329,10 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
    Targeted overrides rather than a blanket --b1/--b2 token change, since those tokens are also used for
    functional dividers (footer stat-strips, input borders) that should stay visible. */
 .card,.stat-card,.up-next-card,.supp-timing-table,.weight-history-strip,
-.focus-card,.macro-card,.fuel-sec,.fuel-wt-card,.score-row,.insight-card,.cs-card{
+.focus-card,.macro-card,.fuel-sec,.fuel-wt-card,.score-row,.cs-card{
   border:none!important;
 }
-.reset-btn,.fb-btn,.fb-connect-btn,.fb-mini,.add-custom-btn,.mb,.wt-btn,.cf-pill,.eod-btn,
+.reset-btn,.fb-btn,.fb-connect-btn,.fb-mini,.add-custom-btn,.mb,.wt-btn,.eod-btn,
 .fuel-log-btn,.train-cta,.rt-btn,.rem-btn{
   border:none!important;border-radius:999px!important;
 }
@@ -1675,6 +1629,25 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
       <button class="custom-del-btn" id="custom-del-btn" onclick="deleteCustomItem()" aria-label="Delete custom item" style="display:none"><i class="ti ti-trash" style="font-size:13px" aria-hidden="true"></i></button>
       <button class="custom-cancel-btn" onclick="closeCustomModal()">Cancel</button>
       <button class="custom-save-btn" onclick="saveCustomItem()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rename a built-in timeline item. Rebuilt Aug 2026 — actionSheetRename() had been wired to
+     the live "Rename" button since the dashboard deletion took this markup with it, so the
+     call threw on a null #rename-label and the button silently did nothing. Reuses the
+     custom-modal styles so no new CSS is needed. -->
+<div class="custom-modal-overlay" id="rename-overlay" onclick="closeRenameSheet(event)">
+  <div class="custom-modal">
+    <div class="custom-modal-title">Rename item</div>
+    <label class="custom-field-label" for="rename-label">Name</label>
+    <input class="custom-input" id="rename-label" placeholder="Item name" maxlength="60">
+    <label class="custom-field-label" for="rename-sub">Detail (optional)</label>
+    <input class="custom-input" id="rename-sub" placeholder="Supporting detail" maxlength="160">
+    <div class="custom-modal-actions">
+      <button class="custom-del-btn" onclick="resetRename()" aria-label="Reset to original wording"><i class="ti ti-rotate" style="font-size:13px" aria-hidden="true"></i></button>
+      <button class="custom-cancel-btn" onclick="closeRenameSheet()">Cancel</button>
+      <button class="custom-save-btn" onclick="saveRename()">Save</button>
     </div>
   </div>
 </div>
@@ -3114,13 +3087,6 @@ function updateOverviewCards(){
 
 // ── MISSION COLLAPSE ──
 let missionOpen=false;
-function toggleMission(){
-  missionOpen=!missionOpen;
-  const det=document.getElementById('mission-sub');
-  const tog=document.getElementById('mission-toggle');
-  if(det) det.className='mission-detail'+(missionOpen?' open':'');
-  if(tog) tog.className='ti ti-chevron-down mission-toggle'+(missionOpen?' open':'');
-}
 
 // ── HYDRATION PACE ──
 // Estimates expected hydration based on shift type and time of day
@@ -4762,56 +4728,7 @@ let lastWeeklyShown=null; // YYYY-MM-DD
 let _checkinDraft={energy:0,sleep:0,sore:0};
 
 // ── DAILY CHECK-IN ──
-function renderCheckin(){
-  const card=document.getElementById('checkin-card');
-  if(!card) return;
-  const today=biologicalToday();
-  const existing=checkins[today];
 
-  // Skipped or absent: show form (skipped users can still log if they reopen)
-  // Logged: show "done" panel with Edit affordance
-  if(existing&&!existing.skipped){
-    card.style.display='block';
-    document.getElementById('checkin-form').style.display='none';
-    document.getElementById('checkin-done').style.display='block';
-    return;
-  }
-  if(existing&&existing.skipped){
-    card.style.display='none';
-    return;
-  }
-
-  // Fresh state
-  card.style.display='block';
-  document.getElementById('checkin-form').style.display='block';
-  document.getElementById('checkin-done').style.display='none';
-  _checkinDraft={energy:0,sleep:0,sore:0};
-  ['energy','sleep','sore'].forEach(scale=>{
-    const el=document.getElementById('checkin-'+scale);
-    if(!el) return;
-    el.innerHTML=[1,2,3,4,5].map(n=>
-      `<button class="checkin-dot" onclick="setCheckin('${scale}',${n})">${n}</button>`
-    ).join('');
-  });
-  document.getElementById('checkin-submit').disabled=true;
-}
-
-function setCheckin(scale,val){
-  _checkinDraft[scale]=val;
-  const el=document.getElementById('checkin-'+scale);
-  if(el){
-    [...el.children].forEach((btn,i)=>{
-      btn.classList.toggle('selected',i+1===val);
-      // soreness 4-5 = warn, energy/sleep 1-2 = alert
-      if(i+1===val){
-        if(scale==='sore'&&val>=4) btn.classList.add('warn');
-        else if((scale==='energy'||scale==='sleep')&&val<=2) btn.classList.add('alert');
-      }
-    });
-  }
-  const done=_checkinDraft.energy&&_checkinDraft.sleep&&_checkinDraft.sore;
-  document.getElementById('checkin-submit').disabled=!done;
-}
 
 // ── PATTERN ENGINE ──
 function recentDays(n){
@@ -5104,13 +5021,13 @@ function applyRecoveryDay(){
   if(!weekHistory[biologicalToday()]) weekHistory[biologicalToday()]={};
   weekHistory[biologicalToday()].recoveryDay=true;
   appliedInsights['recovery-flag']={appliedAt:Date.now(),type:'recovery'};
-  save();renderInsights();
+  save();
 }
 
 function applyEarlyDeload(){
   showToast('Early deload triggered — reduce loads 40–50% next session','action');
   appliedInsights['soreness-flag']={appliedAt:Date.now(),type:'deload'};
-  save();renderInsights();
+  save();
 }
 
 function applyTargetIncrease(){
@@ -5121,27 +5038,14 @@ function applyTargetIncrease(){
   // Update label
   const lbl=document.getElementById('prot-target-label');
   if(lbl) lbl.textContent=`/ ${TARGETS.prot}g`;
-  save();renderInsights();
+  save();
 }
 
 function openTracker(){go('tracker');}
 function openSleep(){go('sleep');}
 
-function setCoachFilter(f,btn){
-  _coachFilter=f;_coachShowAll=false;
-  document.querySelectorAll('.cf-pill').forEach(p=>p.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  renderInsights();
-}
 
-function _coachShiftLabel(){
-  const m={'ds':'Day','ns1':'Night 1','ns2':'Night 2','off':'Off day','xds':'Day extra','xns':'Night extra'};
-  return m[shift]||'';
-}
 
-function _fmtShortDate(isoStr){
-  try{const d=new Date(isoStr);return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});}catch(e){return '';}
-}
 
 // Odometer digit columns — keep 52 in sync with .cs-digit/.cs-num height in CSS
 const _CS_H=52, _CS_CYCLES=4;
@@ -5154,31 +5058,6 @@ function _csOdoHTML(score){
   }).join('');
 }
 
-function _renderCoachScore(stats){
-  const wrap=document.getElementById('coach-score-wrap');
-  if(!wrap) return;
-  const hasData=stats.daysAnalyzed>=1;
-  const score=hasData?Math.min(100,Math.round(stats.avgScore)):0;
-  if(!hasData){
-    wrap.innerHTML=`<div class="cs-card mo-rise-card"><div class="cs-top"><span class="cs-lab">Protocol score</span><span class="cs-pill">Calibrating</span></div>
-      <div class="coach-empty"><div class="coach-empty-title">Log a few days to calibrate</div><div class="coach-empty-sub">Tick the Tracker and complete your check-in. Coach activates after a few days of data.</div></div></div>`;
-    return;
-  }
-  const cutoff7=new Date(Date.now()-7*864e5).toISOString().slice(0,10);
-  const trainWk=sessionLog.filter(s=>s.date>=cutoff7).length;
-  const protVal=stats.avgProt>0?stats.avgProt:'—';
-  const sleepVal=stats.avgSleep>0?stats.avgSleep.toFixed(1):'—';
-  const st=score>=80?{l:'Strong',c:'ac'}:score>=55?{l:'Holding',c:''}:{l:'Low',c:'w'};
-  wrap.innerHTML=`<div class="cs-card mo-rise-card">
-    <div class="cs-top"><span class="cs-lab">Protocol score</span><span class="cs-pill ${st.c}">${st.l}</span></div>
-    <div class="cs-score"><span class="cs-odo">${_csOdoHTML(score)}</span><span class="cs-su">/100</span></div>
-    <div class="cs-foot">
-      <div class="cs-fc"><div class="cs-fl">Fuel avg</div><div class="cs-fv">${protVal}<small>g</small></div></div>
-      <div class="cs-fc"><div class="cs-fl">Sessions</div><div class="cs-fv">${trainWk}<small>/wk</small></div></div>
-      <div class="cs-fc"><div class="cs-fl">Sleep</div><div class="cs-fv">${sleepVal}<small>/5</small></div></div>
-    </div>
-  </div>`;
-}
 
 // Odometer spin — resets digits to 0 then rolls to final, with a landing pop.
 // Reflow (not rAF) so the spin survives a throttled/backgrounded frame loop —
@@ -5215,172 +5094,15 @@ function _playTabEntrance(pageId, odoWrapId){
 
 // Explicit insight→category map. Unmapped ids fall to 'train' (general execution),
 // so a new insight still surfaces under All and Train rather than vanishing.
-const COACH_CAT={
-  'recovery-flag':'recovery','soreness-flag':'recovery','sleep-low':'recovery',
-  'hrv-drop':'recovery','rhr-elevated':'recovery',
-  'food-protein-short':'fuel','food-protein-good':'fuel','food-kcal-under':'fuel',
-  'food-kcal-over':'fuel','food-skipped':'fuel','targets-low':'fuel','targets-high':'fuel',
-  'tracker-low':'train','consistent-execution':'train'
-};
-function _coachCat(i){ return COACH_CAT[i.id]||(i.type==='recovery'?'recovery':'train'); }
 
-function _renderCoachFeed(insights){
-  const feed=document.getElementById('coach-insight-feed');
-  if(!feed) return;
-  const filtered=_coachFilter==='all'?insights:insights.filter(i=>_coachCat(i)===_coachFilter);
-  const MAX=4;
-  const visible=_coachShowAll?filtered:filtered.slice(0,MAX);
-  const more=filtered.length-MAX;
-  if(!filtered.length){
-    feed.innerHTML=`<div class="coach-empty"><div class="coach-empty-title">${_coachFilter==='all'?'No patterns yet':'Nothing in this category'}</div><div class="coach-empty-sub">Keep logging — patterns surface after a few consistent days.</div></div>`;
-    return;
-  }
-  feed.innerHTML=visible.map((ins,idx)=>insightCardHTML(ins,idx===0)).join('')
-    +(!_coachShowAll&&more>0?`<button class="coach-show-more" onclick="_coachShowAll=true;renderInsights()">+${more} more insight${more===1?'':'s'}</button>`:'');
-}
-
-function dismissInsight(id){
-  const el=document.getElementById('ic-'+id);
-  if(el){
-    el.classList.add('dismissing');
-    setTimeout(()=>{dismissedInsights[id]={dismissedAt:Date.now()};save();renderInsights();showToast('Dismissed — coach will revisit in 7 days','action');},300);
-  } else {
-    dismissedInsights[id]={dismissedAt:Date.now()};save();renderInsights();showToast('Dismissed — coach will revisit in 7 days','action');
-  }
-}
 
 // ── RENDER INSIGHTS ──
-function renderInsights(){
-  const insights=generateInsights();
-  const stats=analyzeRecent();
-
-  // ── Data progress indicator ──
-  // Show until we have 5+ days of data — sets expectations
-  const minDays=5;
-  const dp=document.getElementById('data-progress');
-  if(dp){
-    if(stats.daysAnalyzed<minDays){
-      dp.style.display='block';
-      const pct=Math.round((stats.daysAnalyzed/minDays)*100);
-      document.getElementById('data-progress-count').textContent=stats.daysAnalyzed+' / '+minDays+' days';
-      document.getElementById('data-progress-fill').style.width=pct+'%';
-      const note=document.getElementById('data-progress-note');
-      if(note){
-        if(stats.daysAnalyzed===0){
-          note.innerHTML='Tick through your <strong>Tracker</strong> and complete today\'s <strong>check-in</strong> to start building your baseline. Coach needs 5 days of data to surface meaningful patterns.';
-        } else if(stats.daysAnalyzed===1){
-          note.innerHTML='Good start — 1 day logged. <strong>4 more days</strong> until full analysis. Your energy, sleep, and protocol scores are being recorded.';
-        } else if(stats.daysAnalyzed<3){
-          note.innerHTML=`<strong>${minDays-stats.daysAnalyzed} more days</strong> of logging needed. Consistency matters here — partial days still count toward the baseline.`;
-        } else if(stats.daysAnalyzed<minDays){
-          note.innerHTML=`Almost there — <strong>${minDays-stats.daysAnalyzed} more day${minDays-stats.daysAnalyzed===1?'':'s'}</strong>. Some early patterns may already appear below once enough data exists.`;
-        }
-      }
-    } else {
-      dp.style.display='none';
-    }
-  }
-
-  // Update nav badge with unread insight count
-  const newCount=insights.length;
-  if(newCount>0&&_lastInsightCount!==newCount){
-    _lastInsightCount=newCount;
-    setInsightsBadge(newCount);
-  } else if(newCount===0){
-    clearInsightsBadge();
-  }
-
-  // ── Coach score ring + unified feed ──
-  _renderCoachScore(stats);
-  _renderCoachFeed(insights);
-  renderOverloadInsight();
-  // Training trends (progressive overload) only relevant under All / Train filters
-  const _ovlVisible=(_coachFilter==='all'||_coachFilter==='train');
-  const _ovlLabel=document.getElementById('overload-label');
-  const _ovlWrap=document.getElementById('insights-overload');
-  if(_ovlWrap) _ovlWrap.style.display=_ovlVisible?'':'none';
-  if(_ovlLabel&&!_ovlVisible) _ovlLabel.style.display='none';
-}
 
 // Progressive overload summary — compares the two most recent sessions per exercise
-function renderOverloadInsight(){
-  const wrap=document.getElementById('insights-overload');
-  const label=document.getElementById('overload-label');
-  if(!wrap||!label) return;
-  // Collect each exercise's two most recent records (with a numeric load proxy)
-  const seen={}; // name -> [records newest first]
-  for(const sess of sessionLog){
-    if(!sess.lifts) continue;
-    for(const l of sess.lifts){
-      if(!l.name||!l.weight) continue;
-      const key=l.name.trim();
-      if(!seen[key]) seen[key]=[];
-      if(seen[key].length<2) seen[key].push({...l,date:sess.date});
-    }
-  }
-  const rows=[];
-  Object.keys(seen).forEach(name=>{
-    const recs=seen[name];
-    if(recs.length<2) return; // need two sessions to show a trend
-    const [now,prev]=recs;
-    // Load proxy: weight × reps (volume per set), fall back to weight
-    const loadNow=(parseFloat(now.weight)||0)*(parseFloat(now.reps)||1);
-    const loadPrev=(parseFloat(prev.weight)||0)*(parseFloat(prev.reps)||1);
-    let dir='flat',icon='ti-equal',color='var(--t3)';
-    if(loadNow>loadPrev){dir='up';icon='ti-trending-up';color='var(--teal)';}
-    else if(loadNow<loadPrev){dir='down';icon='ti-trending-down';color='var(--amber)';}
-    rows.push({name,dir,icon,color,
-      nowStr:`${now.weight}kg×${now.reps||'?'}`,
-      prevStr:`${prev.weight}kg×${prev.reps||'?'}`});
-  });
-  if(!rows.length){label.style.display='none';wrap.innerHTML='';return;}
-  label.style.display='block';
-  // Sort: improving first, then flat, then declining
-  const order={up:0,flat:1,down:2};
-  rows.sort((a,b)=>order[a.dir]-order[b.dir]);
-  wrap.innerHTML=`<div class="overload-card">`+rows.map(r=>`
-    <div class="ovl-row">
-      <i class="ti ${r.icon}" style="font-size:15px;color:${r.color};flex-shrink:0"></i>
-      <span class="ovl-name">${r.name}</span>
-      <span class="ovl-trend"><span style="color:var(--t3)">${r.prevStr}</span> → <strong style="color:${r.color}">${r.nowStr}</strong></span>
-    </div>`).join('')+`</div>`;
-}
 
 // Semantic status pill per insight type — accent for positive, amber/red for caution
-function _coachPill(type){
-  if(type==='recovery') return {label:'Act now',cls:'r'};
-  if(type==='warning')  return {label:'Watch',cls:'w'};
-  if(type==='pattern')  return {label:'Pattern',cls:'ac'};
-  if(type==='suggestion') return {label:'Tip',cls:'ac'};
-  return {label:type,cls:'ac'};
-}
-const _CAT_LABEL={recovery:'Recovery',warning:'Watch-out',pattern:'Pattern',suggestion:'Suggestion'};
-function insightCardHTML(i, isPrimary=false){
-  const applied=appliedInsights[i.id];
-  const pill=_coachPill(i.type);
-  const cat=_CAT_LABEL[i.type]||i.type;
-  return `<div class="insight-card mo-rise ${i.type}" id="ic-${i.id}">
-    <div class="ic-top"><span class="ic-cat">${cat}</span><span class="ic-pill ${pill.cls}">${pill.label}</span></div>
-    <div class="ic-h">${i.title}</div>
-    <div class="ic-b">${i.body}</div>
-    ${i.data?`<div class="ic-data">${i.data}</div>`:''}
-    ${i.action&&!applied?`<div class="ic-actions">
-      <button class="${isPrimary?'insight-apply':'insight-apply-ghost'}" onclick="${i.actionFn}()"><i class="ti ti-check" style="font-size:12px"></i>${i.actionLabel}</button>
-      <button class="insight-dismiss" onclick="dismissInsight('${i.id}')">Dismiss</button>
-    </div>`:applied?`<div class="insight-applied-chip"><i class="ti ti-check" style="font-size:12px"></i>Applied ${timeAgo(applied.appliedAt)}</div>`:''}
-  </div>`;
-}
 
 
-function timeAgo(ts){
-  const mins=Math.floor((Date.now()-ts)/60000);
-  if(mins<1) return 'just now';
-  if(mins<60) return mins+'m ago';
-  const hrs=Math.floor(mins/60);
-  if(hrs<24) return hrs+'h ago';
-  const days=Math.floor(hrs/24);
-  return days+'d ago';
-}
 
 // ── WEEKLY SUMMARY MODAL ──
 function maybeShowWeeklySummary(){
@@ -6981,17 +6703,26 @@ function actionSheetRename(){
   closeActionSheet();
   if(idx>=baseLen){ openCustomItemModal(idx-baseLen); return; } // customs use their full editor
   const item=getTimeline(s)[idx];
+  const lblEl=document.getElementById('rename-label');
+  const subEl=document.getElementById('rename-sub');
+  const overlay=document.getElementById('rename-overlay');
+  // Guarded: this used to throw on a null #rename-label after the markup was deleted, which
+  // closed the action sheet and then died silently. Fail loudly-but-safely instead.
+  if(!lblEl||!subEl||!overlay){ showToast('Rename unavailable','action'); return; }
   _renameTarget={shift:s,orig:item.origLabel};
-  document.getElementById('rename-label').value=item.label||'';
-  document.getElementById('rename-sub').value=item.sub||'';
-  document.getElementById('rename-overlay').classList.add('show');
-  setTimeout(()=>document.getElementById('rename-label').focus(),150);
+  lblEl.value=item.label||'';
+  subEl.value=item.sub||'';
+  overlay.classList.add('show');
+  setTimeout(()=>lblEl.focus(),150);
 }
 let _renameTarget=null;
 function saveRename(){
   if(!_renameTarget) return;
-  const lbl=document.getElementById('rename-label').value.trim();
-  const sub=document.getElementById('rename-sub').value.trim();
+  const lblEl=document.getElementById('rename-label');
+  const subEl=document.getElementById('rename-sub');
+  if(!lblEl||!subEl) return;
+  const lbl=lblEl.value.trim();
+  const sub=subEl.value.trim();
   const key=_renameTarget.shift+'__'+_renameTarget.orig;
   if(!lbl||lbl===_renameTarget.orig&&!sub){ delete labelEdits[key]; }
   else labelEdits[key]={label:lbl||_renameTarget.orig,sub:sub||undefined};
@@ -7004,8 +6735,11 @@ function resetRename(){
   closeRenameSheet(); render(); save();
   showToast('Back to original','action');
 }
-function closeRenameSheet(){
-  document.getElementById('rename-overlay').classList.remove('show');
+function closeRenameSheet(e){
+  // Backdrop-click only — ignore clicks that bubbled up from inside the modal.
+  if(e&&e.target!==document.getElementById('rename-overlay')) return;
+  const ov=document.getElementById('rename-overlay');
+  if(ov) ov.classList.remove('show');
   _renameTarget=null;
 }
 function actionSheetHalf(){
@@ -7110,7 +6844,6 @@ renderMealLog();
 renderFitbit();
 renderWeekStrip();
 renderSessionHistory();
-renderCheckin();
 renderRemovedItems();
 renderProgress();
 attachMealValidation();
@@ -7194,5 +6927,3 @@ go('tracker');
 
 
 
-
-<!-- build: 2026-08-06T13:20:56Z -->
