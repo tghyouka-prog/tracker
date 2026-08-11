@@ -1464,13 +1464,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
         </div>
         <button class="settings-btn danger" onclick="clearSessionLog()">Clear</button>
       </div>
-      <div class="settings-row">
-        <div>
-          <div class="settings-row-label">Factory reset</div>
-          <div class="settings-row-sub">Wipes everything — irreversible</div>
-        </div>
-        <button class="settings-btn danger" onclick="factoryReset()">Reset all</button>
-      </div>
     </div>
 
     <div class="settings-section">
@@ -5999,18 +5992,6 @@ function clearSessionLog(){
   const snapshot=[...sessionLog];
   sessionLog=[];save();renderSessionHistory();
   pushUndo('Session log cleared',()=>{sessionLog=snapshot;save();renderSessionHistory();});
-}
-function factoryReset(){
-  if(!confirm('FACTORY RESET: wipe all data? This cannot be undone.')) return;
-  // Was only clearing the legacy 'protocol_v2' key — which the app stopped using when the
-  // store became op_protocol_v3, so this silently wiped nothing. Clear every key we own.
-  // Gemini API key and the Health-sync credentials are deliberately included: "wipes
-  // everything" should mean it.
-  ['protocol_v2',STORE,DRAFT_KEY,'streakLastDate','themeMode','fitbitMeta',
-   'geminiApiKey','geminiModel','ghWorker','ghRefresh']
-    .forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
-  showToast('Reset complete — reloading…','action');
-  setTimeout(()=>window.location.reload(),1000);
 }
 
 
