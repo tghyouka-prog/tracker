@@ -2651,23 +2651,29 @@ async function aiAnalyseMeal(){
 
 Food description: ${name}
 
-Respond ONLY with valid JSON (no markdown, no backticks):
-{"food":"<clean short dish name>","protein_g":<number>,"calories_kcal":<number>,"carbs_g":<number>,"confidence":"high|medium|low","note":"<one short sentence: key assumption>"}
+If this names a specific branded or packaged product (a company/brand name, a retail product line, a packaged snack) — use Google Search to find its actual nutrition label or product page and report those exact figures instead of estimating a generic version of the dish. Only fall back to estimating from typical prep when no specific product is named or no reliable source turns up.
+
+Respond with ONLY a single JSON object, no markdown, no backticks, no text before or after it:
+{"food":"<clean short dish name>","protein_g":<number>,"calories_kcal":<number>,"carbs_g":<number>,"confidence":"high|medium|low","note":"<one short sentence: key assumption, or the source if a specific product was found>"}
 
 Rules:
 - Singapore hawker context if ambiguous (chicken rice = Hainanese, mee goreng = local style)
 - Match the described portion and cooking method
-- Confidence high = well-known dish standard prep, low = vague or unusual`;
+- Confidence high = matched an official nutrition label or well-known dish standard prep, low = vague or unusual`;
 
   // Gemini 2.5 models spend part of maxOutputTokens on internal "thinking" before writing the
   // reply — at a low token budget that can eat the whole response, leaving nothing (or a
   // truncated fragment) for the actual JSON, which looks like "returned plain text" but is
-  // really just cut off. Disable thinking (flash models support turning it off entirely) and
-  // give a generous token budget, with one silent retry at an even higher budget if it still
-  // comes back truncated or unparseable — this is what was causing the inconsistent failures.
+  // really just cut off. Give a generous token budget, with one silent retry at an even higher
+  // budget if it still comes back truncated or unparseable.
+  // NOTE: thinking is no longer force-disabled (thinkingBudget:0) — the model needs to reason
+  // in order to decide to call google_search at all, and forcing responseMimeType:'application/
+  // json' is dropped too, since Gemini 2.5 doesn't reliably support tool use (search grounding)
+  // together with enforced JSON mode; only Gemini 3 lifted that restriction. JSON-only output is
+  // now enforced by the prompt instead, and the extraction below already tolerates surrounding
+  // text/markdown, so nothing downstream had to change.
   async function callGemini(maxTokens){
-    const generationConfig={temperature:0.1,maxOutputTokens:maxTokens,responseMimeType:'application/json'};
-    if(_geminiModel.includes('flash')) generationConfig.thinkingConfig={thinkingBudget:0};
+    const generationConfig={temperature:0.1,maxOutputTokens:maxTokens};
     const res = await fetch(
       'https://generativelanguage.googleapis.com/v1beta/models/' + _geminiModel + ':generateContent?key=' + _geminiKey,
       {
@@ -2678,6 +2684,7 @@ Rules:
             ...(photoData?[{inline_data:{mime_type:photoMime,data:photoData}}]:[]),
             {text:prompt}
           ]}],
+          tools:[{google_search:{}}],
           generationConfig
         })
       }
@@ -2688,24 +2695,26 @@ Rules:
     }
     const data = await res.json();
     const cand = data.candidates?.[0];
-    const raw  = cand?.content?.parts?.[0]?.text || '';
+    const raw  = cand?.content?.parts?.map(p=>p.text||'').join('') || '';
     const truncated = cand?.finishReason==='MAX_TOKENS';
 
     // Robust extraction — find the JSON object even if wrapped in text
     let jsonStr = raw.replace(/```json|```/g,'').trim();
     const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
     if(!jsonMatch) throw new Error(truncated ? 'TRUNCATED' : ('NO_JSON: ' + raw.slice(0,120)));
-    return JSON.parse(jsonMatch[0]);
+    const parsed = JSON.parse(jsonMatch[0]);
+    parsed.__grounded = !!(cand?.groundingMetadata?.webSearchQueries?.length);
+    return parsed;
   }
 
   try {
     let parsed;
     try {
-      parsed = await callGemini(1024);
+      parsed = await callGemini(2048); // grounded calls spend tokens digesting search results too
     } catch(e1){
       if(e1.message==='TRUNCATED' || e1.message.startsWith('NO_JSON')){
         if(lbl()) lbl().textContent='Retrying…';
-        parsed = await callGemini(2048); // let the retry's own error surface if this also fails
+        parsed = await callGemini(4096); // let the retry's own error surface if this also fails
       } else {
         throw e1;
       }
@@ -2721,8 +2730,9 @@ Rules:
     if(ne&&!ne.value&&parsed.food) ne.value=parsed.food;
 
     const confColor=parsed.confidence==='high'?'var(--teal)':parsed.confidence==='medium'?'#c97a1d':'#6e6e6e';
-    showStrip(`<span style="color:${confColor};font-weight:700">${parsed.confidence} confidence</span> — ${parsed.note||''} &nbsp;·&nbsp; ${parsed.carbs_g}g carbs`, false);
-    showToast(parsed.protein_g+'g protein · '+parsed.calories_kcal+' kcal estimated','action');
+    const groundedTag=parsed.__grounded?'<i class="ti ti-world" style="font-size:11px;color:var(--teal)" title="Verified via web search"></i> ':'';
+    showStrip(`${groundedTag}<span style="color:${confColor};font-weight:700">${parsed.confidence} confidence</span> — ${parsed.note||''} &nbsp;·&nbsp; ${parsed.carbs_g}g carbs`, false);
+    showToast(parsed.protein_g+'g protein · '+parsed.calories_kcal+' kcal estimated'+(parsed.__grounded?' (web-verified)':''),'action');
 
   } catch(e) {
     let msg=e.message||'Something went wrong.';
