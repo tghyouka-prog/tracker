@@ -661,29 +661,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .db-section{margin-bottom:1.25rem}
 .db-label{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between}
 .db-label span{font-size:11px;letter-spacing:0;text-transform:none;color:var(--t3);font-weight:400}
-.score-row{display:grid;grid-template-columns:auto 1fr;gap:1rem;align-items:center;background:transparent;border:1px solid var(--b1);border-radius:var(--r-lg);padding:1rem 1.125rem;margin-bottom:.5rem}
-.score-ring-wrap{position:relative;width:80px;height:80px;flex-shrink:0}
-.arc-bg{fill:none;stroke:var(--s3);stroke-width:7;stroke-linecap:round}
-.arc-seg{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke-dasharray .45s cubic-bezier(.4,0,.2,1),stroke-dashoffset .45s cubic-bezier(.4,0,.2,1)}
-.arc-seg.prot{stroke:var(--teal)}.arc-seg.hydro{stroke:var(--blue)}.arc-seg.kcal{stroke:var(--amber)}.arc-seg.tracker{stroke:var(--purple)}
-.arc-threshold{fill:none;stroke:rgba(255,248,240,.18);stroke-width:7;stroke-linecap:butt}
-.arc-threshold-90{fill:none;stroke:rgba(255,248,240,.32);stroke-width:7;stroke-linecap:butt}
-.score-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
-.score-pct{font-size:17px;font-weight:700;color:var(--t1);line-height:1;font-variant-numeric:tabular-nums}
-.score-lbl{font-size:11px;color:var(--t3);letter-spacing:.06em;text-transform:uppercase}
-.score-title{font-size:14px;font-weight:600;color:var(--t1);margin-bottom:2px}
-.score-sub{font-size:12px;color:var(--t2);line-height:1.4}
-.streak-row{display:flex;align-items:center;gap:.375rem;margin-top:.5rem}
-.streak-val{font-size:13px;font-weight:600;color:var(--amber)}
-.streak-lbl{font-size:11px;color:var(--t3)}
-.xp-bar-wrap{height:3px;background:var(--s3);border-radius:2px;overflow:hidden;margin-top:.5rem}
-.xp-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--amber),var(--teal));transition:width .35s}
-.arc-legend{display:flex;flex-wrap:wrap;gap:.5rem .75rem;margin-top:.625rem}
-.arc-dot{font-size:11px;font-weight:500;white-space:nowrap}
-.arc-dot.prot{color:var(--teal)}.arc-dot.hydro{color:var(--blue)}.arc-dot.kcal{color:var(--amber)}.arc-dot.tracker{color:var(--purple)}
-.ov-card{background:var(--s1);border:1px solid var(--b1);border-radius:12px;padding:.75rem .625rem;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .1s cubic-bezier(.34,1.56,.64,1)}
-.ov-card:active{transform:scale(.97)}
-.ov-card-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:.375rem}
 
 /* CYCLE */
 .cycle-wrap{background:transparent;border:1px solid var(--b1);border-radius:var(--r-lg);padding:1rem 1.125rem}
@@ -742,7 +719,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .rule-ic.a{color:var(--amber)}.rule-ic.t{color:var(--teal)}.rule-ic.r{color:var(--red)}.rule-ic.b{color:var(--blue)}.rule-ic.p{color:var(--purple)}
 .rule-body{color:var(--t2)}.rule-body strong{color:var(--t1)}
 
-@media(max-width:600px){.feedback-grid{grid-template-columns:1fr}.cycle-days{grid-template-columns:repeat(3,1fr)}.score-row{grid-template-columns:1fr}.score-ring-wrap{display:none}}
+@media(max-width:600px){.feedback-grid{grid-template-columns:1fr}.cycle-days{grid-template-columns:repeat(3,1fr)}}
 
 /* WEEKLY STRIP */
 .week-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:.625rem}
@@ -809,9 +786,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
 /* ═══ PRIORITY 5–8 ═══ */
 
-/* 5 — Arc threshold tick marks */
-.arc-threshold{fill:none;stroke:rgba(255,248,240,.16);stroke-width:7;stroke-linecap:butt}
-.arc-threshold-90{fill:none;stroke:rgba(255,248,240,.30);stroke-width:7;stroke-linecap:butt}
 
 /* 6 — Priority timeline items */
 .tl-item.priority-item{border-left:2px solid var(--amber);padding-left:calc(.875rem - 1px);background:linear-gradient(to right,rgba(232,151,58,.05),var(--s1))}
@@ -833,7 +807,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .meal-log-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.875rem;color:var(--t3);font-size:12px;text-align:center;gap:4px}
 
 /* 8 — Insights nav badge */
-.nav-badge{position:absolute;top:5px;right:8px;min-width:16px;height:16px;border-radius:8px;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;line-height:1;pointer-events:none;border:1.5px solid var(--bg)}
 
 /* ═══ REMAINING IMPROVEMENTS ═══ */
 
@@ -856,7 +829,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .undo-toast-btn:active{transform:scale(.93)}
 
 /* 4 — Gradient warmth on focal surfaces */
-.score-row{background:linear-gradient(135deg,var(--s1) 60%,color-mix(in srgb,var(--teal) 4%,transparent)) !important}
 .up-next-card{background:linear-gradient(135deg,var(--s1),color-mix(in srgb,var(--teal) 6%,transparent)) !important}
 
 
@@ -1334,7 +1306,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
    Targeted overrides rather than a blanket --b1/--b2 token change, since those tokens are also used for
    functional dividers (footer stat-strips, input borders) that should stay visible. */
 .card,.stat-card,.up-next-card,.supp-timing-table,.weight-history-strip,
-.focus-card,.macro-card,.fuel-sec,.fuel-wt-card,.score-row,.cs-card{
+.focus-card,.macro-card,.fuel-sec,.fuel-wt-card,.cs-card{
   border:none!important;
 }
 .reset-btn,.fb-btn,.fb-connect-btn,.fb-mini,.add-custom-btn,.mb,.wt-btn,.eod-btn,
@@ -2950,7 +2922,6 @@ function updateMacroUI(type){
     const bar=document.getElementById(type+'-bar'+suffix);
     const curEl=document.getElementById(type+'-cur'+suffix);
     const gapEl=document.getElementById(type+'-gap'+suffix);
-    const paceEl=document.getElementById(type==='hydro'?'hydro-pace'+suffix:null);
     if(curEl) curEl.textContent=curText;
     if(bar){
       bar.style.width=pct+'%';
@@ -2995,58 +2966,12 @@ function getScore(){
   return Math.round((p+h+k+t)/4);
 }
 
-const ARC_FULL=47.3; // each of 4 segments spans 90° minus gap
-const ARC_OFFSETS={prot:0, hydro:-51.8, kcal:-103.6, tracker:-155.4};
-
-function updateArc(type,pct){
-  const el=document.getElementById('arc-'+type);
-  if(!el) return;
-  const filled=ARC_FULL*(Math.min(100,pct)/100);
-  const gap=207.3-filled;
-  el.setAttribute('stroke-dasharray',filled+' '+gap);
-  el.setAttribute('stroke-dashoffset',ARC_OFFSETS[type]||0);
-  el.style.opacity=pct>0?'1':'0.18';
-}
-
+// Streak bookkeeping. Named updateScore() for historical reasons (it used to also drive an
+// arc-ring score widget) — that widget's HTML was removed in an earlier redesign but this
+// function kept computing and writing to its ids, all silent no-ops via the `if(el)` guards.
+// Stripped down to what's actually live: the day-streak check. Kept the name since it's
+// called from ~10 places already and renaming is pure churn for zero behavior change.
 function updateScore(){
-  const p=Math.min(100,macros.prot/TARGETS.prot*100);
-  const h=Math.min(100,macros.hydro/TARGETS.hydro*100);
-  const k=Math.min(100,macros.kcal/TARGETS.kcal*100);
-  const t=getTrackerPct();
-  const s=Math.round((p+h+k+t)/4); // all four dimensions
-
-  updateArc('prot',p);
-  updateArc('hydro',h);
-  updateArc('kcal',k);
-  updateArc('tracker',t);
-
-  const tl=document.getElementById('arc-lbl-tracker');
-  if(tl) tl.textContent=t+'% done';
-
-  const pl=document.getElementById('arc-lbl-prot');
-  const hl=document.getElementById('arc-lbl-hydro');
-  const kl=document.getElementById('arc-lbl-kcal');
-  if(pl) pl.innerHTML=`<i class="ti ti-circle-filled" style="font-size:7px;margin-right:3px"></i>${macros.prot}g / ${TARGETS.prot}g`;
-  if(hl) hl.innerHTML=`<i class="ti ti-circle-filled" style="font-size:7px;margin-right:3px"></i>${(macros.hydro/1000).toFixed(1)}L / ${(TARGETS.hydro/1000).toFixed(1)}L`;
-  if(kl) kl.innerHTML=`<i class="ti ti-circle-filled" style="font-size:7px;margin-right:3px"></i>${macros.kcal} / ${TARGETS.kcal} kcal`;
-
-  const spct=document.getElementById('score-pct');
-  if(spct) spct.textContent=s+'%';
-
-  const xp=Math.round(s*2+completedDays.length*15);
-  const xpEl=document.getElementById('xp-label');
-  const xbEl=document.getElementById('xp-bar');
-  if(xpEl) xpEl.textContent=xp+' XP';
-  if(xbEl) xbEl.style.width=Math.min(100,(xp%100))+'%';
-
-  const titles=['Start your day','One arc moving…','Halfway there','Three-quarters done','Almost locked in','Day complete ✓'];
-  const subs=['Tick meals in Tracker · log water · complete timeline','Keep going — all four arcs are watched','Protein, water, kcal and tracker all count','Good progress across all dimensions','One more push closes it','All four dimensions hit. Protocol executed.'];
-  const ti=s===100?5:Math.floor(s/20);
-  const ttEl=document.getElementById('score-title');
-  const tsEl=document.getElementById('score-sub');
-  if(ttEl) ttEl.textContent=titles[ti];
-  if(tsEl) tsEl.textContent=subs[ti];
-
   // Streak — a day counts when every core item is handled (done, half, or a conscious skip).
   // Guarded to once per biological day; aligns with the app's consistency-over-perfection philosophy.
   const _sItems=getTimeline(shift)||[];
@@ -3066,94 +2991,10 @@ function updateScore(){
       save();
     }
   }
-  // Update hydration pace
-  updateHydroPace();
-  updateOverviewCards();
-}
-
-function updateOverviewCards(){
-  const protVal=document.getElementById('ov-prot-val');
-  const protTgt=document.getElementById('ov-prot-target');
-  if(protVal) protVal.textContent=(macros.prot||0)+'g';
-  if(protTgt) protTgt.textContent='/ '+(TARGETS.prot||148)+'g';
-  const sessVal=document.getElementById('ov-sess-val');
-  const sessDate=document.getElementById('ov-sess-date');
-  if(sessVal&&sessDate){
-    if(sessionLog&&sessionLog.length){
-      const last=sessionLog[0];
-      sessVal.textContent=last.type||'—';
-      const diffD=Math.floor((Date.now()-(last.ts||0))/86400000);
-      sessDate.textContent=diffD===0?'Today':diffD===1?'Yesterday':diffD+'d ago';
-    } else {
-      sessVal.textContent='—';
-      sessDate.textContent='No sessions yet';
-    }
-  }
-  const streakOv=document.getElementById('ov-streak-val');
-  if(streakOv) streakOv.textContent=dayStreak;
 }
 
 // ── MISSION COLLAPSE ──
 let missionOpen=false;
-
-// ── HYDRATION PACE ──
-// Estimates expected hydration based on shift type and time of day
-function updateHydroPace(){
-  const el=document.getElementById('hydro-pace');
-  if(!el) return;
-
-  const now=new Date();
-  const h=now.getHours(), m=now.getMinutes();
-  const nowMins=h*60+m;
-  const current=macros.hydro;
-  const target=TARGETS.hydro; // plain-water target, set by calcTargets() — scales with bodyweight
-
-  // Shift windows: day/extra-day 08:30–20:30, night/extra-night 20:30–08:30, off/leave spread over waking day
-  let shiftStartMins, shiftEndMins, shiftDuration=720; // 12hrs
-  if(shift==='ds'||shift==='xds'){
-    shiftStartMins=8*60+30; shiftEndMins=20*60+30;
-  } else if(shift==='ns1'||shift==='ns2'||shift==='xns'){
-    // Night: starts 20:30, ends 08:30 next day
-    shiftStartMins=20*60+30; shiftEndMins=8*60+30+1440;
-  } else {
-    // Off day / leave — spread target across 16 waking hours from 07:00–23:00
-    shiftStartMins=7*60; shiftEndMins=23*60;
-  }
-
-  let elapsed;
-  if(shift==='ns1'||shift==='ns2'){
-    // Night shift crosses midnight
-    const nowAdjusted=nowMins<shiftEndMins%1440?nowMins+1440:nowMins;
-    elapsed=Math.max(0,Math.min(1,(nowAdjusted-shiftStartMins)/shiftDuration));
-  } else {
-    elapsed=Math.max(0,Math.min(1,(nowMins-shiftStartMins)/(shiftEndMins-shiftStartMins)));
-  }
-
-  if(elapsed<=0){el.style.display='none';return;}
-  el.style.display='flex';
-  el.style.flexDirection='column';
-
-  const expected=Math.round(target*elapsed);
-  const diff=current-expected;
-  const diffAbs=Math.abs(diff);
-  const remaining=target-current;
-  const timeLeft=Math.round((1-elapsed)*(shiftEndMins-shiftStartMins));
-  const timeLeftStr=timeLeft>60?`${Math.floor(timeLeft/60)}h ${timeLeft%60}m left`:`${timeLeft}m left`;
-
-  if(current>=target){
-    el.className='hydro-pace ahead';
-    el.innerHTML=`<div style="display:flex;align-items:center;gap:7px"><i class="ti ti-check"></i><span>Daily target reached — ${current}ml logged</span></div>`;
-  } else if(diff>=-200){
-    el.className='hydro-pace on-pace';
-    el.innerHTML=`<div style="display:flex;align-items:center;gap:7px"><i class="ti ti-droplets"></i><span>On pace · ${remaining}ml remaining</span></div><div class="hydro-pace-detail">${timeLeftStr}</div>`;
-  } else if(diff>=-700){
-    el.className='hydro-pace behind';
-    el.innerHTML=`<div style="display:flex;align-items:center;gap:7px"><i class="ti ti-alert-triangle"></i><span>${diffAbs}ml behind pace</span></div><div class="hydro-pace-detail">${remaining}ml to go · ${timeLeftStr}</div>`;
-  } else {
-    el.className='hydro-pace critical';
-    el.innerHTML=`<div style="display:flex;align-items:center;gap:7px"><i class="ti ti-alert-circle"></i><span>${diffAbs}ml behind — drink now</span></div><div class="hydro-pace-detail">${remaining}ml remaining · ${timeLeftStr}</div>`;
-  }
-}
 
 function resetDay(){
   saveYesterday();
@@ -3358,6 +3199,9 @@ const CYCLE_TO_SHIFT_DNOO = ['ds','ns1','off','off'];
 
 // Current split is day-of-week based (Wed/Sat = rest). Used to preselect today's session in the logger.
 const DOW_TO_SESSION={0:'Sun-Pull',1:'Mon-Push',2:'Tue-Legs',4:'Thu-Upper',5:'Fri-Lower'};
+// Legacy PPL A/B fallback when the day-of-week map has no entry (Wed/Sat). Was duplicated
+// verbatim in smartPreselect() and the init sequence — single source now.
+const CYCLE_TO_SESSION={1:'Push A',2:'Pull A',3:'Legs A',4:'Push B',5:'Pull B',6:'Legs B'};
 
 // Active cycle and mapping — swap based on date
 function getActiveCycle(){
@@ -4285,7 +4129,6 @@ function showLastSessionRef(sessType){
 
 function smartPreselect(){
   // Prefer today's session from the current day-of-week split; fall back to the cycle map.
-  const CYCLE_TO_SESSION={1:'Push A',2:'Pull A',3:'Legs A',4:'Push B',5:'Pull B',6:'Legs B'};
   const suggested=DOW_TO_SESSION[new Date().getDay()]||CYCLE_TO_SESSION[cycleDay];
   if(!suggested) return;
   const sel=document.getElementById('sess-type-select');
@@ -4610,7 +4453,6 @@ function saveSession(){
     : `${session.type} logged ✓`, 'action');
   _clearDraft();
   save();
-  updateOverviewCards();
 }
 
 // Progress hero — most recent session as a FocusFlight-style record card (top set · volume · weekly count)
@@ -5966,24 +5808,6 @@ function updateShiftChip(){
 }
 
 // ── INSIGHTS BADGE ──
-function setInsightsBadge(count){
-  let badge=document.getElementById('insights-nav-badge');
-  const btn=document.getElementById('nav-insights');
-  if(!btn) return;
-  if(!badge){
-    badge=document.createElement('span');
-    badge.id='insights-nav-badge';
-    badge.className='nav-badge';
-    btn.style.position='relative';
-    btn.appendChild(badge);
-  }
-  badge.textContent=count>9?'9+':count;
-  badge.style.display=count>0?'block':'none';
-}
-function clearInsightsBadge(){
-  const badge=document.getElementById('insights-nav-badge');
-  if(badge) badge.style.display='none';
-}
 
 // ── 4. STREAK MILESTONE WARNING ──
 const STREAK_MILESTONES=[3,7,14,30,60,100];
@@ -6326,7 +6150,6 @@ async function fitbitSync(silent){
     data=await r.json();
   }catch(e){ _fbSyncing=false; if(!silent) showToast('Sync failed — check Worker URL','action'); return; }
   if(!data||data.error){ _fbSyncing=false; if(!silent) showToast('Sync error: '+((data&&data.error)||'no data'),'action'); if(data&&/invalid_grant|refresh/.test(data.error)){ localStorage.removeItem('ghRefresh'); renderFitbit(); } return; }
-  console.log('[GH sync raw]',data); // first-run calibration of v4 field names
   let n=0;
   // weight (kg)
   _ghPoints(data.weight).forEach(dp=>{ const date=_ghDate(dp); const kg=_ghNum(dp.weight||dp,['kilogram','kg','mass','weight']); if(!date||kg==null) return;
@@ -6992,7 +6815,6 @@ if(shift) collapseShiftSelector(shift);
 render();
 updateBar();
 // Show smart pre-select button if today's weekday (new split) or cycle day maps to a session
-const CYCLE_TO_SESSION={1:'Push A',2:'Pull A',3:'Legs A',4:'Push B',5:'Pull B',6:'Legs B'};
 const smartBtn=document.getElementById('sess-smart-btn');
 if(smartBtn) smartBtn.style.display=(DOW_TO_SESSION[new Date().getDay()]||CYCLE_TO_SESSION[cycleDay])?'flex':'none';
 // Show weekly summary if it's been 7+ days
