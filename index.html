@@ -4358,18 +4358,30 @@ function renderLiftRows(){
           <input class="lift-field-input" type="number" inputmode="numeric"
             value="${l.sets||''}" placeholder="${l._defaultSets||'—'}"
             min="1" max="10" oninput="currentLifts[${i}].sets=this.value" ${isCardio?'disabled':''}>
+          <div class="lift-step-row">
+            <button class="lift-step" onclick="stepLiftField(${i},'sets',-1,1,10)" aria-label="Decrease sets for exercise ${i+1}" ${isCardio?'disabled':''}>−</button>
+            <button class="lift-step" onclick="stepLiftField(${i},'sets',1,1,10)" aria-label="Increase sets for exercise ${i+1}" ${isCardio?'disabled':''}>+</button>
+          </div>
         </div>
         <div class="lift-field">
           <span class="lift-field-label">${rLbl}</span>
           <input class="lift-field-input" type="number" inputmode="numeric"
             value="${l.reps||''}" placeholder="${rPh}"
             min="0" oninput="currentLifts[${i}].reps=this.value;_updateVerdict(${i})" onchange="if(this.value)_autoRest()">
+          <div class="lift-step-row">
+            <button class="lift-step" onclick="stepLiftField(${i},'reps',-1,0,999)" aria-label="Decrease ${rLbl.toLowerCase()} for exercise ${i+1}">−</button>
+            <button class="lift-step" onclick="stepLiftField(${i},'reps',1,0,999)" aria-label="Increase ${rLbl.toLowerCase()} for exercise ${i+1}">+</button>
+          </div>
         </div>
         <div class="lift-field">
           <span class="lift-field-label">RIR</span>
           <input class="lift-field-input${l.rpe?' rpe-filled':''}" type="number" inputmode="numeric"
             value="${l.rpe||''}" placeholder="—"
             min="0" max="5" oninput="currentLifts[${i}].rpe=this.value;this.className='lift-field-input'+(this.value?' rpe-filled':'')">
+          <div class="lift-step-row">
+            <button class="lift-step" onclick="stepLiftField(${i},'rpe',-1,0,5)" aria-label="Decrease RIR for exercise ${i+1}">−</button>
+            <button class="lift-step" onclick="stepLiftField(${i},'rpe',1,0,5)" aria-label="Increase RIR for exercise ${i+1}">+</button>
+          </div>
         </div>
       </div>
     </div>`;}).join('');
@@ -4398,6 +4410,20 @@ function stepLiftWeight(i,delta){
   const next=Math.max(0,Math.round((cur+delta)*100)/100);
   l.weight=String(next);
   renderLiftRows();
+  if(navigator.vibrate) navigator.vibrate(3);
+}
+
+// Sets/reps/RIR steppers — same one-tap pattern as weight, generalized since all three are
+// small-integer fields with a min/max clamp. Reps also auto-starts the rest timer, matching
+// what typing a rep count and tabbing away already does.
+function stepLiftField(i,field,delta,min,max){
+  const l=currentLifts[i];
+  if(!l) return;
+  const cur=parseInt(l[field],10)||0;
+  const next=Math.min(max,Math.max(min,cur+delta));
+  l[field]=String(next);
+  renderLiftRows();
+  if(field==='reps'&&next>0) _autoRest();
   if(navigator.vibrate) navigator.vibrate(3);
 }
 
