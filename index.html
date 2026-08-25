@@ -2001,18 +2001,22 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
   <!-- ── SESSION LOGGER (collapsed by default, revealed by the CTA above) ── -->
   <div class="sess-card" id="sess-card-logger" style="margin-top:.25rem;display:none">
 
-    <!-- Session type + smart pre-select -->
+    <!-- Session type — picked freely, not bound to a day. Previously "Sun-Pull"/"Mon-Push"/etc
+         locked each type to a weekday with an Auto-preselect button; removed at the user's
+         request since a missed day used to mean skipping whatever pattern lived on it, rather
+         than just training whichever pattern actually fits that day. value= attributes keep the
+         old day-prefixed keys so existing logged history and per-exercise PBs don't orphan —
+         only the visible label and the auto-select machinery changed. -->
     <div class="sess-header">
       <div style="display:flex;gap:5px;align-items:center;width:100%">
-        <button class="rem-btn" id="sess-smart-btn" onclick="smartPreselect()" title="Auto-select from cycle day" style="display:none"><i class="ti ti-wand" style="font-size:12px"></i>Auto</button>
         <select id="sess-type-select" onchange="updateSessType()" class="sel-input">
           <option value="">— pick session —</option>
-          <optgroup label="Current split">
-            <option value="Sun-Pull">Sun · Pull — Lat width + triceps</option>
-            <option value="Mon-Push">Mon · Push — Upper chest + delts + biceps</option>
-            <option value="Tue-Legs">Tue · Delts/Arms + Legs (HBL)</option>
-            <option value="Thu-Upper">Thu · Upper — Back width + chest</option>
-            <option value="Fri-Lower">Fri · Delts/Arms + Lower — Ham/glute</option>
+          <optgroup label="Training types">
+            <option value="Sun-Pull">Pull — Lat width + triceps</option>
+            <option value="Mon-Push">Push — Upper chest + delts + biceps</option>
+            <option value="Tue-Legs">Legs — Delts/arms + legs</option>
+            <option value="Thu-Upper">Upper — Back width + chest</option>
+            <option value="Fri-Lower">Lower — Delts/arms + hams/glutes</option>
           </optgroup>
           <optgroup label="Conditioning">
             <option value="Cardio">Cardio — Zone 2 (Wed/Sat)</option>
@@ -3199,12 +3203,6 @@ const CYCLE_DNOO = [
 
 const CYCLE_TO_SHIFT_DNOO = ['ds','ns1','off','off'];
 
-// Current split is day-of-week based (Wed/Sat = rest). Used to preselect today's session in the logger.
-const DOW_TO_SESSION={0:'Sun-Pull',1:'Mon-Push',2:'Tue-Legs',4:'Thu-Upper',5:'Fri-Lower'};
-// Legacy PPL A/B fallback when the day-of-week map has no entry (Wed/Sat). Was duplicated
-// verbatim in smartPreselect() and the init sequence — single source now.
-const CYCLE_TO_SESSION={1:'Push A',2:'Pull A',3:'Legs A',4:'Push B',5:'Pull B',6:'Legs B'};
-
 // Active cycle and mapping — swap based on date
 function getActiveCycle(){
   return getActiveRotation()==='DNOO' ? CYCLE_DNOO : CYCLE;
@@ -4127,15 +4125,6 @@ function showLastSessionRef(sessType){
         <span class="lsr-val">${l.weight?l.weight+(isCardio?'km':'kg'):''}${l.sets?' × '+l.sets:''}${l.reps?' × '+l.reps+(isCardio?' min':'r'):''}</span>
       </div>`).join('');
   refEl.style.display='block';
-}
-
-function smartPreselect(){
-  // Prefer today's session from the current day-of-week split; fall back to the cycle map.
-  const suggested=DOW_TO_SESSION[new Date().getDay()]||CYCLE_TO_SESSION[cycleDay];
-  if(!suggested) return;
-  const sel=document.getElementById('sess-type-select');
-  if(sel){sel.value=suggested;updateSessType();}
-  showToast('Pre-selected: '+suggested,'action');
 }
 
 function addLiftRow(){
@@ -6820,9 +6809,6 @@ if(shift) collapseShiftSelector(shift);
 // Render the timeline + focus hero + progress now that shift is known
 render();
 updateBar();
-// Show smart pre-select button if today's weekday (new split) or cycle day maps to a session
-const smartBtn=document.getElementById('sess-smart-btn');
-if(smartBtn) smartBtn.style.display=(DOW_TO_SESSION[new Date().getDay()]||CYCLE_TO_SESSION[cycleDay])?'flex':'none';
 // Show weekly summary if it's been 7+ days
 setTimeout(()=>maybeShowWeeklySummary(),1500);
 // Google Health: catch Worker redirect (#gh_refresh=...), else auto-sync if connected & stale (>6h)
