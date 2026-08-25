@@ -1182,13 +1182,15 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .lift-card-move:disabled{color:var(--b3);opacity:.4;cursor:default}
 .lift-card-del:active{color:var(--red)}
 .lift-card-fields{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
-.lift-shadow{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t3);margin:-2px 0 8px 30px;padding:5px 8px;background:rgba(212,255,71,.05);border-radius:6px;border-left:2px solid rgba(212,255,71,.35)}
-.lift-shadow strong{color:var(--teal);font-weight:600}
-/* Live "did you beat it" verdict, sits at the end of the shadow line */
-.lift-verdict{margin-left:auto;font-size:10.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap;flex-shrink:0}
-.lift-verdict.up{color:var(--focus-ac)}
-.lift-verdict.same{color:var(--t3)}
-.lift-verdict.down{color:var(--amber)}
+.lift-shadow{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--t2);margin:-2px 0 8px 30px;padding:6px 10px;background:rgba(212,255,71,.06);border-radius:6px;border-left:2px solid rgba(212,255,71,.4)}
+.lift-shadow strong{color:var(--teal);font-weight:700}
+.lift-shadow-new{color:var(--t3);font-size:11.5px;background:transparent;border-left-color:var(--b2)}
+/* Live "did you beat it" verdict — a pill, not just colored text, so it reads at a glance
+   mid-workout instead of needing to be read carefully. */
+.lift-verdict{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.02em;white-space:nowrap;flex-shrink:0;padding:3px 9px;border-radius:20px}
+.lift-verdict.up{color:var(--focus-ac);background:color-mix(in srgb,var(--focus-ac) 18%,transparent)}
+.lift-verdict.same{color:var(--t2);background:var(--s3)}
+.lift-verdict.down{color:var(--amber);background:var(--amber-dim)}
 .overload-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.5rem .25rem}
 .ovl-row{display:flex;align-items:center;gap:.625rem;padding:.5rem .75rem}
 .ovl-name{font-size:13px;font-weight:600;color:var(--t1);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -4169,9 +4171,13 @@ function renderLiftRows(){
   el.innerHTML=currentLifts.map((l,i)=>{
     const shadow=lastLiftFor(l.name);
     const v=_liftVerdict(l);
+    // No match ≠ nothing to show — a silent gap here is indistinguishable from "genuinely
+    // new exercise" vs. "typed the name slightly differently from last time, chain broken."
+    // Surfacing it (de-emphasized, since it's not actionable) makes a broken name match visible
+    // instead of just quietly not comparing.
     const shadowHtml=shadow
       ?`<div class="lift-shadow">${shadow.html}<span class="lift-verdict${v?' '+v.cls:''}" id="lv-${i}">${v?v.txt:''}</span></div>`
-      :'';
+      :(l.name&&l.name.trim()?`<div class="lift-shadow lift-shadow-new"><i class="ti ti-sparkles" style="font-size:11px"></i> First time logging this exact name — no comparison yet</div>`:'');
     return `
     <div class="lift-card">
       <div class="lift-card-name-row">
@@ -4377,7 +4383,7 @@ function lastLiftFor(name){
       const parts=[w,sr].filter(Boolean).join(' · ');
       return {
         match, when,
-        html:`<i class="ti ti-history" style="font-size:11px"></i> Last (${when}): <strong>${parts}${rpe}</strong> — beat it`
+        html:`<i class="ti ti-history" style="font-size:11px"></i> Last (${when}): <strong>${parts}${rpe}</strong>`
       };
     }
   }
