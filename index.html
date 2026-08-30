@@ -602,6 +602,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 /* Single-accent doctrine: protein=accent, secondary macros=quiet neutral, 100%=accent tick */
 .macro-bar-fill.prot{background:var(--focus-ac)}
 .macro-bar-fill.kcal{background:var(--t3)}
+.macro-bar-fill.carb{background:var(--t3)}
 .macro-bar-fill.hydro{background:var(--t3)}
 .macro-bar-fill.hit{background:var(--focus-ac)}
 
@@ -903,7 +904,11 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .modal-close{background:var(--s2);border:1px solid var(--b2);border-radius:var(--r-md);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t2);transition:all .12s}
 .modal-close:hover{color:var(--t1);background:var(--s3)}
 .meal-form-box{background:var(--s2);border-radius:var(--r-md);padding:.875rem 1rem;margin-top:.5rem}
-.meal-form-grid{display:grid;grid-template-columns:1fr 72px 72px auto;gap:.5rem;align-items:end}
+/* Name spans the full first row, the three macro fields + Save share the second — keeps all
+   four inputs reachable at 375px without the row overflowing. */
+.meal-form-grid{display:grid;grid-template-columns:72px 72px 72px auto;gap:.5rem;align-items:end}
+.meal-form-grid>div:first-child{grid-column:1/-1}
+.meal-form-grid>div:first-child input{width:100%}
 .meal-form-label{font-size:11px;color:var(--t3);margin-bottom:3px}
 .meal-save-btn{height:35px;padding:0 14px;background:var(--teal);border:none;border-radius:var(--r-md);color:#0a0a0a;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;transition:transform .08s cubic-bezier(.34,1.56,.64,1)}
 .meal-save-btn:active{transform:scale(.93)}
@@ -1558,6 +1563,12 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
           <div style="font-size:11px;color:var(--t3);margin-bottom:3px">Kcal</div>
           <input id="meal-kcal-input" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0" aria-label="Calories"
             style="width:72px;background:var(--s1);border:1px solid var(--b2);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--t1);outline:none;font-family:inherit"
+            onkeydown="if(event.key==='Enter') document.getElementById('meal-carb-input').focus()">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--t3);margin-bottom:3px">Carbs (g)</div>
+          <input id="meal-carb-input" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0" aria-label="Carbohydrates in grams"
+            style="width:72px;background:var(--s1);border:1px solid var(--b2);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--t1);outline:none;font-family:inherit"
             onkeydown="if(event.key==='Enter') saveMealToLibrary()">
         </div>
         <button onclick="saveMealToLibrary()" class="meal-save-btn">
@@ -1915,6 +1926,18 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     </div>
   </div>
 
+  <!-- Carbs — set as the remainder after protein and fat, so it moves with bodyweight
+       and the surplus knob rather than being a hand-picked number. -->
+  <div class="fuel-sec mo-rise">
+    <div class="fuel-sec-top">
+      <span class="fuel-sec-name">Carbs</span>
+      <span class="fuel-sec-nums"><span id="carb-cur-nut">0</span><span class="u">g</span> <span class="u" id="carb-target-label-nut">/ 370g</span></span>
+    </div>
+    <div class="macro-bar-wrap"><div class="macro-bar-fill carb" id="carb-bar-nut" style="width:0%"></div></div>
+    <div class="macro-gap gap-low" id="carb-gap-nut"></div>
+    <div class="page-note" style="margin-top:.5rem">Fuels training volume and recovery. Logged from meals — add carbs when logging.</div>
+  </div>
+
   <div class="fuel-sec mo-rise">
     <div class="fuel-sec-top">
       <span class="fuel-sec-name">Water</span>
@@ -1948,6 +1971,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     <div class="fuel-tgt-strip">
       <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-prot-target">148–163g</div><span class="fuel-tgt-lbl">Protein</span></div>
       <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-kcal-target">~2,840</div><span class="fuel-tgt-lbl">Kcal</span></div>
+      <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-carb-target">~370g</div><span class="fuel-tgt-lbl">Carbs</span></div>
       <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-hydro-target">~1.8L</div><span class="fuel-tgt-lbl">Water</span></div>
     </div>
     <div class="page-note" id="nut-calc-line" style="margin-top:.625rem;padding-top:.5rem;border-top:1px solid var(--b1)"><span id="nut-prot-calc">2.0–2.2g / kg</span> · <span id="nut-hydro-calc">+800ml from food</span></div>
@@ -2053,6 +2077,9 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
     <!-- Lift rows — now includes sets + RPE -->
     <div class="sub-label" style="margin-top:.625rem">Primary lifts</div>
+    <!-- Native datalist: gives the exercise-name field a picker with zero JS/library cost.
+         Populated by renderExerciseLibrary(). -->
+    <datalist id="exercise-library"></datalist>
     <div id="lift-rows"></div>
 
     <!-- Session notes -->
@@ -2196,7 +2223,17 @@ function calcTargets(kg){
   const kcalCalc=Math.round(kg*35)+LEAN_GAIN_SURPLUS;
   // Hydration: 35ml/kg total fluid minus ~800ml from food/Rokeby, rounded to nearest 250ml
   const hydroCalc=Math.max(1500,Math.min(3000,Math.round((kg*35-800)/250)*250));
-  return {protLow,protHigh,protTarget:protHigh,kcal:kcalCalc,hydro:hydroCalc};
+  // Carbs = whatever's left after protein and fat — the standard evidence-based ordering
+  // (Helms/Aragon/Fitschen): set protein, set fat as a % of calories, carbs take the remainder.
+  // FAT_PCT sits mid-range of their 15–30% window: high enough for hormonal health, low enough
+  // to leave carbs generous, which matters here because the split runs ~105 hard sets/week and
+  // glycogen is what fuels that. Deliberately NOT the 8–12 g/kg glycogen-loading figure — that's
+  // an endurance recommendation and would eat nearly the whole calorie budget on its own.
+  // Self-adjusting: change bodyweight or the surplus knob and carbs absorb it.
+  const FAT_PCT=0.25;
+  const fatCalc=Math.round(kcalCalc*FAT_PCT/9);
+  const carbCalc=Math.max(0,Math.round((kcalCalc-protHigh*4-fatCalc*9)/4));
+  return {protLow,protHigh,protTarget:protHigh,kcal:kcalCalc,hydro:hydroCalc,carb:carbCalc,fat:fatCalc};
 }
 
 function applyWeight(kg,save_=true){
@@ -2207,11 +2244,13 @@ function applyWeight(kg,save_=true){
   TARGETS.prot=t.protTarget;
   TARGETS.kcal=t.kcal;
   TARGETS.hydro=t.hydro;
+  TARGETS.carb=t.carb;
 
   // Nutrition page stat cards
   const wd=document.getElementById('nut-weight-display');
   const pd=document.getElementById('nut-prot-target');
   const kd=document.getElementById('nut-kcal-target');
+  const cd=document.getElementById('nut-carb-target');
   const hd=document.getElementById('nut-hydro-target');
   const pc=document.getElementById('nut-prot-calc');
   const hc=document.getElementById('nut-hydro-calc');
@@ -2219,19 +2258,22 @@ function applyWeight(kg,save_=true){
   if(wd) wd.textContent=kg;
   if(pd) pd.textContent=t.protLow+'–'+t.protHigh+'g';
   if(kd) kd.textContent='~'+t.kcal.toLocaleString();
+  if(cd) cd.textContent='~'+t.carb+'g';
   if(hd) hd.textContent='~'+Math.round(t.hydro/100)/10+'L';
   if(pc) pc.textContent='2.0–2.2g / kg · '+kg+'kg';
   if(hc) hc.textContent='~'+Math.round(t.hydro/100)/10+'L + ~800ml from food';
-  if(note) note.textContent='2.0–2.2g protein/kg · ~35 kcal/kg + lean-gain surplus · target 0.2–0.35 kg/week. Gaining faster than that means the surplus is too big — titrate by the weekly weight trend. Recalculates when you update weight ±2kg.';
+  if(note) note.textContent='2.0–2.2g protein/kg · ~35 kcal/kg + lean-gain surplus · fat at 25% of kcal (~'+t.fat+'g), carbs take the remainder (~'+(kg?Math.round(t.carb/kg*10)/10:0)+'g/kg) · target 0.2–0.35 kg/week. Gaining faster than that means the surplus is too big — titrate by the weekly weight trend. Recalculates when you update weight ±2kg.';
 
   // Macro bar labels — update both dashboard and nutrition page
   ['', '-nut'].forEach(suffix=>{
     const protLbl=document.getElementById('prot-target-label'+suffix);
     const kcalLbl=document.getElementById('kcal-target-label'+suffix);
     const hydroLbl=document.getElementById('hydro-target-label'+suffix);
+    const carbLbl=document.getElementById('carb-target-label'+suffix);
     if(protLbl) protLbl.textContent='/ '+t.protTarget+'g';
     if(kcalLbl) kcalLbl.textContent='/ '+t.kcal.toLocaleString()+' kcal';
     if(hydroLbl) hydroLbl.textContent='/ '+t.hydro+'ml';
+    if(carbLbl) carbLbl.textContent='/ '+t.carb+'g';
   });
   const hydroOvLbl=document.getElementById('hydro-overview-label');
   if(hydroOvLbl) hydroOvLbl.textContent='/ '+t.hydro+'ml';
@@ -2245,7 +2287,7 @@ function applyWeight(kg,save_=true){
   if(hydroSpan) hydroSpan.textContent='/ '+t.hydro+'ml';
 
   // Refresh all macro bars and score with new targets
-  ['prot','hydro','kcal'].forEach(type=>updateMacroUI(type));
+  ['prot','hydro','kcal','carb'].forEach(type=>updateMacroUI(type));
   updateScore();
 
   // Header weight display
@@ -2416,8 +2458,8 @@ function resetCycle(){
 // ── MACROS ──
 // Protein and kcal base values are derived from Tracker ticks.
 // kcal also has a manual top-up store for snacks/extras.
-const TARGETS={prot:163,hydro:1750,kcal:2840};
-const macros={prot:0,hydro:0,kcal:0};
+const TARGETS={prot:163,hydro:1750,kcal:2840,carb:370};
+const macros={prot:0,hydro:0,kcal:0,carb:0};
 // ── MEAL LOGGER ──
 let mealLibrary=[];    // [{id, name, prot, kcal}] — persisted across days
 let mealLog=[];        // [{id, name, prot, kcal, ts}] — today only
@@ -2701,9 +2743,13 @@ Rules:
     // Re-query fields after async (modal may have re-rendered)
     const pe=document.getElementById('meal-prot-input');
     const ke=document.getElementById('meal-kcal-input');
+    const ce=document.getElementById('meal-carb-input');
     const ne=document.getElementById('meal-name-input');
     if(pe) pe.value=parsed.protein_g;
     if(ke) ke.value=parsed.calories_kcal;
+    // carbs_g was already being returned by the model and shown in the result strip, but
+    // thrown away rather than filled in — now that carbs are tracked, wire it through.
+    if(ce&&parsed.carbs_g!=null) ce.value=parsed.carbs_g;
     // Auto-fill name field if empty and AI returned a clean food name
     if(ne&&!ne.value&&parsed.food) ne.value=parsed.food;
 
@@ -2745,6 +2791,7 @@ function saveMealToLibrary(){
   const name=document.getElementById('meal-name-input').value.trim();
   const prot=parseInt(document.getElementById('meal-prot-input').value)||0;
   const kcal=parseInt(document.getElementById('meal-kcal-input').value)||0;
+  const carb=parseInt(document.getElementById('meal-carb-input')?.value)||0;
   const hint=document.getElementById('meal-form-hint');
   if(!name){
     hint.textContent='Please enter a meal name.';
@@ -2757,7 +2804,7 @@ function saveMealToLibrary(){
     hint.style.color='var(--red)';
     return;
   }
-  const meal={id:Date.now(),name,prot,kcal};
+  const meal={id:Date.now(),name,prot,kcal,carb};
   mealLibrary.push(meal);
   // Auto-log it immediately
   logMeal(meal);
@@ -2765,6 +2812,7 @@ function saveMealToLibrary(){
   document.getElementById('meal-name-input').value='';
   document.getElementById('meal-prot-input').value='';
   document.getElementById('meal-kcal-input').value='';
+  if(document.getElementById('meal-carb-input')) document.getElementById('meal-carb-input').value='';
   hint.textContent='Saved and logged ✓';
   hint.style.color='var(--teal)';
   setTimeout(()=>{
@@ -2784,6 +2832,7 @@ function logMeal(meal){
   const parts=[];
   if(meal.prot) parts.push(`+${meal.prot}g prot`);
   if(meal.kcal) parts.push(`+${meal.kcal} kcal`);
+  if(meal.carb) parts.push(`+${meal.carb}g carb`);
   showToast(`${meal.name} logged${parts.length?' — '+parts.join(' · '):''}`, 'food');
   save();
 }
@@ -2832,7 +2881,7 @@ function renderMealLog(){
     <div style="display:flex;align-items:center;gap:.5rem;padding:5px 0;border-bottom:1px solid var(--b1)">
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:500;color:var(--t1)">${m.name}</div>
-        <div style="font-size:11px;color:var(--t3)">${m.prot?'+'+m.prot+'g protein · ':''}${m.kcal?'+'+m.kcal+' kcal':''}</div>
+        <div style="font-size:11px;color:var(--t3)">${[m.prot?'+'+m.prot+'g protein':'',m.kcal?'+'+m.kcal+' kcal':'',m.carb?'+'+m.carb+'g carbs':''].filter(Boolean).join(' · ')}</div>
       </div>
       <button onclick="removeLogEntry(${m.ts})" aria-label="Remove ${m.name} from today's log" style="width:36px;height:36px;background:transparent;border:1px solid var(--b2);border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t3);flex-shrink:0" title="Remove log entry"><i class="ti ti-x" style="font-size:11px" aria-hidden="true"></i></button>
     </div>`).join('');
@@ -2860,17 +2909,21 @@ function syncMacrosFromTimeline(){
     const mult=ticks[_k]?1:(halfTicks[_k]?0.5:0);
     if(mult&&item.hydro) hydro+=Math.round(item.hydro*mult);
   });
+  let carb=0;
   mealLog.forEach(m=>{
     if(m.prot) prot+=m.prot;
     if(m.kcal) kcal+=m.kcal;
+    if(m.carb) carb+=m.carb;
   });
   // Preserve manual hydration additions on top of timeline hydro
   const manualHydro=history.hydro?history.hydro.reduce((a,b)=>a+b,0):0;
   macros.prot=prot;
   macros.kcal=kcal;
+  macros.carb=carb;
   macros.hydro=hydro+manualHydro;
   updateMacroUI('prot');
   updateMacroUI('kcal');
+  updateMacroUI('carb');
   updateMacroUI('hydro');
   updateScore();
 }
@@ -2906,17 +2959,20 @@ function updateMacroUI(type){
     ok:{
       prot:'Protein target hit ✓ — muscle synthesis window is covered.',
       hydro:'Hydration target hit ✓ — cells are primed.',
-      kcal:'Calorie target hit ✓ — energy balance locked.'
+      kcal:'Calorie target hit ✓ — energy balance locked.',
+      carb:'Carb target hit ✓ — glycogen topped up for the next session.'
     },
     warn:{
       prot:`${rem}g remaining — one more meal or the vault will close it.`,
       hydro:`${(rem/1000).toFixed(1)}L remaining — keep a bottle within reach.`,
-      kcal:`${rem} kcal remaining — add a small top-up below to close the gap.`
+      kcal:`${rem} kcal remaining — add a small top-up below to close the gap.`,
+      carb:`${rem}g carbs remaining — rice, oats or fruit will close it.`
     },
     low:{
       prot:`${rem}g left — ${rem>80?'two meals will get you there':'one solid meal does it'}.`,
       hydro:`${(rem/1000).toFixed(1)}L to go — ${rem>2000?'you\'re just getting started':'halfway done'}.`,
-      kcal:`${rem} kcal to go — use the top-up options below.`
+      kcal:`${rem} kcal to go — use the top-up options below.`,
+      carb:`${rem}g carbs to go — low carbs means flat sessions and poor pumps.`
     }
   };
   const gapClass=pct>=100?'gap-ok':pct>=66?'gap-warn':'gap-low';
@@ -3004,11 +3060,11 @@ let missionOpen=false;
 
 function resetDay(){
   saveYesterday();
-  macros.prot=0;macros.hydro=0;macros.kcal=0;
-  history.prot=[];history.hydro=[];history.kcal=[];
+  macros.prot=0;macros.hydro=0;macros.kcal=0;macros.carb=0;
+  history.prot=[];history.hydro=[];history.kcal=[];history.carb=[];
   mealLog=[];
   renderMealLog();
-  ['prot','hydro','kcal'].forEach(t=>updateMacroUI(t));
+  ['prot','hydro','kcal','carb'].forEach(t=>updateMacroUI(t));
   dayStreak=0;
   updateScore();
   renderYesterday();
@@ -4072,14 +4128,9 @@ function renderWeekStrip(){
 let sessionLog=[];   // [{date, type, lifts:[{name,weight,reps}]}]
 let currentLifts=[];
 
-function updateSessType(){
-  const sel=document.getElementById('sess-type-select');
-  const disp=document.getElementById('sess-type-display');
-  const sessType=sel.value;
-  if(disp) disp.textContent=sessType||'Select session type';
-
-  // Pre-populate primary lifts with sets from programme
-  const DEFAULTS={
+// Hoisted to top level (was local to updateSessType) so the exercise-name autocomplete can
+// read every programmed exercise, not just the ones in the session you happen to have open.
+const SESSION_DEFAULTS={
     'Push A':[{name:'Incline DB Press',sets:'4'},{name:'Flat Machine Press',sets:'3'},{name:'Cable Crossovers',sets:'3'},{name:'DB Lateral Raises',sets:'4'},{name:'Overhead Cable Triceps Extension',sets:'3'}],
     'Pull A':[{name:'Wide-Grip Lat Pulldowns',sets:'4'},{name:'Single-Arm Cable Row',sets:'3'},{name:'Face Pulls',sets:'5'},{name:'Incline DB Bicep Curls',sets:'3'},{name:'Hammer Curls',sets:'3'}],
     'Legs A':[{name:'Hack Squat Machine',sets:'4'},{name:'Leg Press',sets:'4'},{name:'Leg Extensions',sets:'3'},{name:'Lying Leg Curls',sets:'4'},{name:'Standing Calf Raises',sets:'4'}],
@@ -4095,10 +4146,34 @@ function updateSessType(){
     'Thu-Upper':[{name:'Lat Pulldown (alt grip)',sets:'4'},{name:'Single-Arm Cable Row',sets:'3'},{name:'Cable Lateral Raise',sets:'4'},{name:'Cable Reverse Fly',sets:'3'},{name:'Flat DB Press',sets:'4'},{name:'Pallof Press',sets:'3'}],
     'Fri-Lower':[{name:'DB Lateral Raise',sets:'5'},{name:'Incline DB / Cable Curl',sets:'3'},{name:'Lying Leg Curl',sets:'3'},{name:'Bulgarian Split Squat',sets:'3'},{name:'45° Back Extension',sets:'3'},{name:'Seated Calf Raise',sets:'2'},{name:'Overhead Cable Triceps Extension',sets:'3'}],
     'Cardio':[{name:'Zone 2 run / walk / cycle',sets:'',reps:'',weight:''}],
-  };
+};
 
-  if(sessType&&DEFAULTS[sessType]){
-    currentLifts=DEFAULTS[sessType].map(d=>_prefillLift({name:d.name,weight:'',sets:'',reps:'',rpe:'',_defaultSets:d.sets}));
+// Autocomplete source for the exercise-name field. A name typed even slightly differently
+// ("DB Lateral Raise" vs "Db lateral raises") logs as a separate exercise, which silently
+// splits its history and breaks both the pre-fill and the vs-last-time verdict. Picking from
+// a list prevents that at the point of entry. Sources: every programmed exercise + everything
+// already logged, so a custom exercise autocompletes from its second use onward.
+function _exerciseLibrary(){
+  const names=new Set();
+  Object.values(SESSION_DEFAULTS).forEach(list=>list.forEach(d=>d.name&&names.add(d.name)));
+  sessionLog.forEach(s=>(s.lifts||[]).forEach(l=>l.name&&l.name.trim()&&names.add(l.name.trim())));
+  return [...names].sort((a,b)=>a.localeCompare(b));
+}
+
+function renderExerciseLibrary(){
+  const dl=document.getElementById('exercise-library');
+  if(!dl) return;
+  dl.innerHTML=_exerciseLibrary().map(n=>`<option value="${n.replace(/"/g,'&quot;')}"></option>`).join('');
+}
+
+function updateSessType(){
+  const sel=document.getElementById('sess-type-select');
+  const disp=document.getElementById('sess-type-display');
+  const sessType=sel.value;
+  if(disp) disp.textContent=sessType||'Select session type';
+
+  if(sessType&&SESSION_DEFAULTS[sessType]){
+    currentLifts=SESSION_DEFAULTS[sessType].map(d=>_prefillLift({name:d.name,weight:'',sets:'',reps:'',rpe:'',_defaultSets:d.sets}));
   } else {
     currentLifts=[];
   }
@@ -4172,6 +4247,7 @@ function renderLiftRows(){
       <div class="lift-card-name-row">
         <div class="lift-card-num">${i+1}</div>
         <input class="lift-card-name" type="text" value="${l.name||''}" placeholder="Exercise name"
+          list="exercise-library"
           oninput="currentLifts[${i}].name=this.value" onchange="_prefillLift(currentLifts[${i}]);renderLiftRows()" autocomplete="off" autocorrect="off" spellcheck="false">
         <div class="lift-card-move-stack">
           <button class="lift-card-move" onclick="moveLiftRow(${i},-1)" aria-label="Move exercise ${i+1} up" ${i===0?'disabled':''}><i class="ti ti-chevron-up" style="font-size:12px" aria-hidden="true"></i></button>
@@ -4447,6 +4523,7 @@ function saveSession(){
     ? `${session.type} logged ✓ · ${beaten}/${comparable} beaten`
     : `${session.type} logged ✓`, 'action');
   _clearDraft();
+  renderExerciseLibrary(); // pick up any custom exercise names just logged
   save();
 }
 
@@ -4577,6 +4654,7 @@ function _stampToday(){
     row.prot=macros.prot;
     row.kcal=macros.kcal;
     row.hydro=macros.hydro;
+    row.carb=macros.carb;
     if(sleepRating) row.sleep=sleepRating;
   }catch(e){}
 }
@@ -6785,6 +6863,7 @@ renderFitbit();
 renderWeekStrip();
 renderSessionHistory();
 renderRemovedItems();
+renderExerciseLibrary();
 renderProgress();
 _initDraftWatch();
 _restoreDraft();
