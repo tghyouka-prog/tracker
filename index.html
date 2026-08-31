@@ -1177,16 +1177,28 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .lift-header-row{display:none} /* hide old header */
 .lift-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem 1rem 1rem;margin-bottom:.625rem;position:relative;transition:border-color .12s}
 .lift-card:focus-within{border-color:color-mix(in srgb,var(--teal) 25%,transparent)}
-.lift-card-name-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem}
+/* Tight gap + a slimmer delete button buy back most of the width the picker button costs,
+   so long exercise names keep about as much room as they had before it was added. */
+.lift-card-name-row{display:flex;align-items:center;gap:.375rem;margin-bottom:.5rem}
 .lift-card-num{width:20px;height:20px;border-radius:50%;background:var(--s3);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--t3);flex-shrink:0}
 .lift-card-name{flex:1;min-width:0;font-size:15px;font-weight:600;color:var(--t1);background:transparent;border:none;padding:2px 0;outline:none;font-family:inherit;letter-spacing:-.01em}
 .lift-card-name::placeholder{color:var(--t3);font-weight:400;font-size:14px}
-.lift-card-del{width:36px;height:36px;border-radius:var(--r-md);border:none;background:transparent;color:var(--b3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:color .1s}
+.lift-card-del{width:30px;height:30px;border-radius:var(--r-md);border:none;background:transparent;color:var(--b3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:color .1s}
 .lift-card-move-stack{display:flex;flex-direction:column;flex-shrink:0}
 .lift-card-move{width:24px;height:18px;border-radius:4px;border:none;background:transparent;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;-webkit-tap-highlight-color:transparent;transition:color .1s}
 .lift-card-move:disabled{color:var(--b3);opacity:.4;cursor:default}
 .lift-card-del:active{color:var(--red)}
 .lift-card-fields{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+/* Exercise picker list */
+.ex-pick-list{max-height:min(46vh,340px);overflow-y:auto;margin:.5rem 0;border:1px solid var(--b1);border-radius:var(--r-md)}
+.ex-pick-item{display:block;width:100%;text-align:left;padding:11px 12px;font-size:14px;color:var(--t1);background:transparent;border:none;border-bottom:1px solid var(--b1);cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent}
+.ex-pick-item:last-child{border-bottom:none}
+.ex-pick-item:active{background:var(--s3)}
+.ex-pick-item small{display:block;font-size:11px;color:var(--t3);margin-top:2px}
+.ex-pick-empty{padding:14px 12px;font-size:13px;color:var(--t3)}
+/* Compact so it fits the name row at 375px without squeezing the name field */
+.lift-card-pick{width:28px;height:28px;border-radius:var(--r-sm);border:1px solid var(--b2);background:transparent;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;-webkit-tap-highlight-color:transparent}
+.lift-card-pick:active{background:var(--s3);color:var(--t1)}
 .lift-shadow{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--t2);margin:-2px 0 8px 30px;padding:6px 10px;background:rgba(212,255,71,.06);border-radius:6px;border-left:2px solid rgba(212,255,71,.4)}
 .lift-shadow strong{color:var(--teal);font-weight:700}
 .lift-shadow-new{color:var(--t3);font-size:11.5px;background:transparent;border-left-color:var(--b2)}
@@ -1612,6 +1624,21 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
       <button class="custom-del-btn" id="custom-del-btn" onclick="deleteCustomItem()" aria-label="Delete custom item" style="display:none"><i class="ti ti-trash" style="font-size:13px" aria-hidden="true"></i></button>
       <button class="custom-cancel-btn" onclick="closeCustomModal()">Cancel</button>
       <button class="custom-save-btn" onclick="saveCustomItem()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Exercise picker. The <datalist> alone was technically working but effectively invisible:
+     name fields arrive pre-filled from the session template, so you never type in them, and a
+     datalist only surfaces suggestions on focus+type (and renders very subtly on iOS). This
+     gives the library an actual visible entry point. Reuses .custom-modal styles. -->
+<div class="custom-modal-overlay" id="exercise-picker-overlay" onclick="closeExercisePicker(event)">
+  <div class="custom-modal">
+    <div class="custom-modal-title" id="exercise-picker-title">Pick an exercise</div>
+    <input class="custom-input" id="exercise-picker-filter" placeholder="Search exercises…" autocomplete="off" autocorrect="off" spellcheck="false" oninput="_renderExercisePickerList(this.value)">
+    <div id="exercise-picker-list" class="ex-pick-list"></div>
+    <div class="custom-modal-actions">
+      <button class="custom-cancel-btn" onclick="closeExercisePicker()">Cancel</button>
     </div>
   </div>
 </div>
@@ -2088,7 +2115,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     </div>
 
     <div class="btn-row" style="margin-top:.625rem">
-      <button class="rem-btn accent-teal" onclick="addLiftRow()"><i class="ti ti-plus"></i>Add lift</button>
+      <button class="rem-btn accent-teal" onclick="openExercisePicker(-1)"><i class="ti ti-plus"></i>Add lift</button>
       <button class="rem-btn accent-amber" onclick="saveSession()" style="margin-left:auto"><i class="ti ti-device-floppy" style="font-size:12px"></i>Save session</button>
     </div>
 
@@ -4160,6 +4187,67 @@ function _exerciseLibrary(){
   return [...names].sort((a,b)=>a.localeCompare(b));
 }
 
+// ── EXERCISE PICKER ──
+// _exPickTarget: index of the lift row being set, or -1 to append a new row.
+let _exPickTarget=-1;
+
+function openExercisePicker(i){
+  _exPickTarget=(typeof i==='number')?i:-1;
+  const ov=document.getElementById('exercise-picker-overlay');
+  const filter=document.getElementById('exercise-picker-filter');
+  const title=document.getElementById('exercise-picker-title');
+  if(!ov||!filter) return;
+  if(title) title.textContent=_exPickTarget>=0?'Swap exercise':'Add exercise';
+  filter.value='';
+  _renderExercisePickerList('');
+  ov.classList.add('show');
+  // Deliberately NOT auto-focusing: on mobile that throws up the keyboard and covers the
+  // list, when the whole point is browsing rather than typing.
+}
+
+function _renderExercisePickerList(filterText){
+  const list=document.getElementById('exercise-picker-list');
+  if(!list) return;
+  const q=(filterText||'').trim().toLowerCase();
+  const logged=new Set();
+  sessionLog.forEach(s=>(s.lifts||[]).forEach(l=>l.name&&logged.add(l.name.trim().toLowerCase())));
+  const names=_exerciseLibrary().filter(n=>!q||n.toLowerCase().includes(q));
+  if(!names.length){
+    // Still allow a genuinely new name — the library shouldn't block first-time exercises.
+    list.innerHTML=q
+      ? `<button class="ex-pick-item" onclick="pickExercise(${JSON.stringify(filterText.trim()).replace(/"/g,'&quot;')})"><strong>Use "${filterText.trim().replace(/</g,'&lt;')}"</strong><small>New exercise — not in your library yet</small></button>`
+      : '<div class="ex-pick-empty">No exercises yet.</div>';
+    return;
+  }
+  list.innerHTML=names.map(n=>{
+    const prev=lastLiftFor(n);
+    const sub=prev?prev.match.weight?`Last: ${prev.match.weight}kg · ${prev.match.sets||'?'}×${prev.match.reps||'?'}`:'Logged before':'Not logged yet';
+    return `<button class="ex-pick-item" onclick="pickExercise(${JSON.stringify(n).replace(/"/g,'&quot;')})">${n.replace(/</g,'&lt;')}<small>${sub}</small></button>`;
+  }).join('');
+}
+
+function pickExercise(name){
+  if(!name) return;
+  if(_exPickTarget>=0&&currentLifts[_exPickTarget]){
+    const l=currentLifts[_exPickTarget];
+    l.name=name;
+    // Clear the old exercise's numbers so a swap doesn't inherit them, then pull this
+    // exercise's own history in.
+    l.weight='';l.sets='';l.reps='';l.rpe='';
+    _prefillLift(l);
+  } else {
+    currentLifts.push(_prefillLift({name,weight:'',sets:'',reps:'',rpe:''}));
+  }
+  closeExercisePicker();
+  renderLiftRows();
+}
+
+function closeExercisePicker(e){
+  if(e&&e.target!==document.getElementById('exercise-picker-overlay')) return;
+  const ov=document.getElementById('exercise-picker-overlay');
+  if(ov) ov.classList.remove('show');
+}
+
 function renderExerciseLibrary(){
   const dl=document.getElementById('exercise-library');
   if(!dl) return;
@@ -4200,11 +4288,6 @@ function showLastSessionRef(sessType){
         <span class="lsr-val">${l.weight?l.weight+(isCardio?'km':'kg'):''}${l.sets?' × '+l.sets:''}${l.reps?' × '+l.reps+(isCardio?' min':'r'):''}</span>
       </div>`).join('');
   refEl.style.display='block';
-}
-
-function addLiftRow(){
-  currentLifts.push({name:'',weight:'',sets:'',reps:'',rpe:''});
-  renderLiftRows();
 }
 
 function removeLiftRow(i){
@@ -4249,6 +4332,7 @@ function renderLiftRows(){
         <input class="lift-card-name" type="text" value="${l.name||''}" placeholder="Exercise name"
           list="exercise-library"
           oninput="currentLifts[${i}].name=this.value" onchange="_prefillLift(currentLifts[${i}]);renderLiftRows()" autocomplete="off" autocorrect="off" spellcheck="false">
+        <button class="lift-card-pick" onclick="openExercisePicker(${i})" aria-label="Swap exercise ${i+1} from library" title="Swap from library"><i class="ti ti-list-search" style="font-size:14px" aria-hidden="true"></i></button>
         <div class="lift-card-move-stack">
           <button class="lift-card-move" onclick="moveLiftRow(${i},-1)" aria-label="Move exercise ${i+1} up" ${i===0?'disabled':''}><i class="ti ti-chevron-up" style="font-size:12px" aria-hidden="true"></i></button>
           <button class="lift-card-move" onclick="moveLiftRow(${i},1)" aria-label="Move exercise ${i+1} down" ${i===currentLifts.length-1?'disabled':''}><i class="ti ti-chevron-down" style="font-size:12px" aria-hidden="true"></i></button>
