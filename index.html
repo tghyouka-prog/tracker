@@ -200,12 +200,6 @@ html.theme-light .bottom-nav{background:rgba(250,248,245,.94)}
 .stat-lbl{font-size:11px;color:var(--t3);letter-spacing:.04em;text-transform:uppercase}
 
 /* TRACKER */
-.up-next-card{background:var(--s1);border:1px solid color-mix(in srgb,var(--teal) 20%,transparent);border-radius:var(--r-lg);padding:.875rem 1rem;margin-bottom:.875rem;display:none;box-shadow:var(--sh-sm)}
-.up-next-card.visible{display:block}
-.up-next-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:.3rem}
-.up-next-main{font-size:14px;font-weight:600;color:var(--t1);line-height:1.3}
-.up-next-sub{font-size:12px;color:var(--t2);margin-top:3px}
-.up-next-time{font-size:11px;color:var(--t3);margin-top:4px;font-variant-numeric:tabular-nums}
 .tl-phase{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);padding:.875rem 0 .375rem}
 .tl-phase:first-child{padding-top:0}
 .tl-item{display:flex;align-items:center;gap:.875rem;padding:1.125rem .25rem;border:none;border-bottom:1px solid rgba(255,248,240,.05);border-radius:0;margin-bottom:0;cursor:pointer;background:transparent;transition:opacity .15s,background .15s}
@@ -412,10 +406,6 @@ html.theme-light .bottom-nav{background:rgba(250,248,245,.94)}
 @keyframes page-fade{from{opacity:.4}to{opacity:1}}
 
 
-/* UX: Up Next remaining count + all-clear */
-.up-next-count{font-size:11px;color:var(--t3);margin-top:4px}
-.up-next-card.all-clear{border-color:color-mix(in srgb,var(--teal) 40%,transparent);background:linear-gradient(135deg,color-mix(in srgb,var(--teal) 10%,transparent),transparent)}
-.up-next-card.all-clear .up-next-main{color:var(--teal)}
 /* UX: Completed phase recedes */
 .tl-phase-header.phase-done{opacity:.45}
 .tl-phase-header.phase-done .phase-check{color:var(--teal);margin-left:5px;font-size:11px}
@@ -833,10 +823,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .undo-toast.out{animation:toast-out .28s ease-in forwards}
 .undo-toast-btn{font-size:11px;font-weight:700;padding:4px 12px;border-radius:16px;border:none;background:var(--teal);color:#0a0a0a;cursor:pointer;flex-shrink:0;transition:transform .07s cubic-bezier(.34,1.56,.64,1)}
 .undo-toast-btn:active{transform:scale(.93)}
-
-/* 4 — Gradient warmth on focal surfaces */
-.up-next-card{background:linear-gradient(135deg,var(--s1),color-mix(in srgb,var(--teal) 6%,transparent)) !important}
-
 
 /* ═══ QOL FEATURES ═══ */
 
@@ -1333,7 +1319,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 /* ── SUPPHEAD ROLLOUT (stage 2, app-wide): borderless cards, pill-shaped controls, chunky bold headlines ──
    Targeted overrides rather than a blanket --b1/--b2 token change, since those tokens are also used for
    functional dividers (footer stat-strips, input borders) that should stay visible. */
-.card,.stat-card,.up-next-card,.supp-timing-table,.weight-history-strip,
+.card,.stat-card,.supp-timing-table,.weight-history-strip,
 .focus-card,.macro-card,.fuel-sec,.fuel-wt-card,.cs-card{
   border:none!important;
 }
@@ -3091,9 +3077,6 @@ function updateScore(){
   }
 }
 
-// ── MISSION COLLAPSE ──
-let missionOpen=false;
-
 function resetDay(){
   saveYesterday();
   macros.prot=0;macros.hydro=0;macros.kcal=0;macros.carb=0;
@@ -3754,29 +3737,10 @@ function render(){
   }
   let html='',lastPhase='';
   let nextIdx=-1;
+  // NB: nextIdx stays — the timeline below uses it for isNext. The "up next" card that also
+  // read it was removed with its markup in an earlier redesign; its JS lingered, writing into
+  // a null container (inert, since both branches were gated on the missing #up-next-card).
   for(let i=0;i<items.length;i++){if(!ticks[tlKey(shift,i)]){nextIdx=i;break;}}
-  // Up next card — shows next uncompleted item + how many remain after it
-  const unc=document.getElementById('up-next-card');
-  if(nextIdx>=0&&unc){
-    const n=items[nextIdx];
-    unc.className='up-next-card visible';
-    document.getElementById('up-next-main').textContent=n.label;
-    document.getElementById('up-next-sub').textContent=n.sub||'';
-    document.getElementById('up-next-time').textContent=n.t?'@ '+n.t:'';
-    // Count remaining after this one
-    let remainAfter=0;
-    for(let j=nextIdx+1;j<items.length;j++){if(!ticks[tlKey(shift,j)]) remainAfter++;}
-    const cntEl=document.getElementById('up-next-count');
-    if(cntEl) cntEl.textContent=remainAfter>0?`+${remainAfter} more after this`:'last one — finish strong';
-  } else if(unc){
-    // All done — celebratory state
-    unc.className='up-next-card visible all-clear';
-    document.getElementById('up-next-main').textContent='All core items done';
-    document.getElementById('up-next-sub').textContent='Protocol complete for this shift.';
-    document.getElementById('up-next-time').textContent='';
-    const cntEl=document.getElementById('up-next-count');
-    if(cntEl) cntEl.textContent='';
-  }
   // Timeline
   // Pre-compute which phases are fully complete (all items ticked)
   const phaseComplete={};
@@ -4117,13 +4081,6 @@ function getContextualHint(){
   }
   return null;
 }
-
-// ── 4. GRADIENT WARMTH ON FOCAL SURFACES ──
-// Applied via CSS — score row and up-next card get the treatment
-
-// ── TRACKER ARC (4th segment) ──
-const ARC4_FULL=47.3;
-const ARC4_OFFSETS={prot:0,hydro:-51.8,kcal:-103.6,tracker:-155.4};
 
 function getTrackerPct(){
   return getTrackerPctWeighted();
@@ -4873,9 +4830,6 @@ function renderSessionHistory(){
 // ── REMINDER SYSTEM ──
 
 
-// ── WEEKLY HISTORY PERSISTENCE UPDATE ──
-// Saves today's state into weekHistory before persisting
-const _saveOrig=typeof save==='function'?save:null;
 const STORE='op_protocol_v3';
 
 // Stamp today's numbers into weekHistory on every save. Nothing wrote `score` before this —
@@ -5003,10 +4957,7 @@ let dismissedInsights={}; // {insightId: {dismissedAt, type}}
 let insightsLastRead=null; // ISO date string
 let _lastInsightCount=0;
 let appliedInsights={}; // {insightId: {appliedAt, type}}
-let _coachFilter='all';
-let _coachShowAll=false;
 let lastWeeklyShown=null; // YYYY-MM-DD
-let _checkinDraft={energy:0,sleep:0,sore:0};
 
 // ── DAILY CHECK-IN ──
 
