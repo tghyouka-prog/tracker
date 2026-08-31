@@ -4158,12 +4158,15 @@ let currentLifts=[];
 // Hoisted to top level (was local to updateSessType) so the exercise-name autocomplete can
 // read every programmed exercise, not just the ones in the session you happen to have open.
 const SESSION_DEFAULTS={
-    'Push A':[{name:'Incline DB Press',sets:'4'},{name:'Flat Machine Press',sets:'3'},{name:'Cable Crossovers',sets:'3'},{name:'DB Lateral Raises',sets:'4'},{name:'Overhead Cable Triceps Extension',sets:'3'}],
-    'Pull A':[{name:'Wide-Grip Lat Pulldowns',sets:'4'},{name:'Single-Arm Cable Row',sets:'3'},{name:'Face Pulls',sets:'5'},{name:'Incline DB Bicep Curls',sets:'3'},{name:'Hammer Curls',sets:'3'}],
-    'Legs A':[{name:'Hack Squat Machine',sets:'4'},{name:'Leg Press',sets:'4'},{name:'Leg Extensions',sets:'3'},{name:'Lying Leg Curls',sets:'4'},{name:'Standing Calf Raises',sets:'4'}],
-    'Push B':[{name:'Seated DB Shoulder Press',sets:'4'},{name:'Incline Machine Press',sets:'3'},{name:'Cable Lateral Raises',sets:'4'},{name:'Pec Deck Flyes',sets:'3'},{name:'Close-Grip Machine Press',sets:'3'}],
+    // Legacy PPL A/B. Exercise names here were pluralised while the current split uses the
+    // singular, so the same movement logged under both landed in two separate histories.
+    // Aligned to the singular form; EXERCISE_ALIASES below migrates anything already logged.
+    'Push A':[{name:'Incline DB Press',sets:'4'},{name:'Flat Machine Press',sets:'3'},{name:'Cable Crossovers',sets:'3'},{name:'DB Lateral Raise',sets:'4'},{name:'Overhead Cable Triceps Extension',sets:'3'}],
+    'Pull A':[{name:'Wide-Grip Lat Pulldowns',sets:'4'},{name:'Single-Arm Cable Row',sets:'3'},{name:'Face Pull',sets:'5'},{name:'Incline DB Bicep Curls',sets:'3'},{name:'Hammer Curls',sets:'3'}],
+    'Legs A':[{name:'Hack Squat Machine',sets:'4'},{name:'Leg Press',sets:'4'},{name:'Leg Extensions',sets:'3'},{name:'Lying Leg Curl',sets:'4'},{name:'Standing Calf Raise',sets:'4'}],
+    'Push B':[{name:'Seated DB Shoulder Press',sets:'4'},{name:'Incline Machine Press',sets:'3'},{name:'Cable Lateral Raise',sets:'4'},{name:'Pec Deck Flyes',sets:'3'},{name:'Close-Grip Machine Press',sets:'3'}],
     'Pull B':[{name:'Seated Cable Rows',sets:'4'},{name:'Neutral-Grip Lat Pulldowns',sets:'3'},{name:'Single-Arm Cable Pullover',sets:'3'},{name:'Reverse Pec Deck',sets:'4'},{name:'EZ-Bar Preacher Curls',sets:'3'}],
-    'Legs B':[{name:'Single-Leg RDL DB',sets:'4'},{name:'Bulgarian Split Squats',sets:'3'},{name:'Leg Press',sets:'3'},{name:'Seated Leg Curls',sets:'3'},{name:'Seated Calf Raises',sets:'4'}],
+    'Legs B':[{name:'Single-Leg RDL DB',sets:'4'},{name:'Bulgarian Split Squat',sets:'3'},{name:'Leg Press',sets:'3'},{name:'Seated Leg Curl',sets:'3'},{name:'Seated Calf Raise',sets:'4'}],
     // Current aesthetic-priority split (day-of-week based) — priority lifts listed FIRST.
     // Side/rear delts lead Tue and Fri deliberately: legs run at maintenance, so the priority
     // muscle gets the fresh slot. Keys are unchanged so older logged sessions still match.
@@ -4174,6 +4177,48 @@ const SESSION_DEFAULTS={
     'Fri-Lower':[{name:'DB Lateral Raise',sets:'5'},{name:'Incline DB / Cable Curl',sets:'3'},{name:'Lying Leg Curl',sets:'3'},{name:'Bulgarian Split Squat',sets:'3'},{name:'45° Back Extension',sets:'3'},{name:'Seated Calf Raise',sets:'2'},{name:'Overhead Cable Triceps Extension',sets:'3'}],
     'Cardio':[{name:'Zone 2 run / walk / cycle',sets:'',reps:'',weight:''}],
 };
+
+// ── EXERCISE NAME CANONICALISATION ──
+// The legacy PPL templates pluralised eight movements that the current split writes in the
+// singular, so the same exercise accumulated two separate histories — splitting its pre-fill,
+// its vs-last-time verdict, and its PB detection (PBs are derived from sessionLog at read
+// time, so fixing the log fixes those automatically). Only these eight are mapped: a general
+// "strip trailing s" rule would be wrong (Cable Crossovers, Leg Extensions, Hammer Curls and
+// others have no singular counterpart and are not duplicates).
+const EXERCISE_ALIASES={
+  'db lateral raises':'DB Lateral Raise',
+  'cable lateral raises':'Cable Lateral Raise',
+  'face pulls':'Face Pull',
+  'lying leg curls':'Lying Leg Curl',
+  'seated leg curls':'Seated Leg Curl',
+  'standing calf raises':'Standing Calf Raise',
+  'seated calf raises':'Seated Calf Raise',
+  'bulgarian split squats':'Bulgarian Split Squat',
+};
+
+function _canonicalExercise(name){
+  if(!name) return name;
+  return EXERCISE_ALIASES[name.trim().toLowerCase()]||name;
+}
+
+// One-time cleanup of already-logged data. Idempotent — a second run finds nothing to do, so
+// it's safe to leave in the init path. Returns how many names it rewrote.
+function migrateExerciseNames(){
+  let n=0;
+  sessionLog.forEach(s=>(s.lifts||[]).forEach(l=>{
+    const c=_canonicalExercise(l.name);
+    if(c!==l.name){ l.name=c; n++; }
+  }));
+  // Journey PB entries carry the name in both the stored payload and the display title.
+  journeyLog.forEach(e=>{
+    if(!e||!e.data||!e.data.lift) return;
+    const c=_canonicalExercise(e.data.lift);
+    if(c===e.data.lift) return;
+    if(typeof e.title==='string') e.title=e.title.split(e.data.lift).join(c);
+    e.data.lift=c; n++;
+  });
+  return n;
+}
 
 // Autocomplete source for the exercise-name field. A name typed even slightly differently
 // ("DB Lateral Raise" vs "Db lateral raises") logs as a separate exercise, which silently
@@ -4581,6 +4626,9 @@ function saveSession(){
   const sel=document.getElementById('sess-type-select');
   const notes=document.getElementById('sess-notes')?.value?.trim()||'';
   if(!validateSession(sel,currentLifts)) return;
+  // Canonicalise on the way in so a legacy-named entry can't re-split a history the
+  // migration just merged.
+  currentLifts.forEach(l=>{ l.name=_canonicalExercise(l.name); });
   const filledLifts=currentLifts.filter(l=>l.name&&(l.weight||l.reps));
   // Verdict vs last time — computed BEFORE the session is unshifted into sessionLog,
   // otherwise lastLiftFor() would match the set we're currently saving.
@@ -6947,6 +6995,15 @@ renderFitbit();
 renderWeekStrip();
 renderSessionHistory();
 renderRemovedItems();
+// Merge legacy plural exercise names into their current singular form before anything reads
+// history. Idempotent, so it costs nothing once there's nothing left to migrate.
+{
+  const _migrated=migrateExerciseNames();
+  if(_migrated){
+    save();
+    setTimeout(()=>showToast('Merged '+_migrated+' duplicate exercise name'+(_migrated===1?'':'s'),'action'),900);
+  }
+}
 renderExerciseLibrary();
 renderProgress();
 _initDraftWatch();
