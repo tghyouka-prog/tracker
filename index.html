@@ -4136,6 +4136,11 @@ const SESSION_DEFAULTS={
     // Triceps use the overhead extension rather than a pushdown: Maeo 2023 (within-subject, one
     // arm each, 12wk) found overhead produced substantially more growth across ALL THREE heads
     // with identical strength gains. Both are cables, so switching costs nothing here.
+    // NOTE on the day-4 rear delt: it's the SINGLE-ARM reverse pec deck, and its 3 sets are
+    // per side (the usual convention for unilateral work), so rear-delt stimulus stays 6/cycle.
+    // Deliberately NOT aliased to the bilateral 'Reverse Pec Deck' — unlike the plural/typo
+    // merges, these are genuinely different exercises with non-comparable loads, so a shared
+    // history would produce nonsense pre-fills. Starting a fresh chain is the correct behaviour.
     // Biceps are split preacher (here) / incline (day 4) on purpose — they are NOT
     // interchangeable. Preacher flexes the shoulder, shortening the long head, and loads hardest
     // at the stretched-elbow start, which grows the DISTAL arm. Incline extends the shoulder,
@@ -4151,7 +4156,7 @@ const SESSION_DEFAULTS={
     // effect from order — only strength favours going first. So the compound takes the slot
     // where being fresh actually pays (a stronger press = more load over time = more chest),
     // and the laterals lose nothing by following it.
-    'Thu-Upper':[{name:'Incline Smith Press',sets:'4',rep:'6-10'},{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Lat Pulldown',sets:'4',rep:'6-10'},{name:'Chest-Supported Row',sets:'3',rep:'8-12'},{name:'Reverse Pec Deck',sets:'3',rep:'12-20'},{name:'Incline DB Curl',sets:'2',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'}],
+    'Thu-Upper':[{name:'Incline Smith Press',sets:'4',rep:'6-10'},{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Lat Pulldown',sets:'4',rep:'6-10'},{name:'Chest-Supported Row',sets:'3',rep:'8-12'},{name:'Single-Arm Reverse Pec Deck',sets:'3',rep:'12-20'},{name:'Incline DB Curl',sets:'2',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'}],
     // DNOO cycle day 3 — first off day, best recovered, so leg work lives here. Delts still lead:
     // legs run at maintenance (9 sets), so the priority muscle gets the fresh slot. Core is
     // anti-rotation/anti-flexion only — no loaded side flexion, which is the one thing that can
