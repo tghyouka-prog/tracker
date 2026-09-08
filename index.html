@@ -4138,7 +4138,7 @@ const SESSION_DEFAULTS={
     // DNOO cycle day 4 — second off day, fully recovered, so the longest session. This is the
     // taper session. Incline press at 30° (peak clavicular pec EMG; 45° leaks into front delts,
     // which aren't a priority) and run the cable fly low-to-high for the same reason. 25 sets.
-    'Thu-Upper':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Incline Barbell Press',sets:'4',rep:'6-10'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Lat Pulldown',sets:'4',rep:'6-10'},{name:'Chest-Supported Row',sets:'3',rep:'8-12'},{name:'Reverse Pec Deck',sets:'3',rep:'12-20'},{name:'Incline DB Curl',sets:'2',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'}],
+    'Thu-Upper':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Incline Smith Press',sets:'4',rep:'6-10'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Lat Pulldown',sets:'4',rep:'6-10'},{name:'Chest-Supported Row',sets:'3',rep:'8-12'},{name:'Reverse Pec Deck',sets:'3',rep:'12-20'},{name:'Incline DB Curl',sets:'2',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'}],
     // DNOO cycle day 3 — first off day, best recovered, so leg work lives here. Delts still lead:
     // legs run at maintenance (9 sets), so the priority muscle gets the fresh slot. Core is
     // anti-rotation/anti-flexion only — no loaded side flexion, which is the one thing that can
@@ -4169,13 +4169,17 @@ const EXERCISE_ALIASES={
   // prescribes; the other half is offered in the picker via EXERCISE_EXTRAS.
   'pull-up / lat pulldown':'Lat Pulldown',
   'leg press / hack squat':'Leg Press',
-  'incline barbell / smith press':'Incline Barbell Press',
+  'incline barbell / smith press':'Incline Smith Press',
+  // Smith is what actually gets used. The barbell key is here because the previous release
+  // briefly canonicalised the combined name to 'Incline Barbell Press' — anyone who loaded the
+  // app in that window already has history under it, and this folds it back in.
+  'incline barbell press':'Incline Smith Press',
 };
 
 // Alternatives that no template prescribes but the picker should still offer — the other half
 // of each split above. Without this they'd only appear once already logged, which is exactly
 // when you can't reach for them.
-const EXERCISE_EXTRAS=['Pull-Up','Hack Squat','Incline Smith Press'];
+const EXERCISE_EXTRAS=['Pull-Up','Hack Squat'];
 
 function _canonicalExercise(name){
   if(!name) return name;
