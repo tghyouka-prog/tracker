@@ -4120,7 +4120,7 @@ const SESSION_DEFAULTS={
     'Pull A':[{name:'Wide-Grip Lat Pulldowns',sets:'4'},{name:'Single-Arm Cable Row',sets:'3'},{name:'Face Pull',sets:'5'},{name:'Incline DB Bicep Curls',sets:'3'},{name:'Hammer Curls',sets:'3'}],
     'Legs A':[{name:'Hack Squat Machine',sets:'4'},{name:'Leg Press',sets:'4'},{name:'Leg Extensions',sets:'3'},{name:'Lying Leg Curl',sets:'4'},{name:'Standing Calf Raise',sets:'4'}],
     'Push B':[{name:'Seated DB Shoulder Press',sets:'4'},{name:'Incline Machine Press',sets:'3'},{name:'Cable Lateral Raise',sets:'4'},{name:'Pec Deck Flyes',sets:'3'},{name:'Close-Grip Machine Press',sets:'3'}],
-    'Pull B':[{name:'Seated Cable Rows',sets:'4'},{name:'Neutral-Grip Lat Pulldowns',sets:'3'},{name:'Single-Arm Cable Pullover',sets:'3'},{name:'Reverse Pec Deck',sets:'4'},{name:'EZ-Bar Preacher Curls',sets:'3'}],
+    'Pull B':[{name:'Seated Cable Rows',sets:'4'},{name:'Neutral-Grip Lat Pulldowns',sets:'3'},{name:'Single-Arm Cable Pullover',sets:'3'},{name:'Reverse Pec Deck',sets:'4'},{name:'Preacher Curl',sets:'3'}],
     'Legs B':[{name:'Single-Leg RDL DB',sets:'4'},{name:'Bulgarian Split Squat',sets:'3'},{name:'Leg Press',sets:'3'},{name:'Seated Leg Curl',sets:'3'},{name:'Seated Calf Raise',sets:'4'}],
     // Current aesthetic-priority split (day-of-week based) — priority lifts listed FIRST.
     // Side/rear delts lead Tue and Fri deliberately: legs run at maintenance, so the priority
@@ -4136,7 +4136,12 @@ const SESSION_DEFAULTS={
     // Triceps use the overhead extension rather than a pushdown: Maeo 2023 (within-subject, one
     // arm each, 12wk) found overhead produced substantially more growth across ALL THREE heads
     // with identical strength gains. Both are cables, so switching costs nothing here.
-    'Mon-Push':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Cable Reverse Fly',sets:'3',rep:'12-20'},{name:'Incline DB Curl',sets:'3',rep:'10-15'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'},{name:'Pallof Press',sets:'2',rep:'10-15'}],
+    // Biceps are split preacher (here) / incline (day 4) on purpose — they are NOT
+    // interchangeable. Preacher flexes the shoulder, shortening the long head, and loads hardest
+    // at the stretched-elbow start, which grows the DISTAL arm. Incline extends the shoulder,
+    // lengthening the long head, which grows the PROXIMAL arm. Running both covers regions
+    // either alone would miss; preacher takes the larger share by preference.
+    'Mon-Push':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Cable Reverse Fly',sets:'3',rep:'12-20'},{name:'Preacher Curl',sets:'3',rep:'10-15'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'},{name:'Pallof Press',sets:'2',rep:'10-15'}],
     'Tue-Legs':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Face Pull',sets:'3',rep:'12-20'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Leg Press',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Standing Calf Raise',sets:'2',rep:'10-15'}],
     // DNOO cycle day 4 — second off day, fully recovered, so the longest session. This is the
     // taper session. Incline press at 30° (peak clavicular pec EMG; 45° leaks into front delts,
@@ -4182,6 +4187,8 @@ const EXERCISE_ALIASES={
   // briefly canonicalised the combined name to 'Incline Barbell Press' — anyone who loaded the
   // app in that window already has history under it, and this folds it back in.
   'incline barbell press':'Incline Smith Press',
+  // Preacher curl generalised off the EZ-bar so it covers the machine and DB versions too.
+  'ez-bar preacher curls':'Preacher Curl',
 };
 
 // Alternatives that no template prescribes but the picker should still offer — the other half
