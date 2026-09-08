@@ -2057,12 +2057,14 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
       <div style="display:flex;gap:5px;align-items:center;width:100%">
         <select id="sess-type-select" onchange="updateSessType()" class="sel-input">
           <option value="">— pick session —</option>
-          <optgroup label="Training types">
+          <optgroup label="DNOO cycle">
+            <option value="Mon-Push">Delts + Arms — cycle day 2, pre-shift</option>
+            <option value="Fri-Lower">Lower + Delts — cycle day 3, off</option>
+            <option value="Thu-Upper">Upper · Chest + Back — cycle day 4, off</option>
+          </optgroup>
+          <optgroup label="Other">
             <option value="Sun-Pull">Pull — Lat width + triceps</option>
-            <option value="Mon-Push">Push — Upper chest + delts + biceps</option>
             <option value="Tue-Legs">Legs — Delts/arms + legs</option>
-            <option value="Thu-Upper">Upper — Back width + chest</option>
-            <option value="Fri-Lower">Lower — Delts/arms + hams/glutes</option>
           </optgroup>
           <optgroup label="Conditioning">
             <option value="Cardio">Cardio — Zone 2 (Wed/Sat)</option>
@@ -3262,18 +3264,18 @@ const CYCLE_DNOO = [
    short:'No gym · Vault at 22:00 · Sleep by 23:00',
    mission:'Day shift. Morning light → transporter → takeout + supps → 09:30 PM Mag → vault → sleep.',
    sub:'No gym today. Rest and recover.'},
-  {label:'Day 2',type:'n',typeLabel:'Night',gym:'Pull A/B',
-   short:'Pull A/B pre-shift · Blue-blocks at 08:30 · Vault on arrival',
-   mission:'Night shift. Afternoon wake → 90-min nap → gym (Pull A/B) → flask → mid-shift takeout → blue-blocks 08:30.',
-   sub:'Pull only. Lowest CNS demand for pre-shift slot.'},
-  {label:'Day 3',type:'o',typeLabel:'Off',gym:'Legs A/B',
-   short:'Legs A or B · Heaviest session · Deload check',
-   mission:'Off day. Post-night wind-down first (if Day 2 was night), then afternoon gym — Legs A or B.',
+  {label:'Day 2',type:'n',typeLabel:'Night',gym:'Delts + Arms',
+   short:'Delts + Arms pre-shift · Cables only · Blue-blocks at 08:30',
+   mission:'Night shift. Afternoon wake → 90-min nap → gym (Delts + Arms) → flask → mid-shift takeout → blue-blocks 08:30.',
+   sub:'Cable/machine only — lowest CNS cost before a 12h night.'},
+  {label:'Day 3',type:'o',typeLabel:'Off',gym:'Lower + Delts',
+   short:'Lower + Delts · Legs at maintenance · Deload check',
+   mission:'Off day. Post-night wind-down first, then afternoon gym — Lower + Delts. Delts lead: legs are maintenance, so the priority muscle gets the fresh slot.',
    sub:'Bridge mode activates if you just finished Night shift.'},
-  {label:'Day 4',type:'o',typeLabel:'Off',gym:'Push A/B + Zone 2',
-   short:'Push A or B · Zone 2 30 min post-gym',
-   mission:'Off day. Push A or B → Zone 2 cardio immediately after.',
-   sub:'Zone 2 does not compromise Push recovery at correct intensity.'},
+  {label:'Day 4',type:'o',typeLabel:'Off',gym:'Upper · Chest + Back + Zone 2',
+   short:'Upper — incline 30° · Zone 2 30 min post-gym',
+   mission:'Off day. Upper — Chest + Back → Zone 2 cardio immediately after. Incline press at 30° and cable fly low-to-high: both bias the clavicular (upper) pec instead of leaking into front delts.',
+   sub:'Longest session — you are fully recovered. Zone 2 does not compromise it at correct intensity.'},
 ];
 
 const CYCLE_TO_SHIFT_DNOO = ['ds','ns1','off','off'];
@@ -4141,10 +4143,20 @@ const SESSION_DEFAULTS={
     // compounds moderate, isolations higher, laterals deliberately high (heavy low-rep laterals
     // turn into a trap/momentum movement, which works against the taper).
     'Sun-Pull':[{name:'Pull-Up / Lat Pulldown',sets:'4',rep:'6-10'},{name:'Chest-Supported Row',sets:'4',rep:'8-12'},{name:'Straight-Arm Cable Pullover',sets:'3',rep:'12-15'},{name:'Reverse Pec Deck',sets:'4',rep:'12-20'},{name:'Overhead Cable Triceps Extension',sets:'3',rep:'10-15'},{name:'Triceps Pushdown',sets:'2',rep:'10-15'}],
-    'Mon-Push':[{name:'Incline Barbell / Smith Press',sets:'4',rep:'6-10'},{name:'DB Lateral Raise',sets:'5',rep:'12-20'},{name:'Machine Shoulder Press',sets:'3',rep:'8-12'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Incline DB Curl',sets:'3',rep:'10-15'},{name:'Hanging Knee Raise',sets:'3',rep:'10-15'},{name:'Dead Bug',sets:'2',rep:'10-15'}],
+    // DNOO cycle day 2 — trained pre-shift before a 12h night, so cable/machine only: nothing
+    // here should tax the CNS or lower back. Arms live in this slot because they're the least
+    // fatiguing thing to train, and they're a named priority. 17 sets.
+    'Mon-Push':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Cable Reverse Fly',sets:'3',rep:'12-20'},{name:'Incline DB Curl',sets:'3',rep:'10-15'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Triceps Pushdown',sets:'2',rep:'10-15'},{name:'Pallof Press',sets:'2',rep:'10-15'}],
     'Tue-Legs':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Face Pull',sets:'3',rep:'12-20'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Leg Press / Hack Squat',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Standing Calf Raise',sets:'2',rep:'10-15'}],
-    'Thu-Upper':[{name:'Lat Pulldown (alt grip)',sets:'4',rep:'8-12'},{name:'Single-Arm Cable Row',sets:'3',rep:'10-15'},{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Cable Reverse Fly',sets:'3',rep:'12-20'},{name:'Flat DB Press',sets:'4',rep:'8-12'},{name:'Pallof Press',sets:'3',rep:'10-15'}],
-    'Fri-Lower':[{name:'DB Lateral Raise',sets:'5',rep:'12-20'},{name:'Incline DB / Cable Curl',sets:'3',rep:'10-15'},{name:'Lying Leg Curl',sets:'3',rep:'10-15'},{name:'Bulgarian Split Squat',sets:'3',rep:'8-12'},{name:'45° Back Extension',sets:'3',rep:'10-15'},{name:'Seated Calf Raise',sets:'2',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'3',rep:'10-15'}],
+    // DNOO cycle day 4 — second off day, fully recovered, so the longest session. This is the
+    // taper session. Incline press at 30° (peak clavicular pec EMG; 45° leaks into front delts,
+    // which aren't a priority) and run the cable fly low-to-high for the same reason. 25 sets.
+    'Thu-Upper':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Incline Barbell / Smith Press',sets:'4',rep:'6-10'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Pull-Up / Lat Pulldown',sets:'4',rep:'6-10'},{name:'Chest-Supported Row',sets:'3',rep:'8-12'},{name:'Reverse Pec Deck',sets:'3',rep:'12-20'},{name:'Incline DB Curl',sets:'2',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'}],
+    // DNOO cycle day 3 — first off day, best recovered, so leg work lives here. Delts still lead:
+    // legs run at maintenance (9 sets), so the priority muscle gets the fresh slot. Core is
+    // anti-rotation/anti-flexion only — no loaded side flexion, which is the one thing that can
+    // actually widen the waist. 20 sets.
+    'Fri-Lower':[{name:'DB Lateral Raise',sets:'4',rep:'12-20'},{name:'Leg Press / Hack Squat',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Bulgarian Split Squat',sets:'2',rep:'8-12'},{name:'45° Back Extension',sets:'3',rep:'10-15'},{name:'Standing Calf Raise',sets:'2',rep:'10-15'},{name:'Hanging Knee Raise',sets:'2',rep:'10-15'}],
     'Cardio':[{name:'Zone 2 run / walk / cycle',sets:'',reps:'',weight:''}],
 };
 
