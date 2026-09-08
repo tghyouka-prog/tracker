@@ -1186,6 +1186,9 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .ex-pick-item:last-child{border-bottom:none}
 .ex-pick-item:active{background:var(--s3)}
 .ex-pick-item small{display:block;font-size:11px;color:var(--t3);margin-top:2px}
+.ex-pick-item.is-custom{padding-right:38px;position:relative}
+.ex-pick-del{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;color:var(--t3);cursor:pointer}
+.ex-pick-del:active{background:var(--s3);color:var(--red)}
 .ex-pick-empty{padding:14px 12px;font-size:13px;color:var(--t3)}
 /* Compact so it fits the name row at 375px without squeezing the name field */
 .lift-card-pick{width:28px;height:28px;border-radius:var(--r-sm);border:1px solid var(--b2);background:transparent;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -2042,7 +2045,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
   <div id="sess-history-list"></div>
 
   <!-- Single filled CTA → reveal + jump to logger (collapsed by default, matches the mock's CTA-only composition) -->
-  <button class="train-cta" onclick="document.getElementById('sess-card-logger').style.display='block';document.getElementById('sess-card-logger').scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('sess-type-select').focus(),350)"><i class="ti ti-plus" style="font-size:15px"></i>Log a session</button>
+  <button class="train-cta" onclick="openSessionLogger()"><i class="ti ti-plus" style="font-size:15px"></i>Log a session</button>
 
   <!-- ── SESSION LOGGER (collapsed by default, revealed by the CTA above) ── -->
   <div class="sess-card" id="sess-card-logger" style="margin-top:.25rem;display:none">
@@ -3243,19 +3246,19 @@ const TIMELINE={
 // ── ROTATION SCHEDULE ──
 // DNOO: Day → Night → Off → Off (4-day cycle)
 const CYCLE_DNOO = [
-  {label:'Day 1',type:'d',typeLabel:'Day',gym:'Rest',
+  {label:'Day 1',type:'d',typeLabel:'Day',gym:'Rest',session:null,
    short:'No gym · Vault at 22:00 · Sleep by 23:00',
    mission:'Day shift. Morning light → transporter → takeout + supps → 09:30 PM Mag → vault → sleep.',
    sub:'No gym today. Rest and recover.'},
-  {label:'Day 2',type:'n',typeLabel:'Night',gym:'Delts + Arms',
+  {label:'Day 2',type:'n',typeLabel:'Night',gym:'Delts + Arms',session:'Mon-Push',
    short:'Delts + Arms pre-shift · Cables only · Blue-blocks at 08:30',
    mission:'Night shift. Afternoon wake → 90-min nap → gym (Delts + Arms) → flask → mid-shift takeout → blue-blocks 08:30.',
    sub:'Cable/machine only — lowest CNS cost before a 12h night.'},
-  {label:'Day 3',type:'o',typeLabel:'Off',gym:'Lower + Delts',
+  {label:'Day 3',type:'o',typeLabel:'Off',gym:'Lower + Delts',session:'Fri-Lower',
    short:'Lower + Delts · Legs at maintenance · Deload check',
    mission:'Off day. Post-night wind-down first, then afternoon gym — Lower + Delts. Delts lead: legs are maintenance, so the priority muscle gets the fresh slot.',
    sub:'Bridge mode activates if you just finished Night shift.'},
-  {label:'Day 4',type:'o',typeLabel:'Off',gym:'Upper · Chest + Back + Zone 2',
+  {label:'Day 4',type:'o',typeLabel:'Off',gym:'Upper · Chest + Back + Zone 2',session:'Thu-Upper',
    short:'Upper — incline 30° · Zone 2 30 min post-gym',
    mission:'Off day. Upper — Chest + Back → Zone 2 cardio immediately after. Incline press at 30° and cable fly low-to-high: both bias the clavicular (upper) pec instead of leaking into front delts.',
    sub:'Longest session — you are fully recovered. Zone 2 does not compromise it at correct intensity.'},
@@ -4201,6 +4204,33 @@ const EXERCISE_ALIASES={
 // when you can't reach for them.
 const EXERCISE_EXTRAS=['Pull-Up','Hack Squat'];
 
+// Exercises the user adds themselves. Persisted, so one added mid-session stays available
+// afterwards instead of vanishing until it happens to be logged.
+let customExercises=[];
+
+function addCustomExercise(name){
+  const n=(name||'').trim();
+  if(!n) return false;
+  // Don't duplicate something already known under any spelling the aliases resolve.
+  const canon=_canonicalExercise(n);
+  const known=_exerciseLibrary().some(x=>x.toLowerCase()===canon.toLowerCase());
+  if(known) return false;
+  customExercises.push(canon);
+  save();
+  renderExerciseLibrary();
+  return true;
+}
+
+function removeCustomExercise(name){
+  const before=customExercises.length;
+  customExercises=customExercises.filter(x=>x!==name);
+  if(customExercises.length===before) return;
+  save();
+  renderExerciseLibrary();
+  _renderExercisePickerList(document.getElementById('exercise-picker-filter')?.value||'');
+  showToast('Removed "'+name+'"','action');
+}
+
 function _canonicalExercise(name){
   if(!name) return name;
   return EXERCISE_ALIASES[name.trim().toLowerCase()]||name;
@@ -4232,6 +4262,7 @@ function migrateExerciseNames(){
 // already logged, so a custom exercise autocompletes from its second use onward.
 function _exerciseLibrary(){
   const names=new Set(EXERCISE_EXTRAS);
+  customExercises.forEach(n=>n&&names.add(n));
   Object.values(SESSION_DEFAULTS).forEach(list=>list.forEach(d=>d.name&&names.add(d.name)));
   sessionLog.forEach(s=>(s.lifts||[]).forEach(l=>l.name&&l.name.trim()&&names.add(l.name.trim())));
   return [...names].sort((a,b)=>a.localeCompare(b));
@@ -4262,18 +4293,36 @@ function _renderExercisePickerList(filterText){
   const logged=new Set();
   sessionLog.forEach(s=>(s.lifts||[]).forEach(l=>l.name&&logged.add(l.name.trim().toLowerCase())));
   const names=_exerciseLibrary().filter(n=>!q||n.toLowerCase().includes(q));
+  const esc=s=>String(s).replace(/</g,'&lt;');
+  const arg=s=>JSON.stringify(s).replace(/"/g,'&quot;');
+  // Offer to add whatever's typed as a permanent custom exercise whenever it isn't already
+  // known — not only when the list comes back empty, since a partial match ("cable r") can
+  // still hide a name you meant to create.
+  const typed=(filterText||'').trim();
+  const exact=typed&&_exerciseLibrary().some(x=>x.toLowerCase()===_canonicalExercise(typed).toLowerCase());
+  const addRow=(typed&&!exact)
+    ? `<button class="ex-pick-item" onclick="addAndPickExercise(${arg(typed)})"><strong>+ Add "${esc(typed)}"</strong><small>Saves to your exercise library</small></button>`
+    : '';
   if(!names.length){
-    // Still allow a genuinely new name — the library shouldn't block first-time exercises.
-    list.innerHTML=q
-      ? `<button class="ex-pick-item" onclick="pickExercise(${JSON.stringify(filterText.trim()).replace(/"/g,'&quot;')})"><strong>Use "${filterText.trim().replace(/</g,'&lt;')}"</strong><small>New exercise — not in your library yet</small></button>`
-      : '<div class="ex-pick-empty">No exercises yet.</div>';
+    list.innerHTML=addRow||'<div class="ex-pick-empty">No exercises yet.</div>';
     return;
   }
-  list.innerHTML=names.map(n=>{
+  list.innerHTML=addRow+names.map(n=>{
     const prev=lastLiftFor(n);
     const sub=prev?prev.match.weight?`Last: ${prev.match.weight}kg · ${prev.match.sets||'?'}×${prev.match.reps||'?'}`:'Logged before':'Not logged yet';
-    return `<button class="ex-pick-item" onclick="pickExercise(${JSON.stringify(n).replace(/"/g,'&quot;')})">${n.replace(/</g,'&lt;')}<small>${sub}</small></button>`;
+    const isCustom=customExercises.includes(n);
+    // Remove is offered on custom entries only — template exercises aren't the user's to delete.
+    const del=isCustom
+      ? `<span class="ex-pick-del" onclick="event.stopPropagation();removeCustomExercise(${arg(n)})" role="button" aria-label="Remove ${esc(n)} from your library"><i class="ti ti-x" style="font-size:12px" aria-hidden="true"></i></span>`
+      : '';
+    return `<button class="ex-pick-item${isCustom?' is-custom':''}" onclick="pickExercise(${arg(n)})">${esc(n)}${del}<small>${sub}${isCustom?' · yours':''}</small></button>`;
   }).join('');
+}
+
+// Save a typed name to the library, then use it for the row that opened the picker.
+function addAndPickExercise(name){
+  addCustomExercise(name);
+  pickExercise(_canonicalExercise((name||'').trim()));
 }
 
 function pickExercise(name){
@@ -4302,6 +4351,27 @@ function renderExerciseLibrary(){
   const dl=document.getElementById('exercise-library');
   if(!dl) return;
   dl.innerHTML=_exerciseLibrary().map(n=>`<option value="${n.replace(/"/g,'&quot;')}"></option>`).join('');
+}
+
+// Opens the logger and preselects the session this cycle day calls for. Replaces the old
+// day-of-week auto-select, which was removed as meaningless on a rotating roster — the cycle
+// position IS meaningful, and CYCLE_DNOO already stores which session each day owes.
+// Only preselects when nothing is chosen yet, so it never overwrites a session in progress
+// (including a restored draft or one loaded by editSession).
+function openSessionLogger(){
+  const card=document.getElementById('sess-card-logger');
+  const sel=document.getElementById('sess-type-select');
+  if(card) card.style.display='block';
+  if(sel&&!sel.value&&!currentLifts.length){
+    const day=getActiveCycle()[cycleDay];
+    if(day&&day.session){
+      sel.value=day.session;
+      updateSessType();
+      showToast('Cycle day '+(cycleDay+1)+' — '+day.gym,'action');
+    }
+  }
+  if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
+  if(sel&&!sel.value) setTimeout(()=>sel.focus(),350);
 }
 
 function updateSessType(){
@@ -4891,7 +4961,7 @@ function save(){
   try{
     localStorage.setItem(STORE,JSON.stringify({
       date:biologicalToday(),shift,ticks,macros,history,
-      mealLibrary,mealLog,weekHistory,sessionLog,
+      mealLibrary,mealLog,weekHistory,sessionLog,customExercises,
       cycleDay,cycleNum,cycleAnchorDate,completedDays,
       streak:dayStreak,
       sleepRating,sleepHistory,yesterdayData,
@@ -4944,6 +5014,7 @@ function load(){
     if(d.mealLog&&d.date===biologicalToday()) mealLog=d.mealLog;
     if(d.weekHistory) weekHistory=d.weekHistory;
     if(d.sessionLog) sessionLog=d.sessionLog;
+    if(Array.isArray(d.customExercises)) customExercises=d.customExercises;
       Object.assign(ticks,d.ticks||{});
       if(d.shift) shift=d.shift;
       sleepRating=d.sleepRating||0;
@@ -6000,7 +6071,7 @@ function exportData(){
     version:'4.1',
     exportedAt:new Date().toISOString(),
     date:biologicalToday(),shift,ticks,macros,history,
-    mealLibrary,mealLog,weekHistory,sessionLog,
+    mealLibrary,mealLog,weekHistory,sessionLog,customExercises,
     cycleDay,cycleNum,cycleAnchorDate,completedDays,
     streak:dayStreak,
     sleepRating,sleepHistory,yesterdayData,
@@ -6042,6 +6113,7 @@ function importData(){
   try{
     if(d.mealLibrary) mealLibrary=d.mealLibrary;
     if(d.sessionLog) sessionLog=d.sessionLog;
+    if(Array.isArray(d.customExercises)) customExercises=d.customExercises;
     if(d.customItems) customItems=d.customItems;
     if(d.skippedToday) skippedToday=d.skippedToday;
     if(d.halfTicks) halfTicks=d.halfTicks;
