@@ -4133,12 +4133,20 @@ const SESSION_DEFAULTS={
     // DNOO cycle day 2 — trained pre-shift before a 12h night, so cable/machine only: nothing
     // here should tax the CNS or lower back. Arms live in this slot because they're the least
     // fatiguing thing to train, and they're a named priority. 17 sets.
-    'Mon-Push':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Cable Reverse Fly',sets:'3',rep:'12-20'},{name:'Incline DB Curl',sets:'3',rep:'10-15'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Triceps Pushdown',sets:'2',rep:'10-15'},{name:'Pallof Press',sets:'2',rep:'10-15'}],
+    // Triceps use the overhead extension rather than a pushdown: Maeo 2023 (within-subject, one
+    // arm each, 12wk) found overhead produced substantially more growth across ALL THREE heads
+    // with identical strength gains. Both are cables, so switching costs nothing here.
+    'Mon-Push':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Cable Reverse Fly',sets:'3',rep:'12-20'},{name:'Incline DB Curl',sets:'3',rep:'10-15'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'},{name:'Pallof Press',sets:'2',rep:'10-15'}],
     'Tue-Legs':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Face Pull',sets:'3',rep:'12-20'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Leg Press',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Standing Calf Raise',sets:'2',rep:'10-15'}],
     // DNOO cycle day 4 — second off day, fully recovered, so the longest session. This is the
     // taper session. Incline press at 30° (peak clavicular pec EMG; 45° leaks into front delts,
     // which aren't a priority) and run the cable fly low-to-high for the same reason. 25 sets.
-    'Thu-Upper':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Incline Smith Press',sets:'4',rep:'6-10'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Lat Pulldown',sets:'4',rep:'6-10'},{name:'Chest-Supported Row',sets:'3',rep:'8-12'},{name:'Reverse Pec Deck',sets:'3',rep:'12-20'},{name:'Incline DB Curl',sets:'2',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'}],
+    // Press leads, laterals second. Earlier drafts led with laterals to give the priority muscle
+    // the fresh slot, but the exercise-order meta-analysis found NO significant hypertrophy
+    // effect from order — only strength favours going first. So the compound takes the slot
+    // where being fresh actually pays (a stronger press = more load over time = more chest),
+    // and the laterals lose nothing by following it.
+    'Thu-Upper':[{name:'Incline Smith Press',sets:'4',rep:'6-10'},{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Lat Pulldown',sets:'4',rep:'6-10'},{name:'Chest-Supported Row',sets:'3',rep:'8-12'},{name:'Reverse Pec Deck',sets:'3',rep:'12-20'},{name:'Incline DB Curl',sets:'2',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'}],
     // DNOO cycle day 3 — first off day, best recovered, so leg work lives here. Delts still lead:
     // legs run at maintenance (9 sets), so the priority muscle gets the fresh slot. Core is
     // anti-rotation/anti-flexion only — no loaded side flexion, which is the one thing that can
