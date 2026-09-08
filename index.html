@@ -2364,14 +2364,6 @@ function renderRules(){
 }
 
 // ── MICROCYCLE ──
-const CYCLE=[
-  {label:'Day 1',type:'d',typeLabel:'Day',gym:'Rest',short:'No gym · Vault at 22:00 · Sleep by 23:00',mission:'Day shift. Morning light → transporter → takeout + supps → 09:30 PM Mag → vault → sleep 10:30 PM.',sub:'No gym today. Target 7.5–8 hrs sleep.'},
-  {label:'Day 2',type:'n',typeLabel:'Night 1',gym:'Pull A/B',short:'Pull A/B pre-shift · Blue-blocks at 08:30 · Vault on arrival',mission:'Night Shift 1. Afternoon wake → 90-min nap → gym (Pull A/B) → flask on exit → mid-shift takeout → blue-block glasses at 08:30 AM.',sub:'Pull session only. Lowest CNS demand for pre-shift slot.'},
-  {label:'Day 3',type:'n',typeLabel:'Night 2',gym:'Zone 2',short:'Zone 2 walk only · Blue-blocks at 08:30 · No lifting',mission:'Night Shift 2. Afternoon wake → Zone 2 walk only → night shift → blue-block glasses at 08:30 AM.',sub:'No resistance training. CNS is in the deep trench.'},
-  {label:'Day 4',type:'o',typeLabel:'Off',gym:'Legs A/B',short:'Legs A or B · Heaviest session first · Deload check',mission:'Off day. Wake → outdoor light → Legs A or B. Heaviest session first — freshest recovery window.',sub:'Deload check: if this is cycle 4, reduce all weights 40–50%.'},
-  {label:'Day 5',type:'o',typeLabel:'Off',gym:'Push A/B',short:'Push A or B · Zone 2 30 min post-gym · Log the session',mission:'Off day. Push A or Push B → Zone 2 cardio 30 min immediately after. Brisk walk or easy cycle at 120–140 BPM. Conversational pace.',sub:'Log your session. Zone 2 does not compromise Push recovery — non-glycolytic at correct intensity.'},
-  {label:'Day 6',type:'o',typeLabel:'Off',gym:'Pull A/B',short:'Pull A or B · Close the cycle',mission:'Off day. Remaining Pull session. Lightest close to the cycle.',sub:'After this session, cycle resets to Day 1.'},
-];
 // ── BIOLOGICAL CLOCK ──
 // ── MICROCYCLE ──
 let cycleDay=0, cycleNum=1, completedDays=[];
@@ -3247,16 +3239,9 @@ const TIMELINE={
   ],
 };
 
-const CYCLE_TO_SHIFT=['ds','ns1','ns2','off','off','off'];
 
 // ── ROTATION SCHEDULE ──
 // 1D–2N–3O until 14 Jun 2026, DNOO from 15 Jun 2026 onwards
-const ROTATION_CHANGE_DATE = '2026-06-15';
-
-function getActiveRotation(){
-  const today = new Date().toISOString().slice(0,10);
-  return today >= ROTATION_CHANGE_DATE ? 'DNOO' : '1D2N3O';
-}
 
 // DNOO: Day → Night → Off → Off (4-day cycle)
 const CYCLE_DNOO = [
@@ -3281,14 +3266,17 @@ const CYCLE_DNOO = [
 const CYCLE_TO_SHIFT_DNOO = ['ds','ns1','off','off'];
 
 // Active cycle and mapping — swap based on date
+// DNOO is the only rotation now — the 6-day 1D-2N-3O cycle was removed once it became
+// permanently unreachable. Accessors kept (rather than inlining CYCLE_DNOO at ~8 call sites)
+// so re-introducing a second rotation stays a one-function change.
 function getActiveCycle(){
-  return getActiveRotation()==='DNOO' ? CYCLE_DNOO : CYCLE;
+  return CYCLE_DNOO;
 }
 function getActiveCycleToShift(){
-  return getActiveRotation()==='DNOO' ? CYCLE_TO_SHIFT_DNOO : CYCLE_TO_SHIFT;
+  return CYCLE_TO_SHIFT_DNOO;
 }
 function getCycleLength(){
-  return getActiveRotation()==='DNOO' ? 4 : 6;
+  return CYCLE_DNOO.length;
 }
 
 
@@ -3321,9 +3309,10 @@ function setShift(s, syncCycle=true){
   } else {
     // Normal mode: sync cycle position if shift matches a cycle day
     if(syncCycle){
-      if(CYCLE_TO_SHIFT[cycleDay]!==s){
-        const match=[0,1,2,3,4,5].find(i=>CYCLE_TO_SHIFT[i]===s);
-        if(match!==undefined){cycleDay=match;renderCycle();}
+      const map=getActiveCycleToShift();
+      if(map[cycleDay]!==s){
+        const match=map.findIndex(x=>x===s);
+        if(match>=0){cycleDay=match;renderCycle();}
       }
     }
   }
@@ -4142,21 +4131,21 @@ const SESSION_DEFAULTS={
     // then add load and reset to the bottom. Ranges follow the execution rules already agreed —
     // compounds moderate, isolations higher, laterals deliberately high (heavy low-rep laterals
     // turn into a trap/momentum movement, which works against the taper).
-    'Sun-Pull':[{name:'Pull-Up / Lat Pulldown',sets:'4',rep:'6-10'},{name:'Chest-Supported Row',sets:'4',rep:'8-12'},{name:'Straight-Arm Cable Pullover',sets:'3',rep:'12-15'},{name:'Reverse Pec Deck',sets:'4',rep:'12-20'},{name:'Overhead Cable Triceps Extension',sets:'3',rep:'10-15'},{name:'Triceps Pushdown',sets:'2',rep:'10-15'}],
+    'Sun-Pull':[{name:'Lat Pulldown',sets:'4',rep:'6-10'},{name:'Chest-Supported Row',sets:'4',rep:'8-12'},{name:'Straight-Arm Cable Pullover',sets:'3',rep:'12-15'},{name:'Reverse Pec Deck',sets:'4',rep:'12-20'},{name:'Overhead Cable Triceps Extension',sets:'3',rep:'10-15'},{name:'Triceps Pushdown',sets:'2',rep:'10-15'}],
     // DNOO cycle day 2 — trained pre-shift before a 12h night, so cable/machine only: nothing
     // here should tax the CNS or lower back. Arms live in this slot because they're the least
     // fatiguing thing to train, and they're a named priority. 17 sets.
     'Mon-Push':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Cable Reverse Fly',sets:'3',rep:'12-20'},{name:'Incline DB Curl',sets:'3',rep:'10-15'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Triceps Pushdown',sets:'2',rep:'10-15'},{name:'Pallof Press',sets:'2',rep:'10-15'}],
-    'Tue-Legs':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Face Pull',sets:'3',rep:'12-20'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Leg Press / Hack Squat',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Standing Calf Raise',sets:'2',rep:'10-15'}],
+    'Tue-Legs':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Face Pull',sets:'3',rep:'12-20'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Leg Press',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Standing Calf Raise',sets:'2',rep:'10-15'}],
     // DNOO cycle day 4 — second off day, fully recovered, so the longest session. This is the
     // taper session. Incline press at 30° (peak clavicular pec EMG; 45° leaks into front delts,
     // which aren't a priority) and run the cable fly low-to-high for the same reason. 25 sets.
-    'Thu-Upper':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Incline Barbell / Smith Press',sets:'4',rep:'6-10'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Pull-Up / Lat Pulldown',sets:'4',rep:'6-10'},{name:'Chest-Supported Row',sets:'3',rep:'8-12'},{name:'Reverse Pec Deck',sets:'3',rep:'12-20'},{name:'Incline DB Curl',sets:'2',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'}],
+    'Thu-Upper':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Incline Barbell Press',sets:'4',rep:'6-10'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Lat Pulldown',sets:'4',rep:'6-10'},{name:'Chest-Supported Row',sets:'3',rep:'8-12'},{name:'Reverse Pec Deck',sets:'3',rep:'12-20'},{name:'Incline DB Curl',sets:'2',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'}],
     // DNOO cycle day 3 — first off day, best recovered, so leg work lives here. Delts still lead:
     // legs run at maintenance (9 sets), so the priority muscle gets the fresh slot. Core is
     // anti-rotation/anti-flexion only — no loaded side flexion, which is the one thing that can
     // actually widen the waist. 20 sets.
-    'Fri-Lower':[{name:'DB Lateral Raise',sets:'4',rep:'12-20'},{name:'Leg Press / Hack Squat',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Bulgarian Split Squat',sets:'2',rep:'8-12'},{name:'45° Back Extension',sets:'3',rep:'10-15'},{name:'Standing Calf Raise',sets:'2',rep:'10-15'},{name:'Hanging Knee Raise',sets:'2',rep:'10-15'}],
+    'Fri-Lower':[{name:'DB Lateral Raise',sets:'4',rep:'12-20'},{name:'Leg Press',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Bulgarian Split Squat',sets:'2',rep:'8-12'},{name:'45° Back Extension',sets:'3',rep:'10-15'},{name:'Standing Calf Raise',sets:'2',rep:'10-15'},{name:'Hanging Knee Raise',sets:'2',rep:'10-15'}],
     'Cardio':[{name:'Zone 2 run / walk / cycle',sets:'',reps:'',weight:''}],
 };
 
@@ -4176,7 +4165,19 @@ const EXERCISE_ALIASES={
   'standing calf raises':'Standing Calf Raise',
   'seated calf raises':'Seated Calf Raise',
   'bulgarian split squats':'Bulgarian Split Squat',
+  // Combined "A / B" names split into standalone exercises — logging a pull-up and a lat
+  // pulldown under one name meant their loads shared a history, so neither pre-fill nor the
+  // progression target could mean anything. Each maps to whichever half the template now
+  // prescribes; the other half is offered in the picker via EXERCISE_EXTRAS.
+  'pull-up / lat pulldown':'Lat Pulldown',
+  'leg press / hack squat':'Leg Press',
+  'incline barbell / smith press':'Incline Barbell Press',
 };
+
+// Alternatives that no template prescribes but the picker should still offer — the other half
+// of each split above. Without this they'd only appear once already logged, which is exactly
+// when you can't reach for them.
+const EXERCISE_EXTRAS=['Pull-Up','Hack Squat','Incline Smith Press'];
 
 function _canonicalExercise(name){
   if(!name) return name;
@@ -4208,7 +4209,7 @@ function migrateExerciseNames(){
 // a list prevents that at the point of entry. Sources: every programmed exercise + everything
 // already logged, so a custom exercise autocompletes from its second use onward.
 function _exerciseLibrary(){
-  const names=new Set();
+  const names=new Set(EXERCISE_EXTRAS);
   Object.values(SESSION_DEFAULTS).forEach(list=>list.forEach(d=>d.name&&names.add(d.name)));
   sessionLog.forEach(s=>(s.lifts||[]).forEach(l=>l.name&&l.name.trim()&&names.add(l.name.trim())));
   return [...names].sort((a,b)=>a.localeCompare(b));
@@ -7087,9 +7088,6 @@ setTimeout(()=>{renderWeightChart();},100);
 syncTrackerHydro();
 renderDateCtxButtons();
 setTimeout(applyBridgeState, 200);
-// Update rotation label
-const rotLabel=document.getElementById('rotation-label');
-if(rotLabel) rotLabel.textContent=getActiveRotation()==='DNOO'?'DNOO':'1D–2N–3O';
 // Auto-roll the rotation forward for any days passed (cycle-day bookkeeping only — used by
 // Train's session suggestions. Shift itself is fully manual, see load()/setShift().)
 autoRollCycle();
