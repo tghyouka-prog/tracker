@@ -1201,6 +1201,8 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .lift-target strong{color:var(--focus-ac);font-weight:700}
 .lt-note{font-size:10.5px;color:var(--t3)}
 .lt-stall{font-size:10.5px;font-weight:700;color:var(--amber)}
+/* Named row with no numbers — it won't be saved, so say so before the save, not after */
+.lift-unrecorded{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--amber);margin:-4px 0 8px 30px;padding:5px 10px;border-radius:6px;background:var(--amber-dim);border-left:2px solid var(--amber)}
 /* Autoregulated deload signal — only appears when 2+ lifts have stalled */
 .stall-card{background:var(--amber-dim);border:1px solid color-mix(in srgb,var(--amber) 28%,transparent);border-radius:var(--r-lg);padding:.75rem .95rem;margin-bottom:.75rem}
 .stall-top{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--amber);margin-bottom:.25rem}
@@ -4459,9 +4461,15 @@ function renderLiftRows(){
     const targetHtml=tgt
       ?`<div class="lift-target"><i class="ti ti-target" style="font-size:11px"></i>Target: <strong>${tgt.txt}</strong>${tgt.mode==='load'?' <span class="lt-note">range topped — add load</span>':''}${stalled?' <span class="lt-stall">stalled 2 sessions</span>':''}</div>`
       :'';
-    const shadowHtml=shadow
+    // A named row with no numbers won't be saved. Say so here, while it can still be fixed,
+    // rather than only reporting it after the fact.
+    const unrecorded=l.name&&l.name.trim()&&!l.weight&&!l.reps
+      ?`<div class="lift-unrecorded" id="lu-${i}"><i class="ti ti-alert-circle" style="font-size:11px"></i>Won't be saved — needs a weight or reps</div>`
+      :'';
+    const shadowHtml=(shadow
       ?`<div class="lift-shadow">${shadow.html}<span class="lift-verdict${v?' '+v.cls:''}" id="lv-${i}">${v?v.txt:''}</span></div>${targetHtml}`
-      :(l.name&&l.name.trim()?`<div class="lift-shadow lift-shadow-new"><i class="ti ti-sparkles" style="font-size:11px"></i> First time logging this exact name — no comparison yet</div>`:'');
+      :(l.name&&l.name.trim()?`<div class="lift-shadow lift-shadow-new"><i class="ti ti-sparkles" style="font-size:11px"></i> First time logging this exact name — no comparison yet</div>`:''))
+      +unrecorded;
     return `
     <div class="lift-card">
       <div class="lift-card-name-row">
@@ -4700,11 +4708,17 @@ function _progressionTarget(l){
 }
 
 function _updateVerdict(i){
+  const l=currentLifts[i];
   const el=document.getElementById('lv-'+i);
-  if(!el) return;
-  const v=_liftVerdict(currentLifts[i]);
-  el.className='lift-verdict'+(v?' '+v.cls:'');
-  el.textContent=v?v.txt:'';
+  if(el&&l){
+    const v=_liftVerdict(l);
+    el.className='lift-verdict'+(v?' '+v.cls:'');
+    el.textContent=v?v.txt:'';
+  }
+  // Clear the "won't be saved" warning the moment a number lands, so it tracks what you type
+  // rather than waiting for a re-render.
+  const warn=document.getElementById('lu-'+i);
+  if(warn&&l) warn.style.display=(!l.weight&&!l.reps)?'':'none';
 }
 
 // Logging a set IS the moment rest starts — auto-start so it stops getting skipped when tired.
@@ -4837,6 +4851,11 @@ function saveSession(){
   // migration just merged.
   currentLifts.forEach(l=>{ l.name=_canonicalExercise(l.name); });
   const filledLifts=currentLifts.filter(l=>l.name&&(l.weight||l.reps));
+  // Named rows carrying no numbers are dropped — you didn't record them, so they shouldn't
+  // enter history. But that used to happen SILENTLY, which meant an exercise you actually did
+  // and forgot to fill in never gained history, so it read "first time" again next session and
+  // stayed stuck in that loop. Surface it instead.
+  const droppedLifts=currentLifts.filter(l=>l.name&&l.name.trim()&&!l.weight&&!l.reps);
   // Verdict vs last time — computed BEFORE the session is unshifted into sessionLog,
   // otherwise lastLiftFor() would match the set we're currently saving.
   let beaten=0, comparable=0;
@@ -4868,9 +4887,15 @@ function saveSession(){
   renderProgress(); // an edited/back-dated session changes the heatmap
   checkPBMilestones(session);
   recordJourneyEvent('session',session.type+' session','Logged training session',{type:session.type,lifts:filledLifts.length});
-  showToast(comparable
-    ? `${session.type} logged ✓ · ${beaten}/${comparable} beaten`
-    : `${session.type} logged ✓`, 'action');
+  const beatTxt=comparable?` · ${beaten}/${comparable} beaten`:'';
+  showToast(`${session.type} logged ✓${beatTxt}`,'action');
+  // Second toast rather than appending — this is a warning, not a stat, and it names the
+  // exercises so you know exactly which ones to go back and fill in.
+  if(droppedLifts.length){
+    const names=droppedLifts.map(l=>l.name.trim());
+    const shown=names.slice(0,3).join(', ')+(names.length>3?` +${names.length-3} more`:'');
+    setTimeout(()=>showToast(`${names.length} not saved (no weight or reps): ${shown}`,'action'),2600);
+  }
   _clearDraft();
   renderExerciseLibrary(); // pick up any custom exercise names just logged
   save();
