@@ -51,6 +51,11 @@
   /* Secondary accents: intentionally quieter so accent dominates */
   --amber:#c97a1d; --amber-dim:rgba(201,122,29,.09);
   --blue:#4a8fd4;  --blue-dim:rgba(74,143,212,.09);
+  /* Macro identity, matched to Cal AI: protein coral, carbs orange, fat/water blue, and the
+     headline calorie figure left as the highest-contrast neutral (Cal AI renders that ring
+     black on white). Separate from --amber/--blue, which are semantic warning/info colours
+     used elsewhere — macros needed their own scale to stay brighter and distinct. */
+  --macro-prot:#ff6b6b; --macro-carb:#f0a03c; --macro-water:#4a9fe8;
   --red:#cc3f35;   --red-dim:rgba(204,63,53,.09);
   --purple:#8b6fd4; --purple-dim:rgba(139,111,212,.09);
   --green:#3a9e5e;  --green-bg:rgba(58,158,94,.09);
@@ -80,6 +85,8 @@ html.theme-light{
   --focus-ac:#c9992e; --focus-ac-ink:#1a1610;
   --amber:#c97a1d; --amber-dim:rgba(201,122,29,.10);
   --blue:#2f6fd0;  --blue-dim:rgba(47,111,208,.10);
+  /* Deepened for contrast against the light theme's near-white cards */
+  --macro-prot:#e5484d; --macro-carb:#d98324; --macro-water:#2f8fd4;
   --red:#cc4438;   --red-dim:rgba(204,68,56,.10);
   --purple:#7c5cd6; --purple-dim:rgba(124,92,214,.10);
   --green:#2f9e57;  --green-bg:rgba(47,158,87,.10);
@@ -622,17 +629,26 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .mc-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--t1);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .mc-val small{font-size:10px;font-weight:600;color:var(--t3);margin-left:1px}
 .mc-lbl{font-size:10.5px;font-weight:600;letter-spacing:.03em;color:var(--t3);text-align:center;line-height:1.25}
-/* Distinct identity per macro — the fix for three indistinguishable grey bars.
+/* Cal AI's macro colour language. Calories is the headline, so it takes the highest-contrast
+   neutral — Cal AI draws that ring black on white, which translates to --t1 in a dual-theme
+   app (near-black on light, near-white on dark). The supporting macros carry the accent hues.
    NB: --teal is gold in this palette (a legacy token repointed during the redesign), so it
-   reads as amber and can't be used here. Gold is also reserved for the protein hero, which
-   keeps the priority macro visually separate from this row. */
-.m-kcal  .mc-fill{stroke:var(--amber)}
-.m-carb  .mc-fill{stroke:var(--purple)}
-.m-hydro .mc-fill{stroke:var(--blue)}
+   reads as amber and can't be used for water. */
+.m-kcal  .mc-fill{stroke:var(--t1)}
+.m-carb  .mc-fill{stroke:var(--macro-carb)}
+.m-hydro .mc-fill{stroke:var(--macro-water)}
 .macro-cell.is-hit .mc-val{color:var(--focus-ac)}
 .macro-cell.is-over .mc-val{color:var(--amber)}
 .macro-cell.is-over .mc-lbl{color:var(--amber)}
 .water-quick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem}
+/* Meal-log macros as small colour-coded chips, same scale as the rings above — Cal AI shows
+   each logged meal's macros this way rather than as one run-on grey line. */
+.meal-macros{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px}
+.mm{display:inline-flex;align-items:baseline;gap:3px;font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;font-variant-numeric:tabular-nums}
+.mm small{font-size:9.5px;font-weight:600;opacity:.7}
+.mm-prot{color:var(--macro-prot);background:color-mix(in srgb,var(--macro-prot) 13%,transparent)}
+.mm-kcal{color:var(--t2);background:var(--s3)}
+.mm-carb{color:var(--macro-carb);background:color-mix(in srgb,var(--macro-carb) 14%,transparent)}
 .fuel-sec{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem 1.125rem;margin-bottom:.5rem}
 .fuel-sec-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.5rem}
 .fuel-sec-name{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3)}
@@ -2911,7 +2927,11 @@ function renderMealLog(){
     <div style="display:flex;align-items:center;gap:.5rem;padding:5px 0;border-bottom:1px solid var(--b1)">
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:500;color:var(--t1)">${m.name}</div>
-        <div style="font-size:11px;color:var(--t3)">${[m.prot?'+'+m.prot+'g protein':'',m.kcal?'+'+m.kcal+' kcal':'',m.carb?'+'+m.carb+'g carbs':''].filter(Boolean).join(' · ')}</div>
+        <div class="meal-macros">${[
+          m.prot?`<span class="mm mm-prot">${m.prot}g<small>protein</small></span>`:'',
+          m.kcal?`<span class="mm mm-kcal">${m.kcal}<small>kcal</small></span>`:'',
+          m.carb?`<span class="mm mm-carb">${m.carb}g<small>carbs</small></span>`:''
+        ].filter(Boolean).join('')}</div>
       </div>
       <button onclick="removeLogEntry(${m.ts})" aria-label="Remove ${m.name} from today's log" style="width:36px;height:36px;background:transparent;border:1px solid var(--b2);border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t3);flex-shrink:0" title="Remove log entry"><i class="ti ti-x" style="font-size:11px" aria-hidden="true"></i></button>
     </div>`).join('');
