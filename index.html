@@ -468,25 +468,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .prog-stat{background:var(--s2);border-radius:var(--r-md);padding:.625rem .375rem;text-align:center}
 .prog-stat-val{font-size:19px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums;line-height:1.1}
 .prog-stat-lbl{font-size:9.5px;color:var(--t3);letter-spacing:.01em;margin-top:3px}
-.cal-wrap{background:var(--s2);border-radius:var(--r-lg);padding:.75rem .875rem .875rem}
-.cal-body{display:flex;gap:5px;align-items:stretch}
-.cal-dow{display:grid;grid-template-rows:repeat(7,1fr);gap:4px;flex-shrink:0}
-.cal-dow span{display:flex;align-items:center;font-size:9.5px;color:var(--t3);font-weight:600;line-height:1}
-.cal-grid{flex:1;min-width:0;display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);grid-auto-columns:1fr;gap:4px}
-.cal-cell{aspect-ratio:1;border-radius:4px;border:none;padding:0;cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent;transition:transform .1s cubic-bezier(.34,1.56,.64,1)}
-.cal-cell:active{transform:scale(.85)}
-.cal-none{background:var(--s4,rgba(255,255,255,.06))}
-.cal-low{background:color-mix(in srgb,var(--teal) 22%,transparent)}
-.cal-mid{background:color-mix(in srgb,var(--teal) 55%,transparent)}
-.cal-high{background:var(--teal)}
-.cal-future{background:transparent;cursor:default;pointer-events:none}
-.cal-cell.is-today{box-shadow:0 0 0 2px var(--focus-ac)}
-.cal-legend{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3);margin-top:.75rem;flex-wrap:wrap}
-.cal-swatch{width:9px;height:9px;border-radius:2px;flex-shrink:0}
-.cal-legend-dot{width:5px;height:5px;border-radius:50%;background:var(--t1);opacity:.85;flex-shrink:0;margin-left:5px}
-.cal-detail[hidden]{display:none}
-.cal-detail{font-size:12px;color:var(--t2);line-height:1.5;margin-top:.75rem;padding:.625rem .75rem;background:var(--s2);border-radius:var(--r-md);min-height:38px;box-sizing:border-box}
-.cal-detail strong{color:var(--t1);font-weight:700}
 .prog-empty{font-size:12px;color:var(--t3);line-height:1.55;padding:.75rem .875rem;background:var(--s2);border-radius:var(--r-md)}
 .prog-ms{display:flex;align-items:flex-start;gap:.625rem;padding:.625rem .75rem;background:var(--s2);border-radius:var(--r-md);margin-bottom:5px}
 .prog-ms-ic{font-size:15px;color:var(--focus-ac);flex-shrink:0;margin-top:1px}
@@ -7650,55 +7631,6 @@ function _calKey(baseKey,offsetDays){
   return d.toISOString().slice(0,10);
 }
 
-const _CAL_WEEKS=12;
-
-function renderProgCalendar(){
-  const el=document.getElementById('prog-calendar');
-  if(!el) return;
-  const todayKey=biologicalToday();
-  const todayDate=new Date(todayKey+'T12:00:00Z');
-  const monOffset=(todayDate.getUTCDay()+6)%7;          // 0 = Monday
-  const firstOffset=-monOffset-(_CAL_WEEKS-1)*7;        // Monday of the earliest week shown
-  let html='';
-  for(let i=0;i<_CAL_WEEKS*7;i++){
-    const key=_calKey(todayKey,firstOffset+i);
-    const row=weekHistory[key];
-    const future=key>todayKey;
-    let cls='cal-cell';
-    if(future) cls+=' cal-future';
-    // Was shaded by day-score. Now it answers the only question being asked of it: did you log
-    // that day, and did you train. A score-shaded grid made an honest light day look like a
-    // failure, which is the same trap the streak used to have.
-    else if(!_dayLogged(key)) cls+=' cal-none';
-    else if(_dayTrained(key)) cls+=' cal-high';
-    else cls+=' cal-mid';
-    if(key===todayKey) cls+=' is-today';
-    html+=`<button class="${cls}" onclick="showProgDay('${key}')" aria-label="${key}"></button>`;
-  }
-  el.innerHTML=html;
-}
-
-function showProgDay(key){
-  const el=document.getElementById('prog-detail');
-  if(!el) return;
-  el.hidden=false;
-  const row=weekHistory[key];
-  const d=new Date(key+'T12:00:00Z');
-  const label=d.toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
-  if(!row||row.score===undefined){
-    el.innerHTML=`<strong>${label}</strong> — nothing logged.`;
-    return;
-  }
-  const sess=sessionLog.find(s=>s.date===key);
-  const bits=[
-    _dayLogged(key)?'<strong>logged</strong>':'<strong>not logged</strong>',
-    row.prot?`${row.prot}g protein`:null,
-    row.kcal?`${row.kcal.toLocaleString()} kcal`:null,
-    sess?`trained — ${sess.type}`:(row.hasSession?'trained':null),
-  ].filter(Boolean);
-  el.innerHTML=`<strong>${label}</strong> · `+bits.join(' · ');
-}
-
 function renderProgStats(){
   const el=document.getElementById('prog-stats');
   if(!el) return;
@@ -8029,7 +7961,6 @@ function _renderGoalChart(){
 function renderProgress(){
   renderCalProgress();
   renderProgStats();
-  renderProgCalendar();
   renderProgMilestones();
   // "Since <first logged day>" + disable Export until there's something worth exporting
   const sinceEl=document.getElementById('prog-since');
@@ -8915,21 +8846,6 @@ try{
   <div class="prog-stats mo-rise" id="prog-stats"></div>
 
   <!-- Calendar heatmap -->
-  <div class="sec-label" style="margin-top:1.125rem">Last 12 weeks</div>
-  <div class="cal-wrap mo-rise">
-    <div class="cal-body">
-      <div class="cal-dow"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
-      <div class="cal-grid" id="prog-calendar"></div>
-    </div>
-    <div class="cal-legend">
-      <span class="cal-swatch cal-none"></span><span>not logged</span>
-      <span class="cal-swatch cal-mid"></span><span>logged</span>
-      <span class="cal-swatch cal-high"></span><span>logged + trained</span>
-    </div>
-  </div>
-
-  <!-- Tapped-day readout -->
-  <div class="cal-detail" id="prog-detail" hidden></div>
 
   <!-- Milestones from the journey log -->
   <div class="sec-label" style="margin-top:1.25rem">Milestones</div>
