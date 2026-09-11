@@ -347,6 +347,17 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .pp-log{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;margin-top:.625rem;padding:7px;border-radius:var(--r-md);border:1px solid var(--b2);background:var(--s2);color:var(--t1);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .pp-log:active{transform:scale(.96)}
 .pd-hint{display:block;font-size:10px;color:var(--t3);font-weight:500;margin-top:1px}
+.ge-row{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.7rem 0;border-bottom:1px solid var(--b1)}
+.ge-row:last-child{border-bottom:none}
+.ge-l{display:flex;flex-direction:column;min-width:0}
+.ge-name{font-size:14px;font-weight:600;color:var(--t1)}
+.ge-calc{font-size:10.5px;color:var(--t3);margin-top:1px}
+.ge-r{display:flex;align-items:baseline;gap:4px;flex-shrink:0}
+.ge-r input{width:74px;text-align:right;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-sm);color:var(--t1);font-family:inherit;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;padding:5px 7px;-moz-appearance:textfield}
+.ge-r input.is-set{border-color:var(--focus-ac);color:var(--focus-ac)}
+.ge-r input::-webkit-outer-spin-button,.ge-r input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.ge-r i{font-size:11px;font-style:normal;font-weight:600;color:var(--t3)}
+.ge-x{width:26px;height:26px;border-radius:50%;border:none;background:var(--s3);color:var(--t2);display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;align-self:center;margin-left:2px}
 .ob-date{margin-top:.75rem}
 .ob-date input{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-md);color:var(--t1);font-family:inherit;font-size:16px;font-weight:600;padding:12px 14px}
 .obp-warn span{color:var(--amber)}
@@ -2087,6 +2098,8 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 <div class="shell">
 <div id="onboarding" class="ob-wrap" hidden></div>
 <div id="weighin" class="ob-wrap" hidden></div>
+<div id="goaledit" class="ob-wrap" hidden></div>
+<div id="weighhist" class="ob-wrap" hidden></div>
 
 <!-- ===== BOTTOM NAV ===== -->
 <nav class="bottom-nav" id="bottom-nav">
@@ -2177,6 +2190,10 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     <div class="pd-row">
       <span class="pd-name">Target date</span>
       <button class="pd-goal-btn" id="pd-pace" onclick="startOnboarding()">Recommended</button>
+    </div>
+    <div class="pd-row">
+      <span class="pd-name">Daily targets</span>
+      <button class="pd-goal-btn" onclick="openGoalEditor()" style="background:var(--s2);color:var(--t1);border:1px solid var(--b2)">Edit</button>
     </div>
     <div class="pd-proj" id="pd-proj"></div>
     <div class="fuel-tgt-strip">
@@ -2807,6 +2824,9 @@ function applyWeight(kg,save_=true){
   TARGETS.kcal=t.kcal;
   TARGETS.hydro=t.hydro;
   TARGETS.carb=t.carb;
+  // A manual override wins over the formula, per macro. Anything left null keeps recalculating
+  // from weight and goal as before, so overriding one number doesn't freeze the rest.
+  ['prot','kcal','hydro','carb'].forEach(k=>{ if(goalOverrides[k]!=null) TARGETS[k]=goalOverrides[k]; });
 
   // Nutrition page stat cards
   const wd=null;   // the weight field is an input now — renderPlanRows() owns its value
@@ -7256,6 +7276,13 @@ function renderProgMilestones(){
 // like themeMode and waterStep rather than inside STORE. null until the user sets it, and
 // every consumer degrades rather than guessing a number.
 let goalWeight=null;
+// Per-macro manual targets. null = use the calculated value.
+let goalOverrides={prot:null,kcal:null,carb:null,hydro:null};
+try{
+  const g=JSON.parse(localStorage.getItem('goalOverrides')||'null');
+  if(g&&typeof g==='object') ['prot','kcal','carb','hydro'].forEach(k=>{ if(typeof g[k]==='number') goalOverrides[k]=g[k]; });
+}catch(e){}
+function _saveOverrides(){ try{ localStorage.setItem('goalOverrides',JSON.stringify(goalOverrides)); }catch(e){} }
 try{ const g=parseFloat(localStorage.getItem('goalWeight')); if(g>0) goalWeight=g; }catch(e){}
 let progRange='90d';   // 90d | 6m | 1y | all
 
@@ -7327,6 +7354,7 @@ function _renderProgPair(){
         aria-label="Goal weight in kilograms"> kg
     </div>
     <button class="pp-log" onclick="promptWeighIn()"><i class="ti ti-scale" aria-hidden="true"></i>Log weigh-in</button>
+    <button class="pp-log" onclick="openWeightHistory()"><i class="ti ti-history" aria-hidden="true"></i>History</button>
   </div>
   <div class="pp-card pp-streak">
     <i class="ti ti-flame pp-flame" aria-hidden="true"></i>
@@ -7337,6 +7365,107 @@ function _renderProgPair(){
 }
 
 // One-tap weigh-in from the Progress tab, where you are already looking at the trend.
+// ── Edit daily goals (Cal AI: "Edit Daily Goals" / "Auto Generate Goals") ──
+const GOAL_FIELDS=[
+  {k:'kcal', label:'Calories', unit:'kcal', min:800,  max:6000, step:10},
+  {k:'prot', label:'Protein',  unit:'g',    min:40,   max:400,  step:5},
+  {k:'carb', label:'Carbs',    unit:'g',    min:0,    max:800,  step:5},
+  {k:'hydro',label:'Water',    unit:'ml',   min:500,  max:6000, step:250}
+];
+function openGoalEditor(){
+  const el=document.getElementById('goaledit');
+  if(!el) return;
+  const calc=calcTargets(bodyWeight);
+  const calcOf={kcal:calc.kcal, prot:calc.protTarget, carb:calc.carb, hydro:calc.hydro};
+  el.innerHTML='<div class="ob-sheet">'+
+    '<div class="ob-top"><button class="ob-back" onclick="document.getElementById(\'goaledit\').hidden=true" aria-label="Back"><i class="ti ti-arrow-left"></i></button></div>'+
+    '<div class="ob-body">'+
+      '<h2 class="ob-q">Daily targets</h2>'+
+      '<p class="ob-s">Override any of these. Whatever you leave alone keeps recalculating from your weight and goal.</p>'+
+      '<div class="obp-card">'+GOAL_FIELDS.map(f=>{
+        const overridden=goalOverrides[f.k]!=null;
+        return '<div class="ge-row">'+
+          '<div class="ge-l"><span class="ge-name">'+f.label+'</span>'+
+            '<span class="ge-calc">'+(overridden?('calculated: '+calcOf[f.k]+f.unit):'calculated')+'</span></div>'+
+          '<div class="ge-r">'+
+            '<input type="number" inputmode="numeric" step="'+f.step+'" min="'+f.min+'" max="'+f.max+'" '+
+              'value="'+(overridden?goalOverrides[f.k]:calcOf[f.k])+'" '+
+              'class="'+(overridden?'is-set':'')+'" onchange="setGoalOverride(\''+f.k+'\',this.value)" '+
+              'aria-label="'+f.label+' target in '+f.unit+'"><i>'+f.unit+'</i>'+
+            (overridden?'<button class="ge-x" onclick="setGoalOverride(\''+f.k+'\','+"''"+')" aria-label="Reset '+f.label+' to calculated"><i class="ti ti-rotate"></i></button>':'')+
+          '</div></div>';
+      }).join('')+'</div>'+
+      '<button class="fb-btn" style="width:100%" onclick="resetAllGoals()"><i class="ti ti-wand"></i>Recalculate all from my plan</button>'+
+    '</div>'+
+    '<button class="ob-cta" onclick="document.getElementById(\'goaledit\').hidden=true">Done</button>'+
+    '</div>';
+  el.hidden=false;
+}
+function setGoalOverride(k,v){
+  const f=GOAL_FIELDS.find(x=>x.k===k);
+  const n=parseFloat(v);
+  goalOverrides[k] = (f && n>=f.min && n<=f.max) ? Math.round(n) : null;
+  _saveOverrides();
+  applyWeight(bodyWeight);
+  openGoalEditor();                 // repaint so the calculated/overridden state is visible
+  try{ renderCalHero(); renderMacroRow(); }catch(e){}
+  save();
+}
+function resetAllGoals(){
+  goalOverrides={prot:null,kcal:null,carb:null,hydro:null};
+  _saveOverrides();
+  applyWeight(bodyWeight);
+  openGoalEditor();
+  try{ renderCalHero(); renderMacroRow(); showToast('Targets back to your calculated plan','action'); }catch(e){}
+  save();
+}
+
+// ── Weight history (Cal AI: "Weight History") ──
+function openWeightHistory(){
+  const el=document.getElementById('weighhist');
+  if(!el) return;
+  const rows=(weightHistory||[]).slice().sort((a,b)=>a.date<b.date?1:-1);
+  el.innerHTML='<div class="ob-sheet">'+
+    '<div class="ob-top"><button class="ob-back" onclick="document.getElementById(\'weighhist\').hidden=true" aria-label="Back"><i class="ti ti-arrow-left"></i></button></div>'+
+    '<div class="ob-body">'+
+      '<h2 class="ob-q">Weight history</h2>'+
+      '<p class="ob-s">'+(rows.length?'Your trend reads from these. Fix or remove anything that went in wrong.':'Nothing logged yet.')+'</p>'+
+      (rows.length?'<div class="obp-card">'+rows.map(r=>
+        '<div class="ge-row"><div class="ge-l"><span class="ge-name">'+
+          new Date(r.date+'T12:00:00Z').toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'})+
+        '</span></div><div class="ge-r">'+
+          '<input type="number" inputmode="decimal" step="0.1" min="40" max="150" value="'+r.kg+'" '+
+            'onchange="editWeighIn(\''+r.date+'\',this.value)" aria-label="Weight on '+r.date+'"><i>kg</i>'+
+          '<button class="ge-x" onclick="deleteWeighIn(\''+r.date+'\')" aria-label="Delete entry for '+r.date+'"><i class="ti ti-x"></i></button>'+
+        '</div></div>').join('')+'</div>':'')+
+    '</div>'+
+    '<button class="ob-cta" onclick="document.getElementById(\'weighhist\').hidden=true">Done</button>'+
+    '</div>';
+  el.hidden=false;
+}
+function editWeighIn(date,v){
+  const n=parseFloat(v);
+  const e=weightHistory.find(x=>x.date===date);
+  if(!e){ openWeightHistory(); return; }
+  if(n>=40&&n<=150) e.kg=Math.round(n*10)/10;
+  // The newest entry is also the current weight, so keep the two from drifting apart.
+  const newest=weightHistory.slice().sort((a,b)=>a.date<b.date?1:-1)[0];
+  if(newest && newest.date===date) applyWeight(newest.kg);
+  save();
+  openWeightHistory();
+  try{ renderCalProgress(); renderPlanRows(); }catch(e2){}
+}
+function deleteWeighIn(date){
+  const i=weightHistory.findIndex(x=>x.date===date);
+  if(i<0) return;
+  weightHistory.splice(i,1);
+  const newest=weightHistory.slice().sort((a,b)=>a.date<b.date?1:-1)[0];
+  if(newest) applyWeight(newest.kg);
+  save();
+  openWeightHistory();
+  try{ renderCalProgress(); renderPlanRows(); }catch(e){}
+}
+
 function promptWeighIn(){
   const el=document.getElementById('weighin');
   if(!el) return;
