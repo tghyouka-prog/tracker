@@ -11,8 +11,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Protocol">
 <meta name="application-name" content="Protocol">
-<meta name="theme-color" content="#0a0a0a">
-<meta name="msapplication-navbutton-color" content="#0a0a0a">
+<meta name="theme-color" content="#000000">
+<meta name="msapplication-navbutton-color" content="#000000">
 <meta name="msapplication-starturl" content="/">
 <meta name="description" content="74kg shift worker health & performance protocol">
 
@@ -32,20 +32,21 @@
    ═══════════════════════════════════════ */
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  /* ── Neutral base, one high-chroma accent. Greys are true neutral (no warm cast) and
-       text contrast is lifted; colour is spent only where it carries meaning. ── */
-  --bg:#0a0a0a; --s1:#151515; --s2:#1f1f1f; --s3:#2a2a2a; --s4:#353535;
-  --b1:rgba(255,255,255,.07); --b2:rgba(255,255,255,.13); --b3:rgba(255,255,255,.22);
-  --t1:#fafafa; --t2:#a1a1a1; --t3:#757575;
-  /* --teal is the primary/positive accent (legacy token name, gold value) */
-  --teal:#ffca3a; --teal-dim:rgba(255,202,58,.13);
-  --focus-ac:#ffca3a; --focus-ac-ink:#12100a;
-  --amber:#ff9021; --amber-dim:rgba(255,144,33,.11);
-  --blue:#4da6ff;  --blue-dim:rgba(77,166,255,.11);
-  --macro-prot:#ff4d6a; --macro-carb:#ff9021; --macro-water:#4da6ff;
-  --red:#f4483c;   --red-dim:rgba(244,72,60,.11);
-  --purple:#a78bfa; --purple-dim:color-mix(in srgb,var(--purple) 11%,transparent);
-  --green:#34d399;  --green-bg:rgba(52,211,153,.11);
+  /* ── Cal AI palette, dark. The accent is MONOCHROME — Cal AI spends no colour on
+       chrome, so the calorie ring, CTAs and active nav are simply white here and black
+       on light. Colour is reserved for the macro hues and for warnings. ── */
+  --bg:#000000; --s1:#1c1c1e; --s2:#242428; --s3:#2e2e33; --s4:#3a3a40;
+  --b1:rgba(255,255,255,.06); --b2:rgba(255,255,255,.11); --b3:rgba(255,255,255,.20);
+  --t1:#ffffff; --t2:#98989f; --t3:#86868d;
+  /* --teal is the primary accent (legacy token name, now monochrome) */
+  --teal:#ffffff; --teal-dim:rgba(255,255,255,.10);
+  --focus-ac:#ffffff; --focus-ac-ink:#0b0b0c;
+  --amber:#e2984b; --amber-dim:rgba(226,152,75,.12);
+  --blue:#5a8fd6;  --blue-dim:rgba(90,143,214,.12);
+  --macro-prot:#e5606b; --macro-carb:#e2984b; --macro-water:#5a8fd6;
+  --red:#e04f4f;   --red-dim:rgba(224,79,79,.12);
+  --purple:#a78ab8; --purple-dim:rgba(167,138,184,.12);
+  --green:#6fb98a;  --green-bg:rgba(111,185,138,.12);
   --r-sm:7px; --r-md:11px; --r-lg:16px; --r-xl:22px;
   --sh-sm:none;
   --sh-md:0 2px 12px rgba(0,0,0,.4);
@@ -60,22 +61,23 @@
 
 /* ── LIGHT THEME — warm paper, sleep-safe dark stays default at night ── */
 html.theme-light{
-  /* Neutral paper, not cream. The accent darkens so it stays legible both as text on white
-     and as a button fill — hence --focus-ac-ink flips to white here. */
-  --bg:#f7f7f8; --s1:#ffffff; --s2:#f1f1f3; --s3:#e7e7ea; --s4:#dcdce0;
-  --b1:rgba(0,0,0,.07); --b2:rgba(0,0,0,.12); --b3:rgba(0,0,0,.22);
-  --t1:#111113; --t2:#57575f; --t3:#71717a;
-  --teal:#9a6a00; --teal-dim:rgba(154,106,0,.10);
-  --focus-ac:#9a6a00; --focus-ac-ink:#ffffff;
-  --amber:#b8560c; --amber-dim:rgba(184,86,12,.10);
-  --blue:#1d6ddb;  --blue-dim:rgba(29,109,219,.10);
-  --macro-prot:#dc2b45; --macro-carb:#b8560c; --macro-water:#1d6ddb;
-  --red:#d32f2a;   --red-dim:rgba(211,47,42,.10);
-  --purple:#6d4ad1; --purple-dim:rgba(109,74,209,.10);
-  --green:#0f8a55;  --green-bg:rgba(15,138,85,.10);
-  --sh-sm:0 1px 2px rgba(0,0,0,.06);
-  --sh-md:0 4px 14px rgba(0,0,0,.08);
-  --sh-lg:0 10px 34px rgba(0,0,0,.12);
+  /* Cal AI palette, light: cool off-white page, pure white cards, near-black accent.
+     Macro hues are deepened slightly from Cal AI's ring colours because this app also
+     renders them as small text, where Cal AI's lighter tints would fail contrast. */
+  --bg:#f2f2f5; --s1:#ffffff; --s2:#f6f6f8; --s3:#ececf0; --s4:#dededf;
+  --b1:rgba(0,0,0,.05); --b2:rgba(0,0,0,.09); --b3:rgba(0,0,0,.18);
+  --t1:#0b0b0c; --t2:#6e6e76; --t3:#8a8a90;
+  --teal:#0b0b0c; --teal-dim:rgba(0,0,0,.06);
+  --focus-ac:#0b0b0c; --focus-ac-ink:#ffffff;
+  --amber:#c47a22; --amber-dim:rgba(196,122,34,.10);
+  --blue:#3d74c0;  --blue-dim:rgba(61,116,192,.10);
+  --macro-prot:#cf4a58; --macro-carb:#c47a22; --macro-water:#3d74c0;
+  --red:#c8413c;   --red-dim:rgba(200,65,60,.10);
+  --purple:#8a6a9c; --purple-dim:rgba(138,106,156,.10);
+  --green:#3f8f63;  --green-bg:rgba(63,143,99,.10);
+  --sh-sm:0 1px 2px rgba(0,0,0,.04);
+  --sh-md:0 2px 10px rgba(0,0,0,.06);
+  --sh-lg:0 8px 28px rgba(0,0,0,.10);
 }
 /* light-theme fixes for hardcoded dark glass values */
 html.theme-light body::before{background:
@@ -232,7 +234,7 @@ html.theme-light .bottom-nav{background:rgba(247,247,248,.94)}
   100%{opacity:0;transform:translate(-50%,-50%) scale(.9)}}
 .celebrate-ring{width:64px;height:64px;margin:0 auto .875rem;border-radius:50%;
   background:var(--teal);display:flex;align-items:center;justify-content:center;
-  font-size:32px;color:#0a0a0a;font-weight:800;animation:celebrateRingPop .8s cubic-bezier(.34,1.56,.64,1) .15s backwards}
+  font-size:32px;color:var(--focus-ac-ink);font-weight:800;animation:celebrateRingPop .8s cubic-bezier(.34,1.56,.64,1) .15s backwards}
 @keyframes celebrateRingPop{0%{transform:scale(0) rotate(-180deg)}100%{transform:scale(1) rotate(0)}}
 .celebrate-title{font-size:19px;font-weight:800;color:var(--t1);letter-spacing:-.02em;margin-bottom:4px}
 .celebrate-sub{font-size:13px;color:var(--teal)}
@@ -2253,7 +2255,7 @@ function applyTheme(){
   }
   document.documentElement.classList.toggle('theme-light',useLight);
   const meta=document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.setAttribute('content',useLight?'#f7f7f8':'#0a0a0a');
+  if(meta) meta.setAttribute('content',useLight?'#f2f2f5':'#000000');
 }
 function setThemeMode(m){
   themeMode=m;
@@ -3822,7 +3824,7 @@ function _maybeCelebrate(sv){
 }
 function _confettiBurst(){
   const host=document.getElementById('focus-hero'); if(!host) return;
-  let ac='#ffca3a'; try{ac=getComputedStyle(document.documentElement).getPropertyValue('--focus-ac').trim()||ac;}catch(e){}
+  let ac='#ffffff'; try{ac=getComputedStyle(document.documentElement).getPropertyValue('--focus-ac').trim()||ac;}catch(e){}
   host.style.position='relative';
   for(let k=0;k<16;k++){
     const c=document.createElement('div');
@@ -5979,9 +5981,9 @@ function buildInfographic(){
 
   // Subtle gradient overlay
   const grad=ctx.createLinearGradient(0,0,W,H);
-  grad.addColorStop(0,'rgba(255,202,58,.04)');
-  grad.addColorStop(.5,'rgba(77,166,255,.03)');
-  grad.addColorStop(1,'rgba(167,139,250,.04)');
+  grad.addColorStop(0,'rgba(255,255,255,.04)');
+  grad.addColorStop(.5,'rgba(90,143,214,.03)');
+  grad.addColorStop(1,'rgba(167,138,184,.04)');
   ctx.fillStyle=grad;
   ctx.fillRect(0,0,W,H);
 
@@ -5994,8 +5996,8 @@ function buildInfographic(){
 
   // Header bar
   const hGrad=ctx.createLinearGradient(0,0,W,80);
-  hGrad.addColorStop(0,'rgba(255,202,58,.15)');
-  hGrad.addColorStop(1,'rgba(77,166,255,.08)');
+  hGrad.addColorStop(0,'rgba(255,255,255,.15)');
+  hGrad.addColorStop(1,'rgba(90,143,214,.08)');
   ctx.fillStyle=hGrad;
   ctx.fillRect(0,0,W,80);
 
@@ -6016,10 +6018,10 @@ function buildInfographic(){
     Math.floor((Date.now()-new Date(journeyLog[journeyLog.length-1].date).getTime())/(86400000))+1:0;
 
   const stats=[
-    {label:'Days Active',val:totalDays||'—',color:'#34d399'},
-    {label:'Current Streak',val:streak,color:'#ff9021'},
-    {label:'Personal Bests',val:pbs,color:'#a78bfa'},
-    {label:'Milestones',val:milestones,color:'#4da6ff'},
+    {label:'Days Active',val:totalDays||'—',color:'#6fb98a'},
+    {label:'Current Streak',val:streak,color:'#e2984b'},
+    {label:'Personal Bests',val:pbs,color:'#a78ab8'},
+    {label:'Milestones',val:milestones,color:'#5a8fd6'},
   ];
   stats.forEach((st,i)=>{
     const x=32+i*143;
@@ -6050,8 +6052,8 @@ function buildInfographic(){
     roundRect(ctx,x,240,barW,80,4);ctx.fill();
     // Bar fill
     const cGrad=ctx.createLinearGradient(0,y,0,320);
-    cGrad.addColorStop(0,'#34d399');
-    cGrad.addColorStop(1,'#4da6ff');
+    cGrad.addColorStop(0,'#6fb98a');
+    cGrad.addColorStop(1,'#5a8fd6');
     ctx.fillStyle=cGrad;
     roundRect(ctx,x,y,barW,bH,4);ctx.fill();
     // Score label
@@ -6073,10 +6075,10 @@ function buildInfographic(){
   // Section: Protocol averages
   drawSectionLabel(ctx,'PROTOCOL AVERAGES',32,370);
   const avgs=[
-    {label:'Daily score',val:Math.round(s.avgScore)+'%',color:'#34d399'},
-    {label:'Sleep quality',val:s.avgSleep.toFixed(1)+'/5',color:'#a78bfa'},
-    {label:'Energy level',val:s.avgEnergy.toFixed(1)+'/5',color:'#ff9021'},
-    {label:'Tracker rate',val:Math.round(s.avgTracker)+'%',color:'#4da6ff'},
+    {label:'Daily score',val:Math.round(s.avgScore)+'%',color:'#6fb98a'},
+    {label:'Sleep quality',val:s.avgSleep.toFixed(1)+'/5',color:'#a78ab8'},
+    {label:'Energy level',val:s.avgEnergy.toFixed(1)+'/5',color:'#e2984b'},
+    {label:'Tracker rate',val:Math.round(s.avgTracker)+'%',color:'#5a8fd6'},
   ];
   avgs.forEach((a,i)=>{
     const col=i%2===0?0:1;
@@ -6109,7 +6111,7 @@ function buildInfographic(){
   } else {
     major.forEach((m,i)=>{
       const y=528+i*42;
-      const color=m.type==='milestone'?'#ff9021':m.type==='pb'?'#a78bfa':'#34d399';
+      const color=m.type==='milestone'?'#e2984b':m.type==='pb'?'#a78ab8':'#6fb98a';
       ctx.fillStyle='rgba(255,255,255,.04)';
       roundRect(ctx,32,y-18,W-64,36,7);ctx.fill();
       ctx.fillStyle=color;
@@ -6127,7 +6129,7 @@ function buildInfographic(){
   ctx.fillStyle='#7a7a7a';
   ctx.font='400 12px -apple-system,BlinkMacSystemFont,Inter,sans-serif';
   ctx.fillText('Operational Protocol · 74kg shift worker · Singapore',32,H-28);
-  ctx.fillStyle='rgba(255,202,58,.6)';
+  ctx.fillStyle='rgba(255,255,255,.6)';
   ctx.font='700 12px -apple-system,BlinkMacSystemFont,Inter,sans-serif';
   ctx.textAlign='right';
   ctx.fillText('Cycle '+cycleNum,W-32,H-28);
@@ -6212,7 +6214,7 @@ function downloadInfographic(){
       description:'74kg shift worker health & performance protocol',
       start_url:'./',
       display:'standalone',
-      background_color:'#0a0a0a',
+      background_color:'#000000',
       theme_color:'#0d0d0d',
       orientation:'portrait-primary',
       icons:[{
@@ -6630,7 +6632,7 @@ function renderProgress(){
 
 // Resolve the current accent (--teal) to rgb/rgba for canvas (canvas can't read CSS vars/color-mix)
 function _ac(alpha){
-  const hex=(getComputedStyle(document.documentElement).getPropertyValue('--teal').trim()||'#ffca3a').replace('#','');
+  const hex=(getComputedStyle(document.documentElement).getPropertyValue('--teal').trim()||'#ffffff').replace('#','');
   const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
   return alpha==null?'rgb('+r+','+g+','+b+')':'rgba('+r+','+g+','+b+','+alpha+')';
 }
@@ -6988,7 +6990,7 @@ function launchConfetti(){
   const W=canvas.width=window.innerWidth*dpr;
   const H=canvas.height=window.innerHeight*dpr;
   const ctx=canvas.getContext('2d');
-  const colors=[_ac(),'#4da6ff','#ff9021','#a78bfa','#ffffff'];
+  const colors=[_ac(),'#5a8fd6','#e2984b','#a78ab8','#ffffff'];
   const N=110;
   const parts=[];
   for(let i=0;i<N;i++){
