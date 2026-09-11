@@ -301,7 +301,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 /* Heatmap */
 .sec-label-inline{font-size:15px;font-weight:700;letter-spacing:-.01em;color:var(--t1);margin:1.25rem 0 .5rem;display:block}
 /* ── PROGRESS: calendar heatmap + stats + milestones ── */
-.prog-pair{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.75rem}
+.prog-pair{display:grid;gap:.5rem;margin-top:.75rem}
 .bottom-nav .nav-btn{min-width:0}
 .add-fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:110;width:56px;height:56px;border-radius:50%;border:none;background:var(--focus-ac);color:var(--focus-ac-ink);font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--sh-lg);transition:transform .12s cubic-bezier(.34,1.56,.64,1)}
 .add-fab:active{transform:scale(.9)}
@@ -430,6 +430,21 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .ppw{width:100%;aspect-ratio:1;max-width:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;background:var(--s3);color:var(--t3)}
 .ppw.on{background:var(--focus-ac);color:var(--focus-ac-ink)}
 .ppw.now{outline:1.5px solid var(--t2);outline-offset:1px}
+.wkc{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:1.125rem 1.25rem;margin-top:.5rem}
+.wkc-top{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:1rem}
+.wkc-title{font-size:19px;font-weight:800;letter-spacing:-.03em;color:var(--t1)}
+.wkc-streak{display:inline-flex;align-items:center;gap:5px;font-size:19px;font-weight:800;color:var(--t1);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.wkc-streak i{font-size:17px;color:var(--macro-carb)}
+.wkc-days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end}
+.wkc-day{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
+/* A logged day grows into a tall pill with a tick; the rest stay as dots. */
+.wkc-pill{width:100%;max-width:30px;height:16px;border-radius:999px;background:var(--s3);display:flex;align-items:center;justify-content:center;transition:height .2s cubic-bezier(.34,1.4,.5,1),background .2s}
+.wkc-day.on .wkc-pill{height:46px;background:var(--focus-ac);color:var(--focus-ac-ink)}
+.wkc-day.on .wkc-pill i{font-size:15px}
+.wkc-day.today .wkc-pill{outline:2px solid var(--b3);outline-offset:2px}
+.wkc-let{font-size:12px;font-weight:700;color:var(--t2);line-height:1}
+.wkc-day.future .wkc-pill{background:var(--s2)}
+.wkc-day.future .wkc-let{color:var(--t3);opacity:.55}
 .range-seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--s2);border-radius:20px;padding:3px;margin-top:.75rem}
 .rs-btn{font-size:11px;font-weight:600;color:var(--t2);background:transparent;border:none;border-radius:17px;padding:6px 2px;cursor:pointer;font-family:inherit;white-space:nowrap}
 .rs-btn.on{background:var(--s1);color:var(--t1);font-weight:700;box-shadow:var(--sh-sm)}
@@ -5442,15 +5457,12 @@ function renderLiftRows(){
     const targetHtml=tgt
       ?`<div class="lift-target"><i class="ti ti-target" style="font-size:11px"></i>Target: <strong>${tgt.txt}</strong>${tgt.mode==='load'?' <span class="lt-note">range topped — add load</span>':''}${stalled?' <span class="lt-stall">stalled 2 sessions</span>':''}</div>`
       :'';
-    // A named row with no numbers won't be saved. Say so here, while it can still be fixed,
-    // rather than only reporting it after the fact.
-    const unrecorded=l.name&&l.name.trim()&&!l.weight&&!l.reps
-      ?`<div class="lift-unrecorded" id="lu-${i}"><i class="ti ti-alert-circle" style="font-size:11px"></i>Won't be saved — needs a weight or reps</div>`
-      :'';
-    const shadowHtml=(shadow
+    // No "first time logging" note and no "won't be saved" warning: an empty row is visibly
+    // empty, and a new exercise obviously has no history. Both were noise on a page read
+    // between sets.
+    const shadowHtml=shadow
       ?`<div class="lift-shadow">${shadow.html}<span class="lift-verdict${v?' '+v.cls:''}" id="lv-${i}">${v?v.txt:''}</span></div>${targetHtml}`
-      :(l.name&&l.name.trim()?`<div class="lift-shadow lift-shadow-new"><i class="ti ti-sparkles" style="font-size:11px"></i> First time logging this exact name — no comparison yet</div>`:''))
-      +unrecorded;
+      :'';
     return `
     <div class="lift-card${l._done?' is-done':''}">
       <div class="lift-card-name-row">
@@ -7549,7 +7561,7 @@ function _renderProgPair(){
   for(let i=0;i<7;i++){
     const d=new Date(monday); d.setUTCDate(monday.getUTCDate()+i);
     const key=d.toISOString().slice(0,10);
-    week.push({letter:d.toLocaleDateString('en-SG',{weekday:'narrow',timeZone:'UTC'}), hit:_dayLogged(key), isToday:key===biologicalToday()});
+    week.push({letter:d.toLocaleDateString('en-SG',{weekday:'narrow',timeZone:'UTC'}), hit:_dayLogged(key), isToday:key===biologicalToday(), future:key>biologicalToday()});
   }
 
   el.innerHTML=`<div class="pp-card">
@@ -7564,11 +7576,24 @@ function _renderProgPair(){
     <button class="pp-log" onclick="promptWeighIn()"><i class="ti ti-scale" aria-hidden="true"></i>Log weigh-in</button>
     <button class="pp-log" onclick="openWeightHistory()"><i class="ti ti-history" aria-hidden="true"></i>History</button>
   </div>
-  <div class="pp-card pp-streak">
-    <i class="ti ti-flame pp-flame" aria-hidden="true"></i>
-    <div class="pp-big">${dayStreak}</div>
-    <div class="pp-lbl">Day streak</div>
-    <div class="pp-week">${week.map(d=>`<span class="ppw${d.hit?' on':''}${d.isToday?' now':''}">${d.letter}</span>`).join('')}</div>
+  `;
+  _renderWeekCard(week);
+}
+
+// Full-width week strip: a checked pill for each day you logged, a dot for the rest, days
+// still ahead faded back so an unlogged Friday doesn't read as a miss on Wednesday.
+function _renderWeekCard(week){
+  const el=document.getElementById('week-card');
+  if(!el) return;
+  el.innerHTML=`<div class="wkc">
+    <div class="wkc-top">
+      <span class="wkc-title">This week</span>
+      <span class="wkc-streak"><i class="ti ti-flame" aria-hidden="true"></i>${dayStreak}</span>
+    </div>
+    <div class="wkc-days">${week.map(d=>`<div class="wkc-day${d.hit?' on':''}${d.future?' future':''}${d.isToday?' today':''}">
+      <span class="wkc-pill">${d.hit?'<i class="ti ti-check" aria-hidden="true"></i>':''}</span>
+      <span class="wkc-let">${d.letter}</span>
+    </div>`).join('')}</div>
   </div>`;
 }
 
@@ -8657,6 +8682,8 @@ try{
   <!-- Cal AI's progress screen: weight-vs-goal and the streak side by side, a range selector,
        then the goal chart. Rendered by renderCalProgress(). -->
   <div class="prog-pair mo-rise" id="prog-pair"></div>
+
+  <div class="mo-rise" id="week-card"></div>
 
   <div class="range-seg mo-rise" id="range-seg"></div>
 
