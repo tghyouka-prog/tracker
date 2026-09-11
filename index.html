@@ -524,33 +524,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .bs-btn.danger{background:color-mix(in srgb,var(--red) 15%,transparent);color:var(--red);border:1px solid color-mix(in srgb,var(--red) 20%,transparent)}
 .bs-btn.neutral{background:var(--s2);color:var(--t2);border:1px solid var(--b2)}
 
-/* Long press action sheet */
-.action-sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:400;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s}
-.action-sheet-overlay.open{opacity:1;pointer-events:all}
-.action-sheet{background:var(--s1);border:1px solid var(--b2);border-radius:var(--r-xl) var(--r-xl) 0 0;width:100%;max-width:480px;padding:1.25rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .22s cubic-bezier(.4,0,.2,1)}
-.action-sheet-overlay.open .action-sheet{transform:translateY(0)}
-.as-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
-.as-type-chip{font-size:11px;font-weight:700;letter-spacing:.01em;padding:3px 8px;border-radius:20px;border:1px solid}
-.as-type-chip.food{background:color-mix(in srgb,var(--teal) 10%,transparent);border-color:color-mix(in srgb,var(--teal) 30%,transparent);color:var(--teal)}
-.as-type-chip.supp{background:color-mix(in srgb,var(--purple) 10%,transparent);border-color:color-mix(in srgb,var(--purple) 30%,transparent);color:var(--purple)}
-.as-type-chip.action{background:color-mix(in srgb,var(--blue) 10%,transparent);border-color:color-mix(in srgb,var(--blue) 30%,transparent);color:var(--blue)}
-.as-type-chip.sleep{background:color-mix(in srgb,var(--amber) 10%,transparent);border-color:color-mix(in srgb,var(--amber) 30%,transparent);color:var(--amber)}
-.as-time{font-size:12px;color:var(--t3);font-variant-numeric:tabular-nums}
-.as-title{font-size:16px;font-weight:600;color:var(--t1);margin-bottom:.375rem;line-height:1.3}
-.as-sub{font-size:12px;color:var(--t2);line-height:1.55;margin-bottom:.875rem}
-.as-macro-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:.875rem;display:none}
-.as-macro-row.show{display:grid}
-.as-macro-cell{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-md);padding:.5rem;text-align:center}
-.as-macro-val{display:block;font-size:15px;font-weight:700;color:var(--teal);font-variant-numeric:tabular-nums}
-.as-macro-lbl{font-size:11px;color:var(--t3);letter-spacing:.01em}
-.as-actions{display:flex;flex-direction:column;gap:.375rem}
-.as-btn{width:100%;padding:.75rem 1rem;border-radius:var(--r-lg);border:1px solid var(--b2);background:var(--s2);font-size:14px;font-weight:500;color:var(--t1);cursor:pointer;text-align:left;display:flex;align-items:center;gap:.75rem;transition:all .12s;-webkit-tap-highlight-color:transparent}
-.as-btn:active{transform:scale(.97);background:var(--s3)}
-.as-btn.skip{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 25%,transparent);background:color-mix(in srgb,var(--amber) 6%,transparent)}
-.as-btn.supp-link{color:var(--purple);border-color:color-mix(in srgb,var(--purple) 25%,transparent);background:color-mix(in srgb,var(--purple) 6%,transparent);display:none}
-.as-btn.supp-link.show{display:flex}
-.as-btn.cancel{color:var(--t3);background:transparent;border-color:transparent}
-.as-btn.undone{border-color:color-mix(in srgb,var(--red) 20%,transparent);background:color-mix(in srgb,var(--red) 6%,transparent)}
 
 /* Page transition — safe fade without forwards fill */
 .page.active{animation:page-fade .12s ease-out}
@@ -2127,94 +2100,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
   </div>
 </div>
 
-<!-- Rename a built-in timeline item. Rebuilt Aug 2026 — actionSheetRename() had been wired to
-     the live "Rename" button since the dashboard deletion took this markup with it, so the
-     call threw on a null #rename-label and the button silently did nothing. Reuses the
-     custom-modal styles so no new CSS is needed. -->
-<div class="custom-modal-overlay" id="rename-overlay" onclick="closeRenameSheet(event)">
-  <div class="custom-modal">
-    <div class="custom-modal-title">Rename item</div>
-    <label class="custom-field-label" for="rename-label">Name</label>
-    <input class="custom-input" id="rename-label" placeholder="Item name" maxlength="60">
-    <label class="custom-field-label" for="rename-sub">Detail (optional)</label>
-    <input class="custom-input" id="rename-sub" placeholder="Supporting detail" maxlength="160">
-    <div class="custom-modal-actions">
-      <button class="custom-del-btn" onclick="resetRename()" aria-label="Reset to original wording"><i class="ti ti-rotate" style="font-size:13px" aria-hidden="true"></i></button>
-      <button class="custom-cancel-btn" onclick="closeRenameSheet()">Cancel</button>
-      <button class="custom-save-btn" onclick="saveRename()">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- Completion celebration overlay -->
-<canvas id="confetti-canvas" style="position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:9999;display:none"></canvas>
-<div id="celebrate-toast" class="celebrate-toast">
-  <div class="celebrate-ring">✓</div>
-  <div class="celebrate-title">That's the day, done</div>
-  <div class="celebrate-sub" id="celebrate-sub">Every essential, handled. Nothing left but rest.</div>
-</div>
-
-<!-- ═══ ACTION SHEET — Long press timeline item ═══ -->
-<div class="action-sheet-overlay" id="action-sheet-overlay" onclick="closeActionSheet(event)">
-  <div class="action-sheet">
-
-    <!-- Item header -->
-    <div class="as-header">
-      <div class="as-type-chip" id="as-type-chip"></div>
-      <div class="as-time" id="as-time"></div>
-    </div>
-    <div class="as-title" id="as-title">Timeline item</div>
-    <div class="as-sub" id="as-sub"></div>
-
-    <!-- Macro row — shown for food items only -->
-    <div class="as-macro-row" id="as-macro-row">
-      <div class="as-macro-cell" id="as-macro-prot">
-        <span class="as-macro-val" id="as-macro-prot-val">—</span>
-        <span class="as-macro-lbl">protein</span>
-      </div>
-      <div class="as-macro-cell" id="as-macro-kcal">
-        <span class="as-macro-val" id="as-macro-kcal-val">—</span>
-        <span class="as-macro-lbl">kcal</span>
-      </div>
-      <div class="as-macro-cell" id="as-macro-hydro">
-        <span class="as-macro-val" id="as-macro-hydro-val">—</span>
-        <span class="as-macro-lbl">hydration</span>
-      </div>
-    </div>
-
-    <!-- Actions -->
-    <div class="as-actions" id="as-actions">
-      <button class="as-btn done" id="as-toggle-btn" onclick="actionSheetToggle()">
-        <i class="ti ti-check" id="as-toggle-icon" style="font-size:15px;color:var(--teal)"></i>
-        <span id="as-toggle-label">Mark as done</span>
-      </button>
-      <button class="as-btn" id="as-rename-btn" onclick="actionSheetRename()">
-        <i class="ti ti-pencil" style="font-size:15px;color:var(--blue)"></i>
-        <span>Rename</span>
-      </button>
-      <button class="as-btn" id="as-half-btn" onclick="actionSheetHalf()">
-        <i class="ti ti-circle-half-2" style="font-size:15px;color:var(--teal)"></i>
-        <span>Half done — partial win</span>
-      </button>
-      <button class="as-btn skip" id="as-skip-btn" onclick="actionSheetSkip()">
-        <i class="ti ti-player-skip-forward" style="font-size:15px"></i>
-        <span>Skip — not applicable today</span>
-      </button>
-      <button class="as-btn supp-link" id="as-supp-link" onclick="closeActionSheet();go('supps')">
-        <i class="ti ti-pill" style="font-size:15px;color:var(--purple)"></i>
-        <span>View supplement details</span>
-      </button>
-      <button class="as-btn skip" id="as-remove-btn" onclick="actionSheetRemove()">
-        <i class="ti ti-trash" style="font-size:15px;color:var(--red)"></i>
-        <span>Remove from this shift — restore anytime in Settings</span>
-      </button>
-      <button class="as-btn cancel" onclick="closeActionSheet()">
-        <i class="ti ti-x" style="font-size:14px"></i>Cancel
-      </button>
-    </div>
-
-  </div>
-</div>
 
 <div id="toast-container"></div>
 
@@ -2444,7 +2329,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
 // ── TAB NAV ──
 function go(id){
-  const ids=['dashboard','tracker','nutrition','sleep','training','insights','journey','supps'];
+  const ids=['nutrition','training','insights'];
   if(id==='insights'){
     setTimeout(()=>{renderProgress();_playTabEntrance('page-insights',null);},50);
   }
@@ -2457,7 +2342,7 @@ function go(id){
     if(btn) btn.classList.toggle('active',navId===id);
   });
   // Show correct page — direct getElementById, most reliable
-  const pageIds=['dashboard','tracker','nutrition','sleep','training','insights','journey','supps'];
+  const pageIds=['nutrition','training','insights'];
   pageIds.forEach(pid=>{
     const pg=document.getElementById('page-'+pid);
     if(!pg) return;
@@ -4857,7 +4742,7 @@ function render(){
     }
     const isPriority=['Vault','Magnesium','Blue-block','Supplement stack','Post-gym flask','Morning transporter','Blue-blocks on'].some(p=>item.label.includes(p));
     const tier=item.tier||'default';
-    html+=`<div class="tl-item${done?' done':''}${half?' half':''}${isNext?' next-item':''}${isPriority&&!done?' priority-item':''} tier-${tier}${item.custom?' is-custom':''}" onclick="tlTick('${k}')" oncontextmenu="openActionSheet(event,'${k}');return false" ontouchstart="startLongPress(event,'${k}')" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()">
+    html+=`<div class="tl-item${done?' done':''}${half?' half':''}${isNext?' next-item':''}${isPriority&&!done?' priority-item':''} tier-${tier}${item.custom?' is-custom':''}" onclick="tlTick('${k}')">
       <div class="tl-dot ${item.type}"></div>
       <div class="tl-body">
         <div class="tl-main">${item.label}</div>
@@ -4938,16 +4823,6 @@ function tlTick(k){
 // Flow seamlessly from a completed night shift into the off-day timeline.
 
 // Fractional completion — honest partial wins. Counts 0.5 toward score and macros.
-function markHalfItem(k){
-  if(ticks[k]){ delete ticks[k]; }
-  halfTicks[k]=!halfTicks[k];
-  if(!halfTicks[k]) delete halfTicks[k];
-  if(navigator.vibrate) navigator.vibrate(6);
-  if(halfTicks[k]) showToast('Half counts — logged','action');
-  syncMacrosFromTimeline();
-  render();
-  save();
-}
 
 function transitionToOffDay(){
   const offItems=TIMELINE['off_post_ns2']||[];
@@ -8576,192 +8451,6 @@ function confirmResetChecks(){
 }
 
 // ── 5. LONG PRESS → ACTION SHEET ──
-let _lpTimer=null, _lpKey=null;
-
-function startLongPress(e,k){
-  cancelLongPress();
-  _lpKey=k;
-  _lpTimer=setTimeout(()=>{
-    openActionSheet(e,k);
-  },480);
-}
-function cancelLongPress(){
-  if(_lpTimer){clearTimeout(_lpTimer);_lpTimer=null;}
-}
-
-function openActionSheet(e,k){
-  if(e&&e.preventDefault) e.preventDefault();
-  cancelLongPress();
-  _lpKey=k;
-  const parts=k.split('__');
-  const shiftKey=parts[1];
-  const idx=parseInt(parts[2]);
-  const item=getTimeline(shiftKey)?.[idx];
-  const isDone=!!ticks[k];
-  if(!item) return;
-  // Custom item — long-press opens the editor directly
-  if(item.custom){
-    const baseLen=(TIMELINE[shiftKey]||[]).length;
-    const customIdx=idx-baseLen;
-    if(customIdx>=0){openCustomItemModal(customIdx);return;}
-  }
-
-  // ── Populate header ──
-  const typeChip=document.getElementById('as-type-chip');
-  const timeEl=document.getElementById('as-time');
-  const titleEl=document.getElementById('as-title');
-  const subEl=document.getElementById('as-sub');
-  const macroRow=document.getElementById('as-macro-row');
-  const toggleBtn=document.getElementById('as-toggle-btn');
-  const toggleIcon=document.getElementById('as-toggle-icon');
-  const toggleLabel=document.getElementById('as-toggle-label');
-  const skipBtn=document.getElementById('as-skip-btn');
-  const suppLink=document.getElementById('as-supp-link');
-
-  // Type chip
-  const typeLabels={food:'Food',supp:'Supplement',action:'Action',sleep:'Sleep'};
-  if(typeChip){
-    typeChip.textContent=typeLabels[item.type]||item.type;
-    typeChip.className='as-type-chip '+(item.type||'action');
-  }
-  if(timeEl) timeEl.textContent=item.t||'';
-  if(titleEl) titleEl.textContent=item.label||'';
-
-  // Sub description — clean up any truncated text
-  if(subEl){
-    const sub=item.sub||'';
-    subEl.textContent=sub;
-    subEl.style.display=sub?'block':'none';
-  }
-
-  // Macro row — only for food/action items with macro data
-  const hasMacros=item.prot||item.kcal||item.hydro;
-  if(macroRow){
-    if(hasMacros&&(item.type==='food'||item.type==='action')){
-      macroRow.classList.add('show');
-      const pv=document.getElementById('as-macro-prot-val');
-      const kv=document.getElementById('as-macro-kcal-val');
-      const hv=document.getElementById('as-macro-hydro-val');
-      if(pv) pv.textContent=item.prot?item.prot+'g':'—';
-      if(kv) kv.textContent=item.kcal?item.kcal+' kcal':'—';
-      if(hv) hv.textContent=item.hydro?item.hydro+'ml':'—';
-      // Dim cells with no data
-      document.getElementById('as-macro-prot').style.opacity=item.prot?'1':'0.35';
-      document.getElementById('as-macro-kcal').style.opacity=item.kcal?'1':'0.35';
-      document.getElementById('as-macro-hydro').style.opacity=item.hydro?'1':'0.35';
-    } else {
-      macroRow.classList.remove('show');
-    }
-  }
-
-  // Toggle button — context-aware label and style
-  if(toggleBtn&&toggleLabel&&toggleIcon){
-    if(isDone){
-      toggleLabel.textContent='Mark as not done';
-      toggleIcon.className='ti ti-x';
-      toggleIcon.style.color='var(--red)';
-      toggleBtn.className='as-btn undone';
-    } else {
-      toggleLabel.textContent='Mark as done';
-      toggleIcon.className='ti ti-check';
-      toggleIcon.style.color='var(--teal)';
-      toggleBtn.className='as-btn done';
-    }
-  }
-
-  // Skip button — hide for sleep items (can't meaningfully skip sleep)
-  if(skipBtn) skipBtn.style.display=item.type==='sleep'?'none':'flex';
-
-  // Supplement link — show only for supp items
-  if(suppLink) suppLink.classList.toggle('show', item.type==='supp');
-
-  document.getElementById('action-sheet-overlay')?.classList.add('open');
-}
-function closeActionSheet(e){
-  if(e&&e.target!==document.getElementById('action-sheet-overlay')) return;
-  document.getElementById('action-sheet-overlay')?.classList.remove('open');
-  _lpKey=null;
-}
-function actionSheetToggle(){
-  closeActionSheet();
-  if(_lpKey) tlTick(_lpKey);
-}
-function actionSheetRename(){
-  if(!_lpKey) return;
-  const parts=_lpKey.split('__');
-  const s=parts[1], idx=parseInt(parts[2]);
-  const baseLen=(TIMELINE[s]||[]).length;
-  closeActionSheet();
-  if(idx>=baseLen){ openCustomItemModal(idx-baseLen); return; } // customs use their full editor
-  const item=getTimeline(s)[idx];
-  const lblEl=document.getElementById('rename-label');
-  const subEl=document.getElementById('rename-sub');
-  const overlay=document.getElementById('rename-overlay');
-  // Guarded: this used to throw on a null #rename-label after the markup was deleted, which
-  // closed the action sheet and then died silently. Fail loudly-but-safely instead.
-  if(!lblEl||!subEl||!overlay){ showToast('Rename unavailable','action'); return; }
-  _renameTarget={shift:s,orig:item.origLabel};
-  lblEl.value=item.label||'';
-  subEl.value=item.sub||'';
-  overlay.classList.add('show');
-  setTimeout(()=>lblEl.focus(),150);
-}
-let _renameTarget=null;
-function saveRename(){
-  if(!_renameTarget) return;
-  const lblEl=document.getElementById('rename-label');
-  const subEl=document.getElementById('rename-sub');
-  if(!lblEl||!subEl) return;
-  const lbl=lblEl.value.trim();
-  const sub=subEl.value.trim();
-  const key=_renameTarget.shift+'__'+_renameTarget.orig;
-  if(!lbl||lbl===_renameTarget.orig&&!sub){ delete labelEdits[key]; }
-  else labelEdits[key]={label:lbl||_renameTarget.orig,sub:sub||undefined};
-  closeRenameSheet();
-  render(); save();
-  showToast('Renamed','action');
-}
-function resetRename(){
-  if(_renameTarget) delete labelEdits[_renameTarget.shift+'__'+_renameTarget.orig];
-  closeRenameSheet(); render(); save();
-  showToast('Back to original','action');
-}
-function closeRenameSheet(e){
-  // Backdrop-click only — ignore clicks that bubbled up from inside the modal.
-  if(e&&e.target!==document.getElementById('rename-overlay')) return;
-  const ov=document.getElementById('rename-overlay');
-  if(ov) ov.classList.remove('show');
-  _renameTarget=null;
-}
-function actionSheetHalf(){
-  if(_lpKey) markHalfItem(_lpKey);
-  closeActionSheet();
-}
-function actionSheetSkip(){
-  closeActionSheet();
-  if(!_lpKey) return;
-  // Mark done (skip = treat as complete so it doesn't block score)
-  ticks[_lpKey]=true;
-  syncMacrosFromTimeline();
-  render();save();
-  const parts=_lpKey.split('__');
-  const item=getTimeline(parts[1])?.[parseInt(parts[2])];
-  showToast((item?.label||'Item')+' skipped','action');
-  _lpKey=null;
-}
-function actionSheetRemove(){
-  if(!_lpKey) return;
-  const parts=_lpKey.split('__');
-  const shiftKey=parts[1];
-  const item=getTimeline(shiftKey)?.[parseInt(parts[2])];
-  if(!item||item.custom) return;
-  closeActionSheet();
-  if(!confirm('Remove "'+item.label+'" from this shift\'s timeline? You can restore it anytime from Settings.')) return;
-  hiddenBuiltIn[shiftKey+'__'+item.origLabel]=true;
-  save();render();updateBar();renderRemovedItems();
-  showToast('Removed — restore anytime in Settings','action');
-  _lpKey=null;
-}
 
 // ── REMOVED ITEMS (Settings restore list) ──
 function renderRemovedItems(){
