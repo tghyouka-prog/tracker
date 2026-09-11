@@ -303,6 +303,19 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 /* ── PROGRESS: calendar heatmap + stats + milestones ── */
 .prog-pair{display:grid;gap:.5rem;margin-top:.75rem}
 .bottom-nav .nav-btn{min-width:0}
+.add-sheet{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);display:flex;align-items:flex-end;justify-content:center;padding:0 16px calc(150px + env(safe-area-inset-bottom,0px))}
+.add-sheet[hidden]{display:none}
+.as-grid{display:grid;grid-template-columns:1fr 1fr;gap:.625rem;width:100%;max-width:420px}
+.as-card{display:flex;flex-direction:column;align-items:flex-start;gap:.625rem;padding:1rem;border-radius:var(--r-lg);border:none;background:var(--s1);color:var(--t1);font-family:inherit;font-size:14px;font-weight:700;letter-spacing:-.01em;cursor:pointer;box-shadow:var(--sh-lg)}
+.as-card:active{transform:scale(.97)}
+.as-ic{width:40px;height:40px;border-radius:var(--r-md);background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:19px;color:var(--t1)}
+.meal-empty{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:1.25rem 1rem 1.125rem;text-align:center}
+.me-ghost{display:flex;align-items:center;gap:.75rem;background:var(--s2);border-radius:var(--r-md);padding:.75rem;margin-bottom:.875rem}
+.me-thumb{width:40px;height:40px;border-radius:10px;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--t3);flex-shrink:0}
+.me-bars{flex:1;display:flex;flex-direction:column;gap:7px}
+.me-bars span{height:9px;border-radius:5px;background:var(--s3)}
+.me-bars span:last-child{width:55%}
+.me-cap{font-size:12.5px;color:var(--t3)}
 .add-fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:110;width:56px;height:56px;border-radius:50%;border:none;background:var(--focus-ac);color:var(--focus-ac-ink);font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--sh-lg);transition:transform .12s cubic-bezier(.34,1.56,.64,1)}
 .add-fab:active{transform:scale(.9)}
 .pd-proj{display:flex;align-items:flex-start;gap:6px;font-size:11.5px;color:var(--t2);line-height:1.5;border-top:1px solid var(--b1);margin-top:.5rem;padding-top:.625rem}
@@ -1793,6 +1806,50 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
             onchange="setProfile('heightCm',this.value)"></label>
       </div>
       <div class="settings-row-sub" id="profile-note" style="margin-top:.5rem"></div>
+      <div class="sec-label">Your plan</div>
+      <div class="fuel-wt-card mo-rise">
+        <div class="pd-row">
+          <span class="pd-name">Current weight<small class="pd-hint">tap to log a weigh-in</small></span>
+          <span class="pd-val"><input type="number" inputmode="decimal" step="0.1" min="40" max="150"
+            id="nut-weight-display" value="74" onchange="setWeightInput(this.value)" aria-label="Current weight in kilograms"><i>kg</i></span>
+        </div>
+        <div class="pd-row">
+          <span class="pd-name">Goal weight</span>
+          <span class="pd-val"><input type="number" inputmode="decimal" step="0.5" min="40" max="150"
+            id="pd-goal-w" placeholder="--" onchange="setGoalWeight(this.value)" aria-label="Goal weight in kilograms"><i>kg</i></span>
+        </div>
+        <div class="pd-row">
+          <span class="pd-name">Height</span>
+          <span class="pd-val"><input type="number" inputmode="numeric" min="120" max="230"
+            id="pd-height" placeholder="--" onchange="setProfile('heightCm',this.value)" aria-label="Height in centimetres"><i>cm</i></span>
+        </div>
+        <div class="pd-row">
+          <span class="pd-name">Age</span>
+          <span class="pd-val"><input type="number" inputmode="numeric" min="13" max="100"
+            id="pd-age" placeholder="--" onchange="setProfile('age',this.value)" aria-label="Age in years"><i>yrs</i></span>
+        </div>
+        <div class="pd-row">
+          <span class="pd-name">Goal</span>
+          <button class="pd-goal-btn" id="pd-goal" onclick="startOnboarding()">Bulking</button>
+        </div>
+        <div class="pd-row">
+          <span class="pd-name">Target date</span>
+          <button class="pd-goal-btn" id="pd-pace" onclick="startOnboarding()">Recommended</button>
+        </div>
+        <div class="pd-row">
+          <span class="pd-name">Daily targets</span>
+          <button class="pd-goal-btn" onclick="openGoalEditor()" style="background:var(--s2);color:var(--t1);border:1px solid var(--b2)">Edit</button>
+        </div>
+        <div class="pd-proj" id="pd-proj"></div>
+        <div class="fuel-tgt-strip">
+          <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-prot-target">148–163g</div><span class="fuel-tgt-lbl">Protein</span></div>
+          <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-kcal-target">~2,840</div><span class="fuel-tgt-lbl">Kcal</span></div>
+          <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-carb-target">~370g</div><span class="fuel-tgt-lbl">Carbs</span></div>
+          <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-hydro-target">~1.8L</div><span class="fuel-tgt-lbl">Water</span></div>
+        </div>
+        <div class="page-note" id="nut-calc-line" style="margin-top:.625rem;padding-top:.5rem;border-top:1px solid var(--b1)"><span id="nut-prot-calc">2.0–2.2g / kg</span> · <span id="nut-hydro-calc">+800ml from food</span></div>
+        <div class="page-note" id="nut-note" style="margin-top:.25rem"></div>
+      </div>
       <button class="fb-btn" style="margin-top:.625rem;width:100%" onclick="startOnboarding()"><i class="ti ti-wand"></i>Run setup again</button>
     </div>
 
@@ -2197,7 +2254,15 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 </nav>
 <!-- Cal AI's circular add button, sitting above the tab bar. Replaces the inline
      "Log a meal" button, which did the same job in a less reachable place. -->
-<button class="add-fab" onclick="openMealLogger()" aria-label="Log a meal"><i class="ti ti-plus" aria-hidden="true"></i></button>
+<button class="add-fab" onclick="openAddSheet()" aria-label="Add"><i class="ti ti-plus" aria-hidden="true"></i></button>
+<div class="add-sheet" id="add-sheet" hidden onclick="if(event.target===this)closeAddSheet()">
+  <div class="as-grid">
+    <button class="as-card" onclick="closeAddSheet();openCameraLogger()"><span class="as-ic"><i class="ti ti-barcode" aria-hidden="true"></i></span>Scan food</button>
+    <button class="as-card" onclick="closeAddSheet();openMealLogger()"><span class="as-ic"><i class="ti ti-sparkles" aria-hidden="true"></i></span>Describe it</button>
+    <button class="as-card" onclick="closeAddSheet();openSavedMeals()"><span class="as-ic"><i class="ti ti-bookmark" aria-hidden="true"></i></span>Saved meals</button>
+    <button class="as-card" onclick="closeAddSheet();go('training')"><span class="as-ic"><i class="ti ti-barbell" aria-hidden="true"></i></span>Log a workout</button>
+  </div>
+</div>
 </div>
 
 <!-- ===== TRACKER ===== -->
@@ -2240,50 +2305,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
   <div id="meal-log-list" class="mo-rise" style="margin:0 0 1.25rem"></div>
 
   <!-- ── Your plan — Cal AI's Personal Details row list. Every value is editable in place. ── -->
-  <div class="sec-label">Your plan</div>
-  <div class="fuel-wt-card mo-rise">
-    <div class="pd-row">
-      <span class="pd-name">Current weight<small class="pd-hint">tap to log a weigh-in</small></span>
-      <span class="pd-val"><input type="number" inputmode="decimal" step="0.1" min="40" max="150"
-        id="nut-weight-display" value="74" onchange="setWeightInput(this.value)" aria-label="Current weight in kilograms"><i>kg</i></span>
-    </div>
-    <div class="pd-row">
-      <span class="pd-name">Goal weight</span>
-      <span class="pd-val"><input type="number" inputmode="decimal" step="0.5" min="40" max="150"
-        id="pd-goal-w" placeholder="--" onchange="setGoalWeight(this.value)" aria-label="Goal weight in kilograms"><i>kg</i></span>
-    </div>
-    <div class="pd-row">
-      <span class="pd-name">Height</span>
-      <span class="pd-val"><input type="number" inputmode="numeric" min="120" max="230"
-        id="pd-height" placeholder="--" onchange="setProfile('heightCm',this.value)" aria-label="Height in centimetres"><i>cm</i></span>
-    </div>
-    <div class="pd-row">
-      <span class="pd-name">Age</span>
-      <span class="pd-val"><input type="number" inputmode="numeric" min="13" max="100"
-        id="pd-age" placeholder="--" onchange="setProfile('age',this.value)" aria-label="Age in years"><i>yrs</i></span>
-    </div>
-    <div class="pd-row">
-      <span class="pd-name">Goal</span>
-      <button class="pd-goal-btn" id="pd-goal" onclick="startOnboarding()">Bulking</button>
-    </div>
-    <div class="pd-row">
-      <span class="pd-name">Target date</span>
-      <button class="pd-goal-btn" id="pd-pace" onclick="startOnboarding()">Recommended</button>
-    </div>
-    <div class="pd-row">
-      <span class="pd-name">Daily targets</span>
-      <button class="pd-goal-btn" onclick="openGoalEditor()" style="background:var(--s2);color:var(--t1);border:1px solid var(--b2)">Edit</button>
-    </div>
-    <div class="pd-proj" id="pd-proj"></div>
-    <div class="fuel-tgt-strip">
-      <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-prot-target">148–163g</div><span class="fuel-tgt-lbl">Protein</span></div>
-      <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-kcal-target">~2,840</div><span class="fuel-tgt-lbl">Kcal</span></div>
-      <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-carb-target">~370g</div><span class="fuel-tgt-lbl">Carbs</span></div>
-      <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-hydro-target">~1.8L</div><span class="fuel-tgt-lbl">Water</span></div>
-    </div>
-    <div class="page-note" id="nut-calc-line" style="margin-top:.625rem;padding-top:.5rem;border-top:1px solid var(--b1)"><span id="nut-prot-calc">2.0–2.2g / kg</span> · <span id="nut-hydro-calc">+800ml from food</span></div>
-    <div class="page-note" id="nut-note" style="margin-top:.25rem"></div>
-  </div>
 
 
   <div style="height:80px"></div>
@@ -3267,6 +3288,28 @@ function renderWaterCard(){
 let mealLibrary=[];    // [{id, name, prot, kcal}] — persisted across days
 let mealLog=[];        // [{id, name, prot, kcal, ts}] — today only
 
+// Four ways in, the way Cal AI's + does it. "Food database" is the AI lookup here — describing
+// a meal is what this app has instead of a packaged-food table — and "Log exercise" goes to the
+// Train tab rather than inventing a calories-burned figure to add back to the budget.
+function openAddSheet(){
+  const el=document.getElementById('add-sheet');
+  if(!el) return;
+  el.hidden=false;
+  try{ window.history.pushState({overlay:'add-sheet'},''); }catch(e){}
+}
+function closeAddSheet(){
+  const el=document.getElementById('add-sheet');
+  if(el) el.hidden=true;
+}
+// Straight to the saved list inside the logger, rather than making you scroll past the AI box.
+function openSavedMeals(){
+  openMealLogger();
+  setTimeout(()=>{
+    const lib=document.getElementById('meal-library-list')||document.getElementById('saved-meals');
+    if(lib) lib.scrollIntoView({behavior:'smooth',block:'center'});
+  },260);
+}
+
 function openMealLogger(){
   document.getElementById('meal-modal-overlay').style.display='block';
   document.getElementById('meal-modal').style.display='block';
@@ -3848,7 +3891,12 @@ function renderMealLog(){
     return;
   }
   if(!mealLog.length){
-    el.innerHTML='<div class="meal-log-empty"><i class="ti ti-salad" style="font-size:16px;color:var(--t3);margin-bottom:4px"></i><div>No meals logged yet</div></div>';
+    // Shape of a meal card rather than a sentence about the absence of one — it shows what
+    // will appear here, and points at the control that makes it happen.
+    el.innerHTML='<div class="meal-empty">'+
+      '<div class="me-ghost"><span class="me-thumb"><i class="ti ti-salad" aria-hidden="true"></i></span>'+
+      '<span class="me-bars"><span></span><span></span></span></div>'+
+      '<div class="me-cap">Tap + to add your first meal of the day</div></div>';
     return;
   }
   // Cal AI's meal card without the photo: name + time, the calorie figure as the headline,
@@ -7765,7 +7813,7 @@ function _renderProgPair(){
 // A full-screen overlay that the system back gesture can't dismiss is a trap: on Android it
 // exits the PWA instead. Each overlay pushes a history entry when it opens, so back pops it
 // and closes the overlay rather than the app.
-const _OVERLAY_IDS=['onboarding','weighin','goaledit','weighhist'];
+const _OVERLAY_IDS=['onboarding','weighin','goaledit','weighhist','add-sheet'];
 function _showOverlay(id){
   const el=document.getElementById(id);
   if(!el) return;
