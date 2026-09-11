@@ -2407,9 +2407,10 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     <div style="margin-top:.5rem">
     </div>
 
+    <!-- Saving lives in the sticky Finish bar, which is always in view — a second copy down
+         here just meant scrolling to reach the same action. -->
     <div class="btn-row" style="margin-top:.625rem">
       <button class="rem-btn accent-teal" onclick="openExercisePicker(-1)"><i class="ti ti-plus"></i>Add lift</button>
-      <button class="rem-btn accent-amber" onclick="saveSession()" style="margin-left:auto"><i class="ti ti-device-floppy" style="font-size:12px"></i>Save session</button>
     </div>
 
   </div>
@@ -2724,7 +2725,7 @@ const OB_STEPS=['goal','sex','age','height','weight','goalWeight','pace'];
 let _obIdx=0, _obPhase='q';   // q = questions, build = transition, plan = reveal
 let _obTimer=null;
 function startOnboarding(){
-  _obIdx=0; _obPhase='q';
+  _obIdx=0; _obPhase='q'; _obWeightEntered=false;
   _renderOnboarding();
   _showOverlay('onboarding');
   // Marked as seen on open, not on finish. Leaving early — including via the Android back
@@ -2774,7 +2775,12 @@ function _obBuild(){
   },70);
 }
 function obPick(field,value){ setProfile(field,value); _renderOnboarding(); }
-function obWeight(v){ const n=parseFloat(v); if(n>=40&&n<=150){ applyWeight(Math.round(n*10)/10); recordWeightHistory(bodyWeight); _renderOnboarding(); } }
+// True once there is a real weight to show — either logged previously, or entered during this
+// run of setup.
+let _obWeightEntered=false;
+function _obHasWeight(){ return _obWeightEntered || ((weightHistory||[]).length>0); }
+
+function obWeight(v){ const n=parseFloat(v); if(n>=40&&n<=150){ _obWeightEntered=true; applyWeight(Math.round(n*10)/10); recordWeightHistory(bodyWeight); _renderOnboarding(); } }
 function obGoalWeight(v){ setGoalWeight(v); _renderOnboarding(); }
 
 // Spell out the consequence of the goal weight as it is typed, and flag a mode that points the
@@ -2813,7 +2819,10 @@ function _renderOnboarding(){
     height:{t:'How tall are you?', s:'Used in the BMR equation.',
       body:'<div class="ob-input"><input type="number" inputmode="numeric" min="120" max="230" value="'+(profile.heightCm||'')+'" placeholder="--" onchange="obPick(\'heightCm\',this.value)" aria-label="Height in centimetres"><span>cm</span></div>'},
     weight:{t:'What do you weigh?', s:'Everything else recalculates from this, so keep it current.',
-      body:'<div class="ob-input"><input type="number" inputmode="decimal" step="0.1" min="40" max="150" value="'+bodyWeight+'" onchange="obWeight(this.value)" aria-label="Body weight in kilograms"><span>kg</span></div>'},
+      // Blank for a first run: bodyWeight defaults to 74, and showing that as if it were an
+      // answer invites tapping past it onto a plan built for someone else. Someone who has
+      // actually weighed in sees their own figure.
+      body:'<div class="ob-input"><input type="number" inputmode="decimal" step="0.1" min="40" max="150" value="'+(_obHasWeight()?bodyWeight:'')+'" placeholder="--" onchange="obWeight(this.value)" aria-label="Body weight in kilograms"><span>kg</span></div>'},
     goalWeight:{t:'Where do you want to get to?', s:'This does not change your daily calories — the rate does that. It sets how far away the target is, and so how long it takes.',
       body:'<div class="ob-input"><input type="number" inputmode="decimal" step="0.5" min="40" max="150" value="'+(goalWeight!=null?goalWeight:'')+'" placeholder="--" onchange="obGoalWeight(this.value)" aria-label="Goal weight in kilograms"><span>kg</span></div>'+
            '<div class="ob-hint">'+_obGoalHint()+'</div>'},
@@ -2831,9 +2840,10 @@ function _renderOnboarding(){
   }[step];
 
   // Only gate on the questions that have no safe default — goal and weight always do.
-  const answered = step==='pace' ? (profile.planMode!=='date' || !!profile.targetDate)
+  const answered = step==='weight' ? _obHasWeight()
+    : step==='pace' ? (profile.planMode!=='date' || !!profile.targetDate)
     : step==='goalWeight' ? true
-    : step==='goal' ? true : step==='weight' ? true
+    : step==='goal' ? true
     : step==='sex' ? !!profile.sex : !!profile[step==='height'?'heightCm':'age'];
 
   el.innerHTML='<div class="ob-sheet">'+
