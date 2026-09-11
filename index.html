@@ -430,21 +430,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .ppw{width:100%;aspect-ratio:1;max-width:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;background:var(--s3);color:var(--t3)}
 .ppw.on{background:var(--focus-ac);color:var(--focus-ac-ink)}
 .ppw.now{outline:1.5px solid var(--t2);outline-offset:1px}
-.wkc{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:1.125rem 1.25rem;margin-top:.5rem}
-.wkc-top{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:1rem}
-.wkc-title{font-size:19px;font-weight:800;letter-spacing:-.03em;color:var(--t1)}
-.wkc-streak{display:inline-flex;align-items:center;gap:5px;font-size:19px;font-weight:800;color:var(--t1);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.wkc-streak i{font-size:17px;color:var(--macro-carb)}
-.wkc-days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end}
-.wkc-day{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
-/* A logged day grows into a tall pill with a tick; the rest stay as dots. */
-.wkc-pill{width:100%;max-width:30px;height:16px;border-radius:999px;background:var(--s3);display:flex;align-items:center;justify-content:center;transition:height .2s cubic-bezier(.34,1.4,.5,1),background .2s}
-.wkc-day.on .wkc-pill{height:46px;background:var(--focus-ac);color:var(--focus-ac-ink)}
-.wkc-day.on .wkc-pill i{font-size:15px}
-.wkc-day.today .wkc-pill{outline:2px solid var(--b3);outline-offset:2px}
-.wkc-let{font-size:12px;font-weight:700;color:var(--t2);line-height:1}
-.wkc-day.future .wkc-pill{background:var(--s2)}
-.wkc-day.future .wkc-let{color:var(--t3);opacity:.55}
 .range-seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--s2);border-radius:20px;padding:3px;margin-top:.75rem}
 .rs-btn{font-size:11px;font-weight:600;color:var(--t2);background:transparent;border:none;border-radius:17px;padding:6px 2px;cursor:pointer;font-family:inherit;white-space:nowrap}
 .rs-btn.on{background:var(--s1);color:var(--t1);font-weight:700;box-shadow:var(--sh-sm)}
@@ -854,9 +839,13 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .streak-pill:empty{display:none}
 .streak-pill i{font-size:14px;color:var(--macro-carb)}
 .day-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:.875rem}
-.ds-day{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;aspect-ratio:1;border-radius:50%;background:transparent;border:1px dashed var(--b2);color:var(--t3);cursor:pointer;font-family:inherit;padding:0;transition:border-color .15s,color .15s}
-.ds-day.has-data{border-style:solid;color:var(--t2)}
-.ds-day.is-sel{border:2px solid var(--focus-ac);color:var(--t1)}
+/* One row that both shows the week and navigates it: a logged day fills in with a tick, the
+   rest stay as dated outlines. Taller than wide, like the reference. */
+.ds-day{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;aspect-ratio:.72;border-radius:999px;background:transparent;border:1px dashed var(--b2);color:var(--t3);cursor:pointer;font-family:inherit;padding:0;transition:background .2s,border-color .15s,color .15s}
+.ds-day.has-data{border-style:solid;border-color:transparent;background:var(--focus-ac);color:var(--focus-ac-ink)}
+.ds-day.has-data .ds-dow{opacity:.72}
+.ds-day.is-sel{outline:2px solid var(--t2);outline-offset:2px}
+.ds-day.is-sel:not(.has-data){border-color:var(--t2);color:var(--t1)}
 .ds-dow{font-size:9px;font-weight:600;line-height:1;opacity:.75}
 .ds-num{font-size:12px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
 .day-viewing[hidden]{display:none}
@@ -2388,20 +2377,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
   <!-- Shift-timing reference. Lives inside Train so it renders on one page only — it was
        previously a body-level sibling and leaked onto every tab. -->
-  <div class="db-section" style="margin-top:1.25rem">
-    <div class="db-label" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between" onclick="toggleCycleDetail()">
-      Full cycle detail
-      <span id="cycle-detail-chevron" style="font-size:12px;color:var(--t3);transition:transform .2s">▼</span>
-    </div>
-    <div id="cycle-detail-wrap" style="display:none">
-      <div class="grid4" style="margin-bottom:1rem">
-        <div class="stat-card"><div class="stat-val">8:30</div><div class="stat-lbl">Shift start &amp; end</div></div>
-        <div class="stat-card"><div class="stat-val">~1 hr</div><div class="stat-lbl">Home ↔ work</div></div>
-        <div class="stat-card"><div class="stat-val">9:30</div><div class="stat-lbl">Home post-shift</div></div>
-        <div class="stat-card"><div class="stat-val">6:30–7</div><div class="stat-lbl">Day shift wake AM</div></div>
-      </div>
-    </div>
-  </div>
 
   <div style="height:80px"></div>
 </div>
@@ -2429,14 +2404,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
 <script>
 // ── CYCLE DETAIL TOGGLE (Overview) ──
-function toggleCycleDetail(){
-  const wrap=document.getElementById('cycle-detail-wrap');
-  const chev=document.getElementById('cycle-detail-chevron');
-  if(!wrap) return;
-  const open=wrap.style.display==='none';
-  wrap.style.display=open?'block':'none';
-  if(chev) chev.style.transform=open?'rotate(180deg)':'';
-}
 
 // ── TAB NAV ──
 function go(id){
@@ -4042,9 +4009,9 @@ function renderDayStrip(){
     const isToday=k===todayKey;
     const sel=viewDay?k===viewDay:isToday;
     return `<button class="ds-day${sel?' is-sel':''}${has?' has-data':''}${isToday?' is-today':''}"
-      onclick="selectDay('${k}')" aria-label="${d.toLocaleDateString('en-SG',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'})}"${sel?' aria-current="date"':''}>
+      onclick="selectDay('${k}')" aria-label="${d.toLocaleDateString('en-SG',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'})}${has?' — logged':''}"${sel?' aria-current="date"':''}>
       <span class="ds-dow">${d.toLocaleDateString('en-SG',{weekday:'narrow',timeZone:'UTC'})}</span>
-      <span class="ds-num">${d.getUTCDate()}</span>
+      <span class="ds-num">${has?'<i class="ti ti-check" aria-hidden="true"></i>':d.getUTCDate()}</span>
     </button>`;
   }).join('');
 
@@ -7577,25 +7544,8 @@ function _renderProgPair(){
     <button class="pp-log" onclick="openWeightHistory()"><i class="ti ti-history" aria-hidden="true"></i>History</button>
   </div>
   `;
-  _renderWeekCard(week);
 }
 
-// Full-width week strip: a checked pill for each day you logged, a dot for the rest, days
-// still ahead faded back so an unlogged Friday doesn't read as a miss on Wednesday.
-function _renderWeekCard(week){
-  const el=document.getElementById('week-card');
-  if(!el) return;
-  el.innerHTML=`<div class="wkc">
-    <div class="wkc-top">
-      <span class="wkc-title">This week</span>
-      <span class="wkc-streak"><i class="ti ti-flame" aria-hidden="true"></i>${dayStreak}</span>
-    </div>
-    <div class="wkc-days">${week.map(d=>`<div class="wkc-day${d.hit?' on':''}${d.future?' future':''}${d.isToday?' today':''}">
-      <span class="wkc-pill">${d.hit?'<i class="ti ti-check" aria-hidden="true"></i>':''}</span>
-      <span class="wkc-let">${d.letter}</span>
-    </div>`).join('')}</div>
-  </div>`;
-}
 
 // One-tap weigh-in from the Progress tab, where you are already looking at the trend.
 // ── Android back handling ────────────────────────────────────────────────────────────────
@@ -8682,8 +8632,6 @@ try{
   <!-- Cal AI's progress screen: weight-vs-goal and the streak side by side, a range selector,
        then the goal chart. Rendered by renderCalProgress(). -->
   <div class="prog-pair mo-rise" id="prog-pair"></div>
-
-  <div class="mo-rise" id="week-card"></div>
 
   <div class="range-seg mo-rise" id="range-seg"></div>
 
