@@ -5297,8 +5297,11 @@ function pickExercise(name){
     const l=currentLifts[_exPickTarget];
     l.name=name;
     // Clear the old exercise's numbers so a swap doesn't inherit them, then pull this
-    // exercise's own history in.
+    // exercise's own history in. The per-set rows have to go with the summary — clearing only
+    // the summary left the previous exercise's weights sitting in the rows, so ticking a set
+    // would have logged them against the new movement.
     l.weight='';l.sets='';l.reps='';l.rpe='';
+    delete l.rows;
     _prefillLift(l);
   } else {
     currentLifts.push(_prefillLift({name,weight:'',sets:'',reps:'',rpe:''}));
