@@ -303,12 +303,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 /* ── PROGRESS: calendar heatmap + stats + milestones ── */
 .prog-pair{display:grid;gap:.5rem;margin-top:.75rem}
 .bottom-nav .nav-btn{min-width:0}
-.add-sheet{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);display:flex;align-items:flex-end;justify-content:center;padding:0 16px calc(150px + env(safe-area-inset-bottom,0px))}
-.add-sheet[hidden]{display:none}
-.as-grid{display:grid;grid-template-columns:1fr 1fr;gap:.625rem;width:100%;max-width:420px}
-.as-card{display:flex;flex-direction:column;align-items:flex-start;gap:.625rem;padding:1rem;border-radius:var(--r-lg);border:none;background:var(--s1);color:var(--t1);font-family:inherit;font-size:14px;font-weight:700;letter-spacing:-.01em;cursor:pointer;box-shadow:var(--sh-lg)}
-.as-card:active{transform:scale(.97)}
-.as-ic{width:40px;height:40px;border-radius:var(--r-md);background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:19px;color:var(--t1)}
 .meal-empty{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:1.25rem 1rem 1.125rem;text-align:center}
 .me-ghost{display:flex;align-items:center;gap:.75rem;background:var(--s2);border-radius:var(--r-md);padding:.75rem;margin-bottom:.875rem}
 .me-thumb{width:40px;height:40px;border-radius:10px;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--t3);flex-shrink:0}
@@ -1465,6 +1459,14 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
 /* ── LIFT CARDS — mobile-first gym logger ── */
 .lift-header-row{display:none} /* hide old header */
+.train-sticky{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:.75rem;background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.7rem .75rem .7rem 1rem;margin-bottom:.625rem}
+.train-sticky[hidden]{display:none}
+.ts-l{display:flex;flex-direction:column;min-width:0}
+.ts-name{font-size:14px;font-weight:700;color:var(--t1);letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ts-sub{font-size:11px;color:var(--t3);margin-top:1px}
+.ts-finish{flex-shrink:0;padding:9px 20px;border-radius:20px;border:none;background:var(--focus-ac);color:var(--focus-ac-ink);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.ts-finish:active{transform:scale(.95)}
+.ex-pick-head{font-size:11px;font-weight:700;color:var(--t3);padding:.75rem 2px .375rem}
 .wk-head{grid-column:1/-1;font-size:11px;color:var(--t3);margin-bottom:.5rem;text-align:center}
 .wk-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:1rem .5rem;margin:0 0 .625rem}
 .wk-stat{text-align:center;min-width:0}
@@ -2254,15 +2256,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 </nav>
 <!-- Cal AI's circular add button, sitting above the tab bar. Replaces the inline
      "Log a meal" button, which did the same job in a less reachable place. -->
-<button class="add-fab" onclick="openAddSheet()" aria-label="Add"><i class="ti ti-plus" aria-hidden="true"></i></button>
-<div class="add-sheet" id="add-sheet" hidden onclick="if(event.target===this)closeAddSheet()">
-  <div class="as-grid">
-    <button class="as-card" onclick="closeAddSheet();openCameraLogger()"><span class="as-ic"><i class="ti ti-barcode" aria-hidden="true"></i></span>Scan food</button>
-    <button class="as-card" onclick="closeAddSheet();openMealLogger()"><span class="as-ic"><i class="ti ti-sparkles" aria-hidden="true"></i></span>Describe it</button>
-    <button class="as-card" onclick="closeAddSheet();openSavedMeals()"><span class="as-ic"><i class="ti ti-bookmark" aria-hidden="true"></i></span>Saved meals</button>
-    <button class="as-card" onclick="closeAddSheet();go('training')"><span class="as-ic"><i class="ti ti-barbell" aria-hidden="true"></i></span>Log a workout</button>
-  </div>
-</div>
+<button class="add-fab" onclick="openMealLogger()" aria-label="Log a meal"><i class="ti ti-plus" aria-hidden="true"></i></button>
 </div>
 
 <!-- ===== TRACKER ===== -->
@@ -2398,7 +2392,11 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     </div>
 
     <!-- Lift rows — now includes sets + RPE -->
-    <div class="wk-stats" id="wk-stats"></div>
+    <div class="train-sticky" id="train-sticky" hidden>
+    <div class="ts-l"><span class="ts-name" id="ts-name">Session</span><span class="ts-sub" id="ts-sub"></span></div>
+    <button class="ts-finish" onclick="saveSession()">Finish</button>
+  </div>
+  <div class="wk-stats" id="wk-stats"></div>
   <div class="sec-label" style="margin:1.25rem 0 .625rem">Primary lifts</div>
     <!-- Native datalist: gives the exercise-name field a picker with zero JS/library cost.
          Populated by renderExerciseLibrary(). -->
@@ -3287,28 +3285,6 @@ function renderWaterCard(){
 // ── MEAL LOGGER ──
 let mealLibrary=[];    // [{id, name, prot, kcal}] — persisted across days
 let mealLog=[];        // [{id, name, prot, kcal, ts}] — today only
-
-// Four ways in, the way Cal AI's + does it. "Food database" is the AI lookup here — describing
-// a meal is what this app has instead of a packaged-food table — and "Log exercise" goes to the
-// Train tab rather than inventing a calories-burned figure to add back to the budget.
-function openAddSheet(){
-  const el=document.getElementById('add-sheet');
-  if(!el) return;
-  el.hidden=false;
-  try{ window.history.pushState({overlay:'add-sheet'},''); }catch(e){}
-}
-function closeAddSheet(){
-  const el=document.getElementById('add-sheet');
-  if(el) el.hidden=true;
-}
-// Straight to the saved list inside the logger, rather than making you scroll past the AI box.
-function openSavedMeals(){
-  openMealLogger();
-  setTimeout(()=>{
-    const lib=document.getElementById('meal-library-list')||document.getElementById('saved-meals');
-    if(lib) lib.scrollIntoView({behavior:'smooth',block:'center'});
-  },260);
-}
 
 function openMealLogger(){
   document.getElementById('meal-modal-overlay').style.display='block';
@@ -5306,7 +5282,18 @@ function _renderExercisePickerList(filterText){
   const q=(filterText||'').trim().toLowerCase();
   const logged=new Set();
   sessionLog.forEach(s=>(s.lifts||[]).forEach(l=>l.name&&logged.add(l.name.trim().toLowerCase())));
-  const names=_exerciseLibrary().filter(n=>!q||n.toLowerCase().includes(q));
+  const all=_exerciseLibrary().filter(n=>!q||n.toLowerCase().includes(q));
+  // Most recently logged first, like Hevy's "Recent Exercises" — the ones you actually use are
+  // otherwise buried in an alphabetical list. Suppressed while searching, where the query is
+  // already the filter.
+  const recentOrder=[];
+  (sessionLog||[]).forEach(s=>(s.lifts||[]).forEach(l=>{
+    const nm=l.name&&l.name.trim();
+    if(nm&&!recentOrder.some(x=>x.toLowerCase()===nm.toLowerCase())) recentOrder.push(nm);
+  }));
+  const recent=q?[]:recentOrder.filter(n=>all.some(a=>a.toLowerCase()===n.toLowerCase())).slice(0,6);
+  const names=recent.length?recent.concat(all.filter(n=>!recent.some(r=>r.toLowerCase()===n.toLowerCase()))):all;
+  const firstOther=recent.length?recent.length:-1;
   const esc=s=>String(s).replace(/</g,'&lt;');
   const arg=s=>JSON.stringify(s).replace(/"/g,'&quot;');
   // Offer to add whatever's typed as a permanent custom exercise whenever it isn't already
@@ -5321,15 +5308,21 @@ function _renderExercisePickerList(filterText){
     list.innerHTML=addRow||'<div class="ex-pick-empty">No exercises yet.</div>';
     return;
   }
-  list.innerHTML=addRow+names.map(n=>{
+  list.innerHTML=addRow+names.map((n,idx)=>{
     const prev=lastLiftFor(n);
-    const sub=prev?prev.match.weight?`Last: ${prev.match.weight}kg · ${prev.match.sets||'?'}×${prev.match.reps||'?'}`:'Logged before':'Not logged yet';
+    // Muscle first, then history. An exercise whose name matches no rule shows no muscle —
+    // which is also the signal that it won't count toward the weekly set totals.
+    const mus=_muscleOf(n);
+    const hist=prev?(prev.match.weight?`Last: ${prev.match.weight}kg · ${prev.match.sets||'?'}×${prev.match.reps||'?'}`:'Logged before'):'Not logged yet';
+    const sub=(mus?mus+' · ':'')+hist;
     const isCustom=customExercises.includes(n);
     // Remove is offered on custom entries only — template exercises aren't the user's to delete.
     const del=isCustom
       ? `<span class="ex-pick-del" onclick="event.stopPropagation();removeCustomExercise(${arg(n)})" role="button" aria-label="Remove ${esc(n)} from your library"><i class="ti ti-x" style="font-size:12px" aria-hidden="true"></i></span>`
       : '';
-    return `<button class="ex-pick-item${isCustom?' is-custom':''}" onclick="pickExercise(${arg(n)})">${esc(n)}${del}<small>${sub}${isCustom?' · yours':''}</small></button>`;
+    const head = idx===0&&firstOther>0 ? '<div class="ex-pick-head">Recent</div>'
+               : idx===firstOther ? '<div class="ex-pick-head">All exercises</div>' : '';
+    return head+`<button class="ex-pick-item${isCustom?' is-custom':''}" onclick="pickExercise(${arg(n)})">${esc(n)}${del}<small>${sub}${isCustom?' · yours':''}</small></button>`;
   }).join('');
 }
 
@@ -5426,9 +5419,14 @@ function renderSessChips(){
 function pickSession(v){
   const sel=document.getElementById('sess-type-select');
   if(!sel) return;
-  sel.value = (sel.value===v) ? '' : v;   // tapping the active chip clears it
+  // Re-tapping the active chip used to clear the session — and updateSessType() then reset
+  // currentLifts to [], silently throwing away every set you had entered. A no-op instead;
+  // clearing is still possible through "Other sessions".
+  if(sel.value===v) return;
+  sel.value = v;
   updateSessType();
   renderSessChips();
+  renderTrainSticky();
 }
 
 function toggleSessMore(){
@@ -5554,7 +5552,24 @@ function prevSetKg(shadow,ri){
   return m.weight||'—';
 }
 
+// Appears once there is something to save, so an untouched Train tab stays clean.
+function renderTrainSticky(){
+  const bar=document.getElementById('train-sticky');
+  if(!bar) return;
+  const sel=document.getElementById('sess-type-select');
+  const ticked=(currentLifts||[]).reduce((a,l)=>a+((l.rows||[]).filter(r=>r&&r.done).length),0);
+  const anyData=(currentLifts||[]).some(l=>l.name&&(l.weight||l.reps));
+  bar.hidden=!(sel&&sel.value&&anyData);
+  if(bar.hidden) return;
+  const nm=document.getElementById('ts-name');
+  const sub=document.getElementById('ts-sub');
+  const live=LIVE_SESSIONS.find(s=>s.v===sel.value);
+  if(nm) nm.textContent=live?live.label:sel.value;
+  if(sub) sub.textContent=ticked?ticked+' set'+(ticked===1?'':'s')+' done':'Nothing ticked yet';
+}
+
 function renderWorkoutStats(){
+  renderTrainSticky();
   const el=document.getElementById('wk-stats');
   if(!el) return;
   const by=weeklySetsByMuscle();
@@ -7813,7 +7828,7 @@ function _renderProgPair(){
 // A full-screen overlay that the system back gesture can't dismiss is a trap: on Android it
 // exits the PWA instead. Each overlay pushes a history entry when it opens, so back pops it
 // and closes the overlay rather than the app.
-const _OVERLAY_IDS=['onboarding','weighin','goaledit','weighhist','add-sheet'];
+const _OVERLAY_IDS=['onboarding','weighin','goaledit','weighhist'];
 function _showOverlay(id){
   const el=document.getElementById(id);
   if(!el) return;
