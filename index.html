@@ -437,6 +437,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .ppw{width:100%;aspect-ratio:1;max-width:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;background:var(--s3);color:var(--t3)}
 .ppw.on{background:var(--focus-ac);color:var(--focus-ac-ink)}
 .ppw.now{outline:1.5px solid var(--t2);outline-offset:1px}
+.range-seg[hidden]{display:none}
 .range-seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--s2);border-radius:20px;padding:3px;margin-top:.75rem}
 .rs-btn{font-size:11px;font-weight:600;color:var(--t2);background:transparent;border:none;border-radius:17px;padding:6px 2px;cursor:pointer;font-family:inherit;white-space:nowrap}
 .rs-btn.on{background:var(--s1);color:var(--t1);font-weight:700;box-shadow:var(--sh-sm)}
@@ -468,9 +469,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .prog-stat-val{font-size:19px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums;line-height:1.1}
 .prog-stat-lbl{font-size:9.5px;color:var(--t3);letter-spacing:.01em;margin-top:3px}
 .cal-wrap{background:var(--s2);border-radius:var(--r-lg);padding:.75rem .875rem .875rem}
-.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:5px}
-.cal-dow span{font-size:9.5px;color:var(--t3);text-align:center;font-weight:600}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-body{display:flex;gap:5px;align-items:stretch}
+.cal-dow{display:grid;grid-template-rows:repeat(7,1fr);gap:4px;flex-shrink:0}
+.cal-dow span{display:flex;align-items:center;font-size:9.5px;color:var(--t3);font-weight:600;line-height:1}
+.cal-grid{flex:1;min-width:0;display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);grid-auto-columns:1fr;gap:4px}
 .cal-cell{aspect-ratio:1;border-radius:4px;border:none;padding:0;cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent;transition:transform .1s cubic-bezier(.34,1.56,.64,1)}
 .cal-cell:active{transform:scale(.85)}
 .cal-none{background:var(--s4,rgba(255,255,255,.06))}
@@ -478,12 +480,11 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .cal-mid{background:color-mix(in srgb,var(--teal) 55%,transparent)}
 .cal-high{background:var(--teal)}
 .cal-future{background:transparent;cursor:default;pointer-events:none}
-/* trained-that-day marker — a dot in the corner, readable on every fill colour */
-.cal-cell.has-session::after{content:'';position:absolute;right:2px;bottom:2px;width:4px;height:4px;border-radius:50%;background:var(--t1);opacity:.85}
 .cal-cell.is-today{box-shadow:0 0 0 2px var(--focus-ac)}
 .cal-legend{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3);margin-top:.75rem;flex-wrap:wrap}
 .cal-swatch{width:9px;height:9px;border-radius:2px;flex-shrink:0}
 .cal-legend-dot{width:5px;height:5px;border-radius:50%;background:var(--t1);opacity:.85;flex-shrink:0;margin-left:5px}
+.cal-detail[hidden]{display:none}
 .cal-detail{font-size:12px;color:var(--t2);line-height:1.5;margin-top:.75rem;padding:.625rem .75rem;background:var(--s2);border-radius:var(--r-md);min-height:38px;box-sizing:border-box}
 .cal-detail strong{color:var(--t1);font-weight:700}
 .prog-empty{font-size:12px;color:var(--t3);line-height:1.55;padding:.75rem .875rem;background:var(--s2);border-radius:var(--r-md)}
@@ -7671,7 +7672,6 @@ function renderProgCalendar(){
     else if(!_dayLogged(key)) cls+=' cal-none';
     else if(_dayTrained(key)) cls+=' cal-high';
     else cls+=' cal-mid';
-    if(row&&row.hasSession) cls+=' has-session';
     if(key===todayKey) cls+=' is-today';
     html+=`<button class="${cls}" onclick="showProgDay('${key}')" aria-label="${key}"></button>`;
   }
@@ -7681,6 +7681,7 @@ function renderProgCalendar(){
 function showProgDay(key){
   const el=document.getElementById('prog-detail');
   if(!el) return;
+  el.hidden=false;
   const row=weekHistory[key];
   const d=new Date(key+'T12:00:00Z');
   const label=d.toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
@@ -7804,18 +7805,6 @@ function _renderProgPair(){
   const start=series.length?series[0].kg:bodyWeight;
   let pct=0;
   if(goalWeight && goalWeight!==start) pct=Math.max(0,Math.min(100,((bodyWeight-start)/(goalWeight-start))*100));
-
-  // Streak week: Mon-Sun of the current week, filled on the days you logged — the same bar
-  // updateScore() uses for the streak itself.
-  const now=new Date(biologicalToday()+'T12:00:00Z');
-  const dow=(now.getUTCDay()+6)%7;   // 0 = Monday
-  const monday=new Date(now); monday.setUTCDate(now.getUTCDate()-dow);
-  const week=[];
-  for(let i=0;i<7;i++){
-    const d=new Date(monday); d.setUTCDate(monday.getUTCDate()+i);
-    const key=d.toISOString().slice(0,10);
-    week.push({letter:d.toLocaleDateString('en-SG',{weekday:'narrow',timeZone:'UTC'}), hit:_dayLogged(key), isToday:key===biologicalToday(), future:key>biologicalToday()});
-  }
 
   el.innerHTML=`<div class="pp-card">
     <div class="pp-lbl">My weight</div>
@@ -7989,6 +7978,9 @@ function saveWeighIn(){
 function _renderRangeSeg(){
   const el=document.getElementById('range-seg');
   if(!el) return;
+  // A range switch above a chart that has no data yet is a control for nothing.
+  el.hidden=_weightSeries().length<2 && (weightHistory||[]).length<2;
+  if(el.hidden) return;
   const opts=[['90d','90 days'],['6m','6 months'],['1y','1 year'],['all','All time']];
   el.innerHTML=opts.map(o=>`<button class="rs-btn${progRange===o[0]?' on':''}" onclick="setProgRange('${o[0]}')">${o[1]}</button>`).join('');
 }
@@ -7999,7 +7991,7 @@ function _renderGoalChart(){
   const s=_weightSeries();
   if(s.length<2){
     el.innerHTML='<div class="gp-card"><div class="gp-head"><span class="gp-title">Goal progress</span></div>'+
-      '<div class="gp-empty">Log your weight on two or more days to see the trend — update it in the Your plan card on Home.</div>'+
+      '<div class="gp-empty">Log your weight on two or more days to see the trend.</div>'+
       '<div class="gp-proj"><span>'+projectionText()+'</span></div></div>';
     return;
   }
@@ -8013,16 +8005,12 @@ function _renderGoalChart(){
   const pts=s.map((e,i)=>x(i).toFixed(1)+','+y(e.kg).toFixed(1)).join(' ');
 
   const start=s[0].kg;
-  let pill='';
-  if(goalWeight!=null && goalWeight!==start){
-    const pct=Math.max(0,Math.min(100,((bodyWeight-start)/(goalWeight-start))*100));
-    pill=`<span class="gp-pill"><i class="ti ti-flag" aria-hidden="true"></i>${pct.toFixed(0)}% of goal</span>`;
-  }
+  // No "% of goal" pill — the bar in the weight card above is the same number.
   const delta=bodyWeight-start;
   const dirWord=Math.abs(delta)<0.1?'Holding steady':(delta>0?('Up '+delta.toFixed(1)+'kg'):('Down '+Math.abs(delta).toFixed(1)+'kg'))+' since '+new Date(s[0].date+'T12:00:00Z').toLocaleDateString('en-SG',{day:'numeric',month:'short',timeZone:'UTC'});
 
   el.innerHTML=`<div class="gp-card">
-    <div class="gp-head"><span class="gp-title">Goal progress</span>${pill}</div>
+    <div class="gp-head"><span class="gp-title">Goal progress</span></div>
     <div class="gp-plot">
       <div class="gp-ax"><span>${hi.toFixed(1)}</span><span>${((hi+lo)/2).toFixed(1)}</span><span>${lo.toFixed(1)}</span></div>
       <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
@@ -8929,8 +8917,10 @@ try{
   <!-- Calendar heatmap -->
   <div class="sec-label" style="margin-top:1.125rem">Last 12 weeks</div>
   <div class="cal-wrap mo-rise">
-    <div class="cal-dow"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
-    <div class="cal-grid" id="prog-calendar"></div>
+    <div class="cal-body">
+      <div class="cal-dow"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+      <div class="cal-grid" id="prog-calendar"></div>
+    </div>
     <div class="cal-legend">
       <span class="cal-swatch cal-none"></span><span>not logged</span>
       <span class="cal-swatch cal-mid"></span><span>logged</span>
@@ -8939,7 +8929,7 @@ try{
   </div>
 
   <!-- Tapped-day readout -->
-  <div class="cal-detail" id="prog-detail">Tap any day to see its numbers.</div>
+  <div class="cal-detail" id="prog-detail" hidden></div>
 
   <!-- Milestones from the journey log -->
   <div class="sec-label" style="margin-top:1.25rem">Milestones</div>
