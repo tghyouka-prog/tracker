@@ -1375,10 +1375,14 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 }
 
 /* TOAST */
-#toast-container{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:8px}
-.toast{background:rgba(20,20,20,.97);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:7px 16px;font-size:12px;font-weight:500;color:var(--t1);white-space:nowrap;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 4px 20px rgba(0,0,0,.5);display:flex;align-items:center;gap:7px;animation:toast-in .2s cubic-bezier(.34,1.56,.64,1) forwards}
+/* bottom:24px put this behind the tab bar, which is ~62px tall plus the safe area — the
+   toast was rendering underneath it. Clear the nav and the FAB. */
+#toast-container{position:fixed;bottom:calc(146px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:999;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:8px;width:max-content;max-width:calc(100vw - 32px)}
+/* white-space:nowrap meant a long message could not wrap, so it ran off both edges of the
+   centred container and got clipped. Let it wrap and cap the width instead. */
+.toast{background:rgba(20,20,20,.97);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:11px 16px;font-size:13px;font-weight:500;line-height:1.45;color:var(--t1);white-space:normal;overflow-wrap:anywhere;max-width:calc(100vw - 32px);text-align:left;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 4px 20px rgba(0,0,0,.5);display:flex;align-items:flex-start;gap:8px;animation:toast-in .2s cubic-bezier(.34,1.56,.64,1) forwards}
 .toast.out{animation:toast-out .28s ease-in forwards}
-.toast-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.toast-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:6px}
 @keyframes toast-in{from{opacity:0;transform:translateY(10px) scale(.9)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes toast-out{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(-6px) scale(.95)}}
 
@@ -3563,17 +3567,30 @@ function saveMealToLibrary(){
   save();
 }
 
+// Protein is the headline target, so crossing it earns the full burst — once a day, not on
+// every subsequent meal.
+let _protHitDay=null;
 function logMeal(meal){
   // Defensive: ensure meal has a stable timestamp id
   const entry={...meal, ts:Date.now()};
+  const protBefore=macros.prot;
   mealLog.push(entry);
   syncMacrosFromTimeline(); // recalculates everything including mealLog
   renderMealLog();
+  const today=biologicalToday();
+  const crossedProt = TARGETS.prot>0 && protBefore<TARGETS.prot && macros.prot>=TARGETS.prot && _protHitDay!==today;
+  if(crossedProt){ _protHitDay=today; }
+  try{
+    launchConfetti(crossedProt?110:30);
+    if(navigator.vibrate) navigator.vibrate(crossedProt?[12,40,12]:12);
+  }catch(e){}
   const parts=[];
   if(meal.prot) parts.push(`+${meal.prot}g prot`);
   if(meal.kcal) parts.push(`+${meal.kcal} kcal`);
   if(meal.carb) parts.push(`+${meal.carb}g carb`);
-  showToast(`${meal.name} logged${parts.length?' — '+parts.join(' · '):''}`, 'food');
+  showToast(crossedProt
+    ? `Protein target hit — ${Math.round(macros.prot)}g of ${TARGETS.prot}g`
+    : `${meal.name} logged${parts.length?' — '+parts.join(' · '):''}`, 'food');
   save();
 }
 
@@ -4535,20 +4552,7 @@ function _focusNudgeMaybe(){
 }
 function _maybeCelebrate(sv){
   if(_focusWasDone) return; _focusWasDone=true;
-  if(sv>0 && sv%7===0) _confettiBurst();
-}
-function _confettiBurst(){
-  const host=document.getElementById('focus-hero'); if(!host) return;
-  let ac='#ffffff'; try{ac=getComputedStyle(document.documentElement).getPropertyValue('--focus-ac').trim()||ac;}catch(e){}
-  host.style.position='relative';
-  for(let k=0;k<16;k++){
-    const c=document.createElement('div');
-    c.style.cssText='position:absolute;left:50%;top:28%;width:7px;height:7px;border-radius:2px;pointer-events:none;z-index:6;background:'+(k%3===1?'#ffffff':ac);
-    host.appendChild(c);
-    const dx=(Math.random()-.5)*220,dy=120+Math.random()*120,rot=Math.random()*420;
-    try{ c.animate([{transform:'translate(0,0) rotate(0)',opacity:1},{transform:'translate('+dx+'px,'+dy+'px) rotate('+rot+'deg)',opacity:0}],{duration:1200+Math.random()*500,easing:'cubic-bezier(.2,.6,.3,1)'}); }catch(e){}
-    setTimeout(()=>c.remove(),1800);
-  }
+  if(sv>0 && sv%7===0) launchConfetti();   // every 7th day of the streak
 }
 
 function completeFocusItem(){
@@ -4622,10 +4626,12 @@ function showToast(msg, colorKey){
   el.className='toast';
   el.innerHTML=`<span class="toast-dot" style="background:${color}"></span>${msg}`;
   container.appendChild(el);
+  // 1.5s was not enough to read a long message. Scale with length, within sane bounds.
+  const hold=Math.max(1800, Math.min(6500, 1500 + String(msg).length*55));
   setTimeout(()=>{
     el.className='toast out';
     setTimeout(()=>el.remove(), 320);
-  }, 1500);
+  }, hold);
 }
 
 function tlTick(k){
@@ -7760,16 +7766,19 @@ function fireCelebration(){
   launchConfetti();
 }
 
-function launchConfetti(){
+// Particle count is a parameter now: a light burst for an ordinary log, the full one for
+// something genuinely worth marking.
+function launchConfetti(count){
   const canvas=document.getElementById('confetti-canvas');
   if(!canvas) return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
   canvas.style.display='block';
   const dpr=window.devicePixelRatio||1;
   const W=canvas.width=window.innerWidth*dpr;
   const H=canvas.height=window.innerHeight*dpr;
   const ctx=canvas.getContext('2d');
   const colors=[_ac(),'#5a8fd6','#e2984b','#a78ab8','#ffffff'];
-  const N=110;
+  const N=count||110;
   const parts=[];
   for(let i=0;i<N;i++){
     parts.push({
