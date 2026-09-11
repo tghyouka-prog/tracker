@@ -1437,6 +1437,29 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
 /* ── LIFT CARDS — mobile-first gym logger ── */
 .lift-header-row{display:none} /* hide old header */
+.wk-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.75rem .5rem;margin-bottom:.75rem}
+.wk-stat{text-align:center;min-width:0}
+.wk-v{display:block;font-size:17px;font-weight:800;color:var(--t1);letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.wk-v small{font-size:10px;font-weight:600;color:var(--t3);margin-left:1px}
+.wk-l{display:block;font-size:10px;color:var(--t3);margin-top:2px}
+/* Hevy's table: the column header is stated once per exercise, then a single tight row. */
+.lift-head{display:grid;grid-template-columns:1.05fr 1.5fr .7fr .8fr .7fr;gap:6px;padding:0 2px 4px;font-size:9.5px;font-weight:700;color:var(--t3);letter-spacing:.01em}
+.lift-head span{text-align:center}
+.lift-head span:first-child{text-align:left}
+.lift-prevcol{display:none}
+.lift-row{display:grid;grid-template-columns:1.05fr 1.5fr .7fr .8fr .7fr;gap:6px;align-items:center}
+.lift-prev{font-size:11px;color:var(--t3);font-variant-numeric:tabular-nums;line-height:1.25;overflow:hidden;text-overflow:ellipsis}
+.lift-in{width:100%;min-width:0;font-size:16px;font-weight:700;color:var(--t1);background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-sm);padding:9px 2px;text-align:center;outline:none;font-family:inherit;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+.lift-in::-webkit-outer-spin-button,.lift-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.lift-in:focus{border-color:var(--focus-ac)}
+.lift-in:disabled{opacity:.35}
+.lift-wcell{display:grid;grid-template-columns:1fr auto auto;gap:3px;align-items:center;min-width:0}
+.lift-nudge{width:24px;height:32px;border-radius:var(--r-sm);border:1px solid var(--b2);background:var(--s1);color:var(--t2);font-size:14px;font-weight:700;line-height:1;cursor:pointer;font-family:inherit;flex-shrink:0}
+.lift-nudge:active{transform:scale(.9)}
+.lift-tick{width:26px;height:26px;border-radius:50%;border:1px solid var(--b2);background:transparent;color:var(--t2);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;flex-shrink:0;padding:0}
+.lift-tick.on{background:var(--green);border-color:var(--green);color:#fff}
+.lift-card.is-done{opacity:.62}
+.lift-card.is-done .lift-card-name{text-decoration:line-through;text-decoration-color:var(--t3)}
 .lift-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem 1rem 1rem;margin-bottom:.625rem;position:relative;transition:border-color .12s}
 .lift-card:focus-within{border-color:color-mix(in srgb,var(--teal) 25%,transparent)}
 /* Tight gap + a slimmer delete button buy back most of the width the picker button costs,
@@ -2326,7 +2349,8 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     </div>
 
     <!-- Lift rows — now includes sets + RPE -->
-    <div class="sub-label" style="margin-top:.625rem">Primary lifts</div>
+    <div class="wk-stats" id="wk-stats"></div>
+  <div class="sub-label" style="margin-top:.625rem">Primary lifts</div>
     <!-- Native datalist: gives the exercise-name field a picker with zero JS/library cost.
          Populated by renderExerciseLibrary(). -->
     <datalist id="exercise-library"></datalist>
@@ -5360,9 +5384,40 @@ function moveLiftRow(i,dir){
   renderLiftRows();
 }
 
+// Duration / Volume / Sets, the strip Hevy puts above the exercises. Volume is the honest
+// tonnage figure — weight x reps x sets across everything entered so far.
+function renderWorkoutStats(){
+  const el=document.getElementById('wk-stats');
+  if(!el) return;
+  let vol=0, sets=0, done=0;
+  (currentLifts||[]).forEach(l=>{
+    const w=parseFloat(l.weight)||0, r=parseFloat(l.reps)||0, s=parseInt(l.sets)||0;
+    if(w&&r&&s) vol+=w*r*s;
+    if(s) sets+=s;
+    if(l._done) done++;
+  });
+  const mins=_draftTs?Math.max(0,Math.round((Date.now()-_draftTs)/60000)):0;
+  const dur=mins<60?mins+'m':Math.floor(mins/60)+'h '+(mins%60)+'m';
+  el.innerHTML=
+    '<div class="wk-stat"><span class="wk-v">'+(_draftTs?dur:'—')+'</span><span class="wk-l">Duration</span></div>'+
+    '<div class="wk-stat"><span class="wk-v">'+(vol?Math.round(vol).toLocaleString():'—')+'<small>kg</small></span><span class="wk-l">Volume</span></div>'+
+    '<div class="wk-stat"><span class="wk-v">'+(sets||'—')+'</span><span class="wk-l">Sets</span></div>'+
+    '<div class="wk-stat"><span class="wk-v">'+done+'<small>/'+(currentLifts||[]).length+'</small></span><span class="wk-l">Done</span></div>';
+}
+
+// Marking an exercise complete — Hevy checks off each set; one row here is one exercise, so
+// the tick lives at that level.
+function toggleLiftDone(i){
+  if(!currentLifts[i]) return;
+  currentLifts[i]._done=!currentLifts[i]._done;
+  renderLiftRows();
+  if(currentLifts[i]._done){ try{ _autoRest(); if(navigator.vibrate) navigator.vibrate(10); }catch(e){} }
+}
+
 function renderLiftRows(){
   const el=document.getElementById('lift-rows');
   if(!el) return;
+  renderWorkoutStats();
   if(!currentLifts.length){
     el.innerHTML='<div style="font-size:12px;color:var(--t3);padding:.25rem 0 .5rem">Select a session type above — exercises will pre-fill.</div>';
     return;
@@ -5393,10 +5448,11 @@ function renderLiftRows(){
       ?`<div class="lift-shadow">${shadow.html}<span class="lift-verdict${v?' '+v.cls:''}" id="lv-${i}">${v?v.txt:''}</span></div>${targetHtml}`
       :(l.name&&l.name.trim()?`<div class="lift-shadow lift-shadow-new"><i class="ti ti-sparkles" style="font-size:11px"></i> First time logging this exact name — no comparison yet</div>`:''))
       +unrecorded;
+    const prevTxt=shadow&&shadow.txt?shadow.txt:(l.name&&l.name.trim()?'First time':'—');
     return `
-    <div class="lift-card">
+    <div class="lift-card${l._done?' is-done':''}">
       <div class="lift-card-name-row">
-        <div class="lift-card-num">${i+1}</div>
+        <button class="lift-tick${l._done?' on':''}" onclick="toggleLiftDone(${i})" aria-pressed="${!!l._done}" aria-label="${l._done?'Mark done':'Mark not done'} — exercise ${i+1}">${l._done?'<i class="ti ti-check" aria-hidden="true"></i>':i+1}</button>
         <input class="lift-card-name" type="text" value="${l.name||''}" placeholder="Exercise name"
           list="exercise-library"
           oninput="currentLifts[${i}].name=this.value" onchange="_prefillLift(currentLifts[${i}]);renderLiftRows()" autocomplete="off" autocorrect="off" spellcheck="false">
@@ -5408,47 +5464,25 @@ function renderLiftRows(){
         <button class="lift-card-del" onclick="removeLiftRow(${i})" aria-label="Remove exercise ${i+1}"><i class="ti ti-x" style="font-size:13px" aria-hidden="true"></i></button>
       </div>
       ${shadowHtml}
-      <div class="lift-card-fields">
-        <div class="lift-field">
-          <span class="lift-field-label">${wLbl}</span>
-          <input class="lift-field-input" type="number" inputmode="decimal"
-            value="${l.weight||''}" placeholder="${wPh}"
-            min="0" step="${wStep}" oninput="currentLifts[${i}].weight=this.value;_updateVerdict(${i})">
-          <div class="lift-step-row">
-            <button class="lift-step" onclick="stepLiftWeight(${i},-${stepBy})" aria-label="Decrease ${wLbl.toLowerCase()} for exercise ${i+1}">−</button>
-            <button class="lift-step" onclick="stepLiftWeight(${i},${stepBy})" aria-label="Increase ${wLbl.toLowerCase()} for exercise ${i+1}">+</button>
-          </div>
+      <div class="lift-head"><span>Previous</span><span>${wLbl}</span><span>Sets</span><span>${rLbl}</span><span>RIR</span></div>
+      <div class="lift-row">
+        <div class="lift-prev">${prevTxt}</div>
+        <div class="lift-wcell">
+          <input class="lift-in" type="number" inputmode="decimal" value="${l.weight||''}" placeholder="${wPh}"
+            min="0" step="${wStep}" oninput="currentLifts[${i}].weight=this.value;_updateVerdict(${i});renderWorkoutStats()"
+            aria-label="${wLbl} for exercise ${i+1}">
+          <button class="lift-nudge" onclick="stepLiftWeight(${i},-${stepBy})" aria-label="Decrease ${wLbl.toLowerCase()}, exercise ${i+1}">&minus;</button>
+          <button class="lift-nudge" onclick="stepLiftWeight(${i},${stepBy})" aria-label="Increase ${wLbl.toLowerCase()}, exercise ${i+1}">+</button>
         </div>
-        <div class="lift-field"${isCardio?' style="opacity:.4"':''}>
-          <span class="lift-field-label">Sets</span>
-          <input class="lift-field-input" type="number" inputmode="numeric"
-            value="${l.sets||''}" placeholder="${l._defaultSets||'—'}"
-            min="1" max="10" oninput="currentLifts[${i}].sets=this.value" ${isCardio?'disabled':''}>
-          <div class="lift-step-row">
-            <button class="lift-step" onclick="stepLiftField(${i},'sets',-1,1,10)" aria-label="Decrease sets for exercise ${i+1}" ${isCardio?'disabled':''}>−</button>
-            <button class="lift-step" onclick="stepLiftField(${i},'sets',1,1,10)" aria-label="Increase sets for exercise ${i+1}" ${isCardio?'disabled':''}>+</button>
-          </div>
-        </div>
-        <div class="lift-field">
-          <span class="lift-field-label">${rLbl}</span>
-          <input class="lift-field-input" type="number" inputmode="numeric"
-            value="${l.reps||''}" placeholder="${(!isCardio&&l._repRange)?l._repRange:rPh}"
-            min="0" oninput="currentLifts[${i}].reps=this.value;_updateVerdict(${i})" onchange="if(this.value)_autoRest()">
-          <div class="lift-step-row">
-            <button class="lift-step" onclick="stepLiftField(${i},'reps',-1,0,999)" aria-label="Decrease ${rLbl.toLowerCase()} for exercise ${i+1}">−</button>
-            <button class="lift-step" onclick="stepLiftField(${i},'reps',1,0,999)" aria-label="Increase ${rLbl.toLowerCase()} for exercise ${i+1}">+</button>
-          </div>
-        </div>
-        <div class="lift-field">
-          <span class="lift-field-label">RIR</span>
-          <input class="lift-field-input${l.rpe?' rpe-filled':''}" type="number" inputmode="numeric"
-            value="${l.rpe||''}" placeholder="—"
-            min="0" max="5" oninput="currentLifts[${i}].rpe=this.value;this.className='lift-field-input'+(this.value?' rpe-filled':'')">
-          <div class="lift-step-row">
-            <button class="lift-step" onclick="stepLiftField(${i},'rpe',-1,0,5)" aria-label="Decrease RIR for exercise ${i+1}">−</button>
-            <button class="lift-step" onclick="stepLiftField(${i},'rpe',1,0,5)" aria-label="Increase RIR for exercise ${i+1}">+</button>
-          </div>
-        </div>
+        <input class="lift-in" type="number" inputmode="numeric" value="${l.sets||''}" placeholder="${l._defaultSets||'—'}"
+          min="1" max="10" oninput="currentLifts[${i}].sets=this.value;renderWorkoutStats()" ${isCardio?'disabled':''}
+          aria-label="Sets for exercise ${i+1}">
+        <input class="lift-in" type="number" inputmode="numeric" value="${l.reps||''}" placeholder="${(!isCardio&&l._repRange)?l._repRange:rPh}"
+          min="0" oninput="currentLifts[${i}].reps=this.value;_updateVerdict(${i});renderWorkoutStats()" onchange="if(this.value)_autoRest()"
+          aria-label="${rLbl} for exercise ${i+1}">
+        <input class="lift-in${l.rpe?' rpe-filled':''}" type="number" inputmode="numeric" value="${l.rpe||''}" placeholder="—"
+          min="0" max="5" oninput="currentLifts[${i}].rpe=this.value;this.className='lift-in'+(this.value?' rpe-filled':'')"
+          aria-label="Reps in reserve for exercise ${i+1}">
       </div>
     </div>`;}).join('');
   _initDraftWatch();
