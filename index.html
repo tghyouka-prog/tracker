@@ -990,6 +990,13 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 /* The logger is a grouping element, not a surface — its children are the cards. Nesting them
    inside another card is what made this page read differently from Home and Progress. */
 #sess-card-logger{background:none;border:none;border-radius:0;padding:0;margin:0}
+.sess-chips{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.sess-chip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:.7rem .75rem;border-radius:var(--r-md);border:1.5px solid var(--b1);background:var(--s2);color:var(--t1);cursor:pointer;font-family:inherit;min-width:0}
+.sess-chip.on{border-color:var(--focus-ac);background:color-mix(in srgb,var(--focus-ac) 10%,transparent)}
+.sc-l{font-size:13px;font-weight:700;letter-spacing:-.01em;line-height:1.25}
+.sc-s{font-size:10.5px;color:var(--t3)}
+.sess-chip.on .sc-s{color:var(--focus-ac)}
+.sess-more{width:100%;margin-top:.5rem;padding:8px;border-radius:var(--r-md);border:1px dashed var(--b2);background:none;color:var(--t3);font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer}
 .sess-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
 .sess-pick{margin-bottom:.625rem}
 .sess-title{font-size:13px;font-weight:600;color:var(--t1)}
@@ -2319,8 +2326,10 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
          only the visible label and the auto-select machinery changed. -->
     <div class="sess-card sess-pick">
     <div class="sess-header">
-      <div style="display:flex;gap:5px;align-items:center;width:100%">
-        <select id="sess-type-select" onchange="updateSessType()" class="sel-input">
+      <div style="width:100%">
+        <div class="sess-chips" id="sess-chips"></div>
+        <button class="sess-more" id="sess-more" onclick="toggleSessMore()">Other sessions</button>
+        <select id="sess-type-select" onchange="updateSessType();renderSessChips()" class="sel-input" style="display:none">
           <option value="">— pick session —</option>
           <optgroup label="DNOO cycle">
             <option value="Mon-Push">Delts + Arms — cycle day 2, pre-shift</option>
@@ -5319,6 +5328,7 @@ function renderExerciseLibrary(){
 // nothing to reveal. Name kept because other callers reference it.
 function openSessionLogger(){
   const sel=document.getElementById('sess-type-select');
+  setTimeout(renderSessChips,0);
   if(sel&&!sel.value&&!currentLifts.length){
     const day=getActiveCycle()[cycleDay];
     if(day&&day.session){
@@ -5330,6 +5340,52 @@ function openSessionLogger(){
   // No scroll-to and no auto-focus any more: this runs on every visit to the tab now, not on
   // a deliberate button press, so yanking the page down or popping the picker open would be
   // hostile. (card was also left dangling here when the reveal was removed.)
+}
+
+// The sessions actually in rotation. Everything else stays reachable through "Other sessions",
+// which just reveals the original select — old logged types still need to be selectable to be
+// edited.
+const LIVE_SESSIONS=[
+  {v:'Mon-Push',  label:'Delts + Arms',          sub:'pre-shift'},
+  {v:'Fri-Lower', label:'Lower + Delts',         sub:'off day'},
+  {v:'Thu-Upper', label:'Upper · Chest + Back',  sub:'off day'},
+  {v:'Cardio',    label:'Cardio',                sub:'Zone 2'}
+];
+
+function renderSessChips(){
+  const el=document.getElementById('sess-chips');
+  const sel=document.getElementById('sess-type-select');
+  if(!el||!sel) return;
+  let todaySession=null;
+  try{ todaySession=(getActiveCycle()[cycleDay]||{}).session||null; }catch(e){}
+  el.innerHTML=LIVE_SESSIONS.map(s=>{
+    const on=sel.value===s.v;
+    const isToday=s.v===todaySession;
+    return '<button class="sess-chip'+(on?' on':'')+'" onclick="pickSession(\''+s.v+'\')" aria-pressed="'+on+'">'+
+      '<span class="sc-l">'+s.label+'</span>'+
+      '<span class="sc-s">'+(isToday?'Today':s.sub)+'</span>'+
+      '</button>';
+  }).join('');
+  // A legacy or off-rotation type selected from the dropdown still needs to show somewhere.
+  const known=LIVE_SESSIONS.some(s=>s.v===sel.value);
+  const more=document.getElementById('sess-more');
+  if(more) more.textContent = (sel.value && !known) ? sel.value : 'Other sessions';
+}
+
+function pickSession(v){
+  const sel=document.getElementById('sess-type-select');
+  if(!sel) return;
+  sel.value = (sel.value===v) ? '' : v;   // tapping the active chip clears it
+  updateSessType();
+  renderSessChips();
+}
+
+function toggleSessMore(){
+  const sel=document.getElementById('sess-type-select');
+  if(!sel) return;
+  const showing=sel.style.display!=='none';
+  sel.style.display = showing ? 'none' : 'block';
+  if(!showing) setTimeout(()=>sel.focus(),50);
 }
 
 function updateSessType(){
