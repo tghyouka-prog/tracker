@@ -347,6 +347,24 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .pp-log{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;margin-top:.625rem;padding:7px;border-radius:var(--r-md);border:1px solid var(--b2);background:var(--s2);color:var(--t1);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .pp-log:active{transform:scale(.96)}
 .pd-hint{display:block;font-size:10px;color:var(--t3);font-weight:500;margin-top:1px}
+.arc-card{background:var(--s2);border:1px solid var(--b2);border-radius:var(--r-lg);padding:.875rem 1rem;margin-bottom:.75rem}
+.arc-top{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;margin-bottom:.25rem}
+.arc-name{font-size:15px;font-weight:700;color:var(--t1);letter-spacing:-.01em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arc-conf{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;text-transform:capitalize;padding:2px 8px;border-radius:20px;flex-shrink:0;background:var(--s3);color:var(--t3)}
+.arc-conf.ok{color:var(--green);background:color-mix(in srgb,var(--green) 14%,transparent)}
+.arc-conf.mid{color:var(--amber);background:color-mix(in srgb,var(--amber) 14%,transparent)}
+.arc-kcal{display:flex;align-items:baseline;gap:5px;font-size:26px;font-weight:800;color:var(--t1);letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin-bottom:.5rem}
+.arc-kcal i{font-size:16px;color:var(--t3)}
+.arc-kcal small{font-size:12px;font-weight:600;color:var(--t3);letter-spacing:0}
+.arc-macros{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.75rem}
+.arc-serv{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.625rem 0;border-top:1px solid var(--b1);border-bottom:1px solid var(--b1);margin-bottom:.75rem}
+.arc-serv-l{font-size:13px;color:var(--t2)}
+.arc-serv-r{display:flex;align-items:center;gap:10px}
+.arc-sval{font-size:13px;font-weight:700;color:var(--t1);min-width:84px;text-align:center;font-variant-numeric:tabular-nums}
+.arc-sbtn{width:30px;height:30px;border-radius:50%;border:1px solid var(--b2);background:transparent;color:var(--t1);font-size:16px;font-weight:600;line-height:1;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
+.arc-sbtn:active{transform:scale(.9)}
+.arc-log{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;border-radius:var(--r-md);border:none;background:var(--focus-ac);color:var(--focus-ac-ink);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.arc-log:active{transform:scale(.98)}
 .ge-row{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.7rem 0;border-bottom:1px solid var(--b1)}
 .ge-row:last-child{border-bottom:none}
 .ge-l{display:flex;flex-direction:column;min-width:0}
@@ -1894,6 +1912,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
       <i class="ti ti-sparkles" style="font-size:16px"></i>
       <span id="ai-btn-label">Analyse with Gemini</span>
     </button>
+    <div id="ai-result-card" hidden></div>
     <div id="ai-progress" hidden>
       <div class="aip-bar"><span></span></div>
       <div class="aip-cap" id="ai-progress-cap"></div>
@@ -3369,6 +3388,86 @@ function initGeminiKeyField(){
   });
 }
 
+// ── Analysed-result card, Cal AI's confirm step ────────────────────────────────────────────
+let _aiResult=null, _aiServings=1;
+const _SERVING_STEPS=[0.25,0.5,0.75,1,1.25,1.5,2,2.5,3];
+
+function aiServings(dir){
+  if(!_aiResult) return;
+  const i=_SERVING_STEPS.indexOf(_aiServings);
+  const next=i<0 ? 1 : Math.max(0, Math.min(_SERVING_STEPS.length-1, i+dir));
+  _aiServings=_SERVING_STEPS[next];
+  renderAiResult();
+}
+
+// Scaled values at the current serving count. Rounded only at the edge, so repeated scaling
+// doesn't accumulate rounding error.
+function _aiScaled(){
+  const s=_aiServings;
+  return {
+    name:_aiResult.name,
+    prot:Math.round(_aiResult.prot*s),
+    kcal:Math.round(_aiResult.kcal*s),
+    carb:Math.round(_aiResult.carb*s),
+    micros:_aiResult.micros ? {
+      fiber:_aiResult.micros.fiber!=null?+(_aiResult.micros.fiber*s).toFixed(1):null,
+      sugar:_aiResult.micros.sugar!=null?+(_aiResult.micros.sugar*s).toFixed(1):null,
+      sodium:_aiResult.micros.sodium!=null?Math.round(_aiResult.micros.sodium*s):null
+    } : null
+  };
+}
+
+function renderAiResult(){
+  const el=document.getElementById('ai-result-card');
+  if(!el) return;
+  if(!_aiResult){ el.hidden=true; el.innerHTML=''; return; }
+  const v=_aiScaled();
+  // Keep the manual fields in step, so editing by hand after scaling starts from the right
+  // numbers rather than the unscaled ones.
+  const set=(id,val)=>{ const f=document.getElementById(id); if(f) f.value=val; };
+  set('meal-name-input', v.name);
+  set('meal-prot-input', v.prot);
+  set('meal-kcal-input', v.kcal);
+  set('meal-carb-input', v.carb);
+
+  const conf=_aiResult.confidence;
+  const confCls=conf==='high'?'ok':conf==='medium'?'mid':'low';
+  const servLbl=_aiServings===1?'1 serving':_aiServings+' servings';
+  el.hidden=false;
+  el.innerHTML=`<div class="arc-card">
+    <div class="arc-top">
+      <span class="arc-name">${String(v.name).replace(/</g,'&lt;')}</span>
+      <span class="arc-conf ${confCls}">${_aiResult.grounded?'<i class="ti ti-world" aria-hidden="true"></i>':''}${conf||'—'}</span>
+    </div>
+    <div class="arc-kcal"><i class="ti ti-flame" aria-hidden="true"></i>${v.kcal.toLocaleString()}<small>calories</small></div>
+    <div class="arc-macros">
+      <span class="mm mm-prot">${v.prot}g<small>protein</small></span>
+      <span class="mm mm-carb">${v.carb}g<small>carbs</small></span>
+    </div>
+    <div class="arc-serv">
+      <span class="arc-serv-l">Servings</span>
+      <div class="arc-serv-r">
+        <button class="arc-sbtn" onclick="aiServings(-1)" aria-label="Fewer servings">&minus;</button>
+        <span class="arc-sval">${servLbl}</span>
+        <button class="arc-sbtn" onclick="aiServings(1)" aria-label="More servings">+</button>
+      </div>
+    </div>
+    <button class="arc-log" onclick="logAiResult()"><i class="ti ti-plus" aria-hidden="true"></i>Log it</button>
+  </div>`;
+}
+
+function logAiResult(){
+  if(!_aiResult) return;
+  const v=_aiScaled();
+  const meal={id:Date.now(), name:v.name, prot:v.prot, kcal:v.kcal, carb:v.carb};
+  if(v.micros && (v.micros.fiber!=null||v.micros.sugar!=null||v.micros.sodium!=null)) meal.micros=v.micros;
+  logMeal(meal);
+  _aiResult=null; _aiServings=1; _mealMicros=null;
+  renderAiResult();
+  try{ closeMealLogger(); }catch(e){}
+  save();
+}
+
 // Indeterminate progress for the AI call. Captions rotate for reassurance while waiting and
 // are replaced outright when something real happens (see the retry path).
 let _aiCapTimer=null;
@@ -3522,6 +3621,20 @@ Rules:
     };
     // Auto-fill name field if empty and AI returned a clean food name
     if(ne&&!ne.value&&parsed.food) ne.value=parsed.food;
+
+    // Hold the analysed values at 1 serving; the card rescales from these rather than from
+    // whatever is currently in the fields, so scaling stays lossless however often it changes.
+    _aiResult={
+      name: parsed.food || (ne&&ne.value) || 'Meal',
+      prot: Number(parsed.protein_g)||0,
+      kcal: Number(parsed.calories_kcal)||0,
+      carb: Number(parsed.carbs_g)||0,
+      micros: _mealMicros,
+      confidence: parsed.confidence,
+      grounded: !!parsed.__grounded
+    };
+    _aiServings=1;
+    renderAiResult();
 
     const confColor=parsed.confidence==='high'?'var(--teal)':parsed.confidence==='medium'?'var(--amber)':'#6e6e6e';
     const groundedTag=parsed.__grounded?'<i class="ti ti-world" style="font-size:11px;color:var(--teal)" title="Verified via web search"></i> ':'';
