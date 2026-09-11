@@ -1525,6 +1525,49 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     </div>
 
     <div class="settings-section">
+      <div class="settings-section-title">Shift</div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">Today's shift</div>
+          <div class="settings-row-sub">Sets the training day in the DNOO cycle, and flips the day boundary to noon on nights</div>
+        </div>
+      </div>
+      <div class="shift-selector-wrap" id="shift-selector-wrap">
+        <!-- Collapsed chip — shown after selection -->
+        <div class="shift-collapsed" id="shift-collapsed" style="display:none" onclick="expandShiftSelector()">
+          <span class="shift-collapsed-icon" id="shift-collapsed-icon"><i class="ti ti-sun"></i></span>
+          <div class="shift-collapsed-text">
+            <span class="shift-collapsed-label">Today's shift</span>
+            <span class="shift-collapsed-name" id="shift-collapsed-name">Day</span>
+          </div>
+          <span class="shift-collapsed-change"><i class="ti ti-chevron-down" style="font-size:13px"></i>change</span>
+        </div>
+        <!-- Expanded grid -->
+        <div class="shift-expanded" id="shift-expanded">
+          <div class="shift-group">
+            <div class="shift-group-label">Regular</div>
+            <div class="shift-group-btns">
+              <button class="shift-btn s-ds" id="btn-ds" onclick="setShift('ds')"><i class="ti ti-sun" style="font-size:12px"></i>Day</button>
+              <button class="shift-btn" id="btn-school" onclick="setShift('school')"><i class="ti ti-school" style="font-size:12px"></i>School</button>
+              <button class="shift-btn lift-day" id="btn-ns1" onclick="setShift('ns1')"><i class="ti ti-barbell" style="font-size:12px"></i>Night 1</button>
+              <button class="shift-btn" id="btn-ns2" onclick="setShift('ns2')"><i class="ti ti-moon" style="font-size:12px"></i>Night 2</button>
+              <button class="shift-btn lift-day" id="btn-off" onclick="setShift('off')"><i class="ti ti-barbell" style="font-size:12px"></i>Off · Lift</button>
+              <button class="shift-btn" id="btn-leave" onclick="setShift('leave')"><i class="ti ti-palm-tree" style="font-size:12px"></i>Leave</button>
+            </div>
+          </div>
+          <div class="shift-group">
+            <div class="shift-group-label">Extra</div>
+            <div class="shift-group-btns">
+              <button class="shift-btn" id="btn-xds" onclick="setShift('xds')"><i class="ti ti-sun-2" style="font-size:12px"></i>Extra day</button>
+              <button class="shift-btn" id="btn-xns" onclick="setShift('xns')"><i class="ti ti-moon-stars" style="font-size:12px"></i>Extra night</button>
+              <button class="shift-btn s-ns" id="btn-postnight" onclick="enterPostNightMode()"><i class="ti ti-sunrise" style="font-size:12px"></i>Post-night</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
       <div class="settings-section-title">Appearance</div>
       <div class="settings-row">
         <div>
@@ -1861,10 +1904,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 <div class="shell">
 <!-- ===== BOTTOM NAV ===== -->
 <nav class="bottom-nav" id="bottom-nav">
-  <button class="nav-btn active" id="nav-tracker" onclick="go('tracker')">
-    <i class="ti ti-sun"></i><span>Today</span>
-  </button>
-  <button class="nav-btn" id="nav-nutrition" onclick="go('nutrition')">
+  <button class="nav-btn active" id="nav-nutrition" onclick="go('nutrition')">
     <i class="ti ti-flame"></i><span>Fuel</span>
   </button>
   <button class="nav-btn" id="nav-training" onclick="go('training')">
@@ -1877,164 +1917,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 </div>
 
 <!-- ===== TRACKER ===== -->
-<div class="page active" id="page-tracker">
-
-  <div style="padding:.625rem 0 .25rem;display:flex;align-items:flex-start;justify-content:space-between">
-    <div>
-      <div id="today-greet" style="font-size:13px;color:var(--t2)">Good evening</div>
-      <div id="today-shift" style="font-size:26px;font-weight:300;color:var(--t1);letter-spacing:-.02em;line-height:1.1;margin-top:1px">Today</div>
-    </div>
-  </div>
-
-  <div class="date-ctx-row" id="date-ctx-row">
-    <button class="date-ctx-btn active" id="ctx-today" onclick="setDateCtx('today')">
-      <span class="ctx-label">Today</span><span class="ctx-date" id="ctx-today-date"></span>
-    </button>
-    <button class="date-ctx-btn" id="ctx-yesterday" onclick="setDateCtx('yesterday')">
-      <span class="ctx-label">Yesterday</span><span class="ctx-date" id="ctx-yesterday-date"></span>
-    </button>
-    <button class="date-ctx-btn" id="ctx-2days" onclick="setDateCtx('2days')">
-      <span class="ctx-label">2 days ago</span><span class="ctx-date" id="ctx-2days-date"></span>
-    </button>
-  </div>
-  <div class="retro-banner" id="retro-banner">
-    <i class="ti ti-clock-edit" style="font-size:13px;flex-shrink:0"></i>
-    <div style="flex:1"><span id="retro-banner-text">Logging for yesterday</span>
-    <div style="font-size:11px;color:var(--amber);opacity:.8;margin-top:2px">Select the correct shift type below</div></div>
-    <button onclick="setDateCtx('today')" style="font-size:11px;color:var(--t3);background:var(--s3);border:1px solid var(--b2);border-radius:var(--r-sm);padding:3px 9px;cursor:pointer;flex-shrink:0">← Today</button>
-  </div>
-
-  <div class="shift-selector-wrap" id="shift-selector-wrap">
-    <!-- Collapsed chip — shown after selection -->
-    <div class="shift-collapsed" id="shift-collapsed" style="display:none" onclick="expandShiftSelector()">
-      <span class="shift-collapsed-icon" id="shift-collapsed-icon"><i class="ti ti-sun"></i></span>
-      <div class="shift-collapsed-text">
-        <span class="shift-collapsed-label">Today's shift</span>
-        <span class="shift-collapsed-name" id="shift-collapsed-name">Day</span>
-      </div>
-      <span class="shift-collapsed-change"><i class="ti ti-chevron-down" style="font-size:13px"></i>change</span>
-    </div>
-    <!-- Expanded grid -->
-    <div class="shift-expanded" id="shift-expanded">
-      <div class="shift-group">
-        <div class="shift-group-label">Regular</div>
-        <div class="shift-group-btns">
-          <button class="shift-btn s-ds" id="btn-ds" onclick="setShift('ds')"><i class="ti ti-sun" style="font-size:12px"></i>Day</button>
-          <button class="shift-btn" id="btn-school" onclick="setShift('school')"><i class="ti ti-school" style="font-size:12px"></i>School</button>
-          <button class="shift-btn lift-day" id="btn-ns1" onclick="setShift('ns1')"><i class="ti ti-barbell" style="font-size:12px"></i>Night 1</button>
-          <button class="shift-btn" id="btn-ns2" onclick="setShift('ns2')"><i class="ti ti-moon" style="font-size:12px"></i>Night 2</button>
-          <button class="shift-btn lift-day" id="btn-off" onclick="setShift('off')"><i class="ti ti-barbell" style="font-size:12px"></i>Off · Lift</button>
-          <button class="shift-btn" id="btn-leave" onclick="setShift('leave')"><i class="ti ti-palm-tree" style="font-size:12px"></i>Leave</button>
-        </div>
-      </div>
-      <div class="shift-group">
-        <div class="shift-group-label">Extra</div>
-        <div class="shift-group-btns">
-          <button class="shift-btn" id="btn-xds" onclick="setShift('xds')"><i class="ti ti-sun-2" style="font-size:12px"></i>Extra day</button>
-          <button class="shift-btn" id="btn-xns" onclick="setShift('xns')"><i class="ti ti-moon-stars" style="font-size:12px"></i>Extra night</button>
-          <button class="shift-btn s-ns" id="btn-postnight" onclick="enterPostNightMode()"><i class="ti ti-sunrise" style="font-size:12px"></i>Post-night</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- Post-NS2 bridge banner -->
-  <div id="ns2-bridge-banner" style="display:none">
-    <div class="bridge-banner">
-      <div class="bridge-header">
-        <div class="bridge-icon"><i class="ti ti-moon-stars" style="color:var(--amber)" aria-hidden="true"></i></div>
-        <div class="bridge-body">
-          <div class="bridge-title">Post-shift wind-down</div>
-          <div class="bridge-sub">Just off a night shift — work through these before sleep. The banner clears once you tick Sleep, and the rest of the list is your off-day.</div>
-        </div>
-        <button class="bridge-dismiss" onclick="dismissBridge()">Not post-shift →</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- View toggle: Focus (glance) vs Full (overview) -->
-  <div class="view-toggle" id="view-toggle">
-    <button class="vt-btn active" id="vt-focus" onclick="setTrackerView('focus')">Focus</button>
-    <button class="vt-btn" id="vt-full" onclick="setTrackerView('full')">All tasks</button>
-  </div>
-
-  <!-- FOCUS HERO — the one next thing, big and tappable -->
-  <div class="focus-hero" id="focus-hero">
-    <div class="focus-deck" id="focus-deck">
-      <div class="focus-peek"></div>
-      <div class="focus-rev focus-rev-done" id="focus-rev-done"><i class="ti ti-check"></i><span>complete</span></div>
-      <div class="focus-rev focus-rev-skip" id="focus-rev-skip"><span>skip for now</span><i class="ti ti-clock-pause"></i></div>
-      <div class="focus-card" id="focus-card">
-        <div class="focus-now" id="focus-now"><span class="focus-now-l"><span class="focus-pulse"></span><span id="focus-now-txt">—</span></span><span class="focus-now-r" id="focus-now-phase"></span></div>
-        <div class="focus-verb" id="focus-hero-main">—</div>
-        <div class="focus-sub" id="focus-hero-sub"></div>
-        <div class="focus-foot" id="focus-foot"><span id="focus-foot-l"></span><span id="focus-foot-r"></span></div>
-        <div class="focus-grip" id="focus-grip">
-          <span class="fg-h" id="focus-tap-skip"><i class="ti ti-arrow-left"></i>skip</span>
-          <span class="fg-h done" id="focus-tap-done">complete<i class="ti ti-arrow-right"></i></span>
-        </div>
-      </div>
-    </div>
-    <div class="focus-tl" id="focus-tl">
-      <div class="focus-tlcap"><span id="ftl-start">On duty</span><span id="ftl-end">Off duty</span></div>
-      <div class="focus-tlbar"><div class="focus-tlfill" id="ftl-fill"></div><div class="focus-tlo"></div><div class="focus-tlnow" id="ftl-now"></div><div class="focus-tld"></div></div>
-      <div class="focus-tlmeta"><span id="ftl-left">—</span><span id="ftl-right">—</span></div>
-    </div>
-    <div class="focus-quicklog" id="focus-quicklog">
-      <button class="fq-btn" onclick="addMacro('hydro',250,'Glass')"><i class="ti ti-glass-full" style="font-size:13px"></i>+250ml</button>
-      <button class="fq-btn" onclick="addMacro('hydro',500,'Bottle')"><i class="ti ti-bottle" style="font-size:13px"></i>+500ml</button>
-      <button class="fq-btn" onclick="openMealLogger()"><i class="ti ti-plus" style="font-size:13px"></i>Meal</button>
-    </div>
-  </div>
-
-  <div id="tracker-quiet-streak"></div>
-
-  <div class="progress-wrap">
-    <div class="progress-main-row">
-      <div class="progress-ring-wrap">
-        <svg class="progress-ring" viewBox="0 0 120 120" width="96" height="96">
-          <defs><linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="var(--teal)"/><stop offset="100%" stop-color="var(--teal)"/>
-          </linearGradient></defs>
-          <circle class="progress-ring-track" cx="60" cy="60" r="52" fill="none" stroke-width="9"/>
-          <circle class="progress-ring-fill" id="prog-ring" cx="60" cy="60" r="52" fill="none" stroke-width="9"
-            stroke-linecap="round" transform="rotate(-90 60 60)"
-            stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
-        </svg>
-        <div class="progress-ring-center">
-          <div class="progress-pct" id="prog-pct">0%</div>
-        </div>
-      </div>
-      <div class="progress-detail">
-        <div class="progress-label" id="prog-label">0 of 0 complete</div>
-        <div class="progress-breakdown" id="prog-breakdown"></div>
-        <div class="tracker-streak" id="tracker-streak" style="display:none"></div>
-      </div>
-    </div>
-    <div class="progress-hint" id="prog-sub">Select your shift type above</div>
-  </div>
-
-  <div id="tracker-all-wrap">
-  <div class="all-done-banner" id="complete-banner"><div class="icon">✓</div><p>That's everything. The day is yours.</p></div>
-
-  <div id="full-list-section">
-  <div id="timeline-wrap"></div>
-  <div class="lp-hint" id="lp-hint"><i class="ti ti-hand-finger" style="font-size:13px"></i>Tap to log · long-press any item for details &amp; options</div>
-  <button class="add-custom-btn" onclick="openCustomItemModal()"><i class="ti ti-plus" style="font-size:14px"></i>Add custom item</button>
-  </div>
-  </div>
-
-  <div class="tracker-footer-row">
-    <button class="eod-btn" onclick="markDayComplete()" id="eod-btn"><i class="ti ti-check-all" style="font-size:14px"></i>Mark remaining done</button>
-    <button class="reset-btn" onclick="openResetSheet()"><i class="ti ti-refresh" style="font-size:13px"></i>Reset</button>
-  </div>
-
-
-</div>
-
-<!-- ===== NUTRITION ===== -->
-<div class="page" id="page-nutrition">
+<div class="page active" id="page-nutrition">
 
   <div class="fuel-head">
     <div><div class="coach-eyebrow">Fuel</div><div class="coach-h1" style="margin-bottom:0">Intake</div></div>
@@ -2278,7 +2161,6 @@ function go(id){
   // Render training check-in flag when Training tab is opened
   if(id==='nutrition'){renderCalHero();renderMacroRow();renderMealLog();setTimeout(()=>_playTabEntrance('page-nutrition',null),50);}
   if(id==='training'){renderTrainingCheckinFlag();renderSessionHistory();setTimeout(()=>_playTabEntrance('page-training',null),50);}
-  if(id==='tracker') setTimeout(applyBridgeState,100);
   // Activate the correct nav button
   ids.forEach(navId=>{
     const btn=document.getElementById('nav-'+navId);
@@ -3405,11 +3287,13 @@ function renderMacroRow(){
 // Fuel protein record card — FocusFlight + odometer; re-rendered on protein/target change
 
 function getScore(){
+  // Was a 4-way average including getTrackerPct(), the daily-list completion. That list was
+  // the Today tab, which no longer exists — leaving the term in would have pinned a quarter of
+  // every day's score at zero, silently dragging the Progress heatmap down.
   const p=Math.min(100,macros.prot/TARGETS.prot*100);
   const h=Math.min(100,macros.hydro/TARGETS.hydro*100);
   const k=Math.min(100,macros.kcal/TARGETS.kcal*100);
-  const t=getTrackerPct();
-  return Math.round((p+h+k+t)/4);
+  return Math.round((p+h+k)/3);
 }
 
 // Streak bookkeeping. Named updateScore() for historical reasons (it used to also drive an
@@ -3418,16 +3302,13 @@ function getScore(){
 // Stripped down to what's actually live: the day-streak check. Kept the name since it's
 // called from ~10 places already and renaming is pure churn for zero behavior change.
 function updateScore(){
-  // Streak — a day counts when every core item is handled (done, half, or a conscious skip).
-  // Guarded to once per biological day; aligns with the app's consistency-over-perfection philosophy.
-  const _sItems=getTimeline(shift)||[];
-  let _allHandled=_sItems.length>0;
-  _sItems.forEach((it,i)=>{
-    const _tier=it.tier||'default';
-    if(_tier==='optional') return;
-    const _k=tlKey(shift,i);
-    if(!(ticks[_k]||halfTicks[_k]||skippedToday[focusSkipKey(i)])) _allHandled=false;
-  });
+  // Streak — previously "every item on the daily list handled". That list was the Today tab,
+  // so the condition became unreachable and the streak would have frozen at its current value
+  // forever. Rebased on what the app actually tracks now: hitting protein and calories for the
+  // day. Both must land, so it stays a real bar rather than a participation trophy.
+  const _allHandled = TARGETS.prot>0 && TARGETS.kcal>0
+    && macros.prot >= TARGETS.prot
+    && macros.kcal >= TARGETS.kcal;
   if(_allHandled){
     const _today=biologicalToday();
     let _last=null; try{ _last=localStorage.getItem('streakLastDate'); }catch(e){}
@@ -4230,100 +4111,11 @@ function transitionToOffDay(){
 
 function key(s,i){return tlKey(s,i);}
 
-function updateBar(){
-  const items=getTimeline(shift);
-  if(!items||!items.length){
-    document.getElementById('prog-pct').textContent='0%';
-    document.getElementById('prog-label').textContent='Select a shift type';
-    return;
-  }
-
-  // Count by type for breakdown chips
-  const cat={food:[0,0],supp:[0,0],action:[0,0],sleep:[0,0]};
-  let coreDone=0,coreTotal=0,optDone=0,optTotal=0;
-
-  items.forEach((item,i)=>{
-    const tier=item.tier||'default';
-    const effectiveTier=tier;
-    const done=!!ticks[tlKey(shift,i)];
-    const t=item.type||'action';
-
-    if(effectiveTier==='optional'){
-      optTotal++;if(done) optDone++;
-    } else {
-      coreTotal++;coreDone+=done?1:(halfTicks[tlKey(shift,i)]?0.5:0);
-    }
-    if(cat[t]){cat[t][1]++;if(done) cat[t][0]++;}
-  });
-
-  const pct=getTrackerPctWeighted();
-  const bonus=optTotal?Math.round(optDone/optTotal*100):0;
-  const allCoreDone=coreDone===coreTotal&&coreTotal>0;
-  const allDone=allCoreDone&&optDone===optTotal;
-
-  // Progress percentage — capped at 100
-  document.getElementById('prog-pct').textContent=pct+'%';
-  document.getElementById('prog-label').textContent=
-    allCoreDone?`All done${optTotal?' — '+optDone+'/'+optTotal+' bonus':''} ✓`:
-    `${coreDone} done · ${coreTotal-coreDone} to go${optDone>0?` · +${optDone} bonus`:''}`;
-
-  // Category breakdown with optional bonus chip
-  const breakdownEl=document.getElementById('prog-breakdown');
-  if(breakdownEl){
-    const parts=[];
-    if(cat.food[1])   parts.push(`<span class="pb-cat pb-food"><span class="pb-dot food"></span>Food ${cat.food[0]}/${cat.food[1]}</span>`);
-    if(cat.supp[1])   parts.push(`<span class="pb-cat pb-supp"><span class="pb-dot supp"></span>Supps ${cat.supp[0]}/${cat.supp[1]}</span>`);
-    if(cat.action[1]) parts.push(`<span class="pb-cat pb-action"><span class="pb-dot action"></span>Actions ${cat.action[0]}/${cat.action[1]}</span>`);
-    if(cat.sleep[1])  parts.push(`<span class="pb-cat pb-sleep"><span class="pb-dot sleep"></span>Sleep ${cat.sleep[0]}/${cat.sleep[1]}</span>`);
-    if(optTotal)      parts.push(`<span class="pb-cat pb-optional"><span class="pb-dot optional"></span>Bonus ${optDone}/${optTotal}</span>`);
-    breakdownEl.innerHTML=parts.join('');
-  }
-
-  // Progress hint
-  const hintEl=document.getElementById('prog-sub');
-  if(hintEl){
-    if(allDone) hintEl.textContent='All done — foundations and bonus ✓';
-    else if(allCoreDone&&optTotal) hintEl.textContent=`Core complete ✓ — ${optTotal-optDone} optional${optTotal-optDone===1?'':'s'} remaining`;
-    else hintEl.textContent=`${coreTotal-coreDone} core item${coreTotal-coreDone===1?'':'s'} remaining`;
-    hintEl.className='progress-hint'+(allCoreDone?' good':'');
-  }
-
-  // Animated progress ring — circumference = 2πr = 2π(52) ≈ 326.7
-  const ring=document.getElementById('prog-ring');
-  const ringWrap=document.querySelector('.progress-ring-wrap');
-  if(ring){
-    const circ=326.7;
-    const offset=circ-(Math.min(100,pct)/100)*circ;
-    ring.style.strokeDashoffset=offset;
-  }
-  if(ringWrap){
-    const wasComplete=ringWrap.classList.contains('complete');
-    if(pct>=100&&!wasComplete){
-      ringWrap.classList.add('complete');
-      fireCelebration();
-    } else if(pct<100){
-      ringWrap.classList.remove('complete');
-    }
-  }
-  checkCelebrationReset(pct);
-
-  // All done banner — triggers on core complete
-  const banner=document.getElementById('complete-banner');
-  if(banner) banner.className='all-done-banner'+(allCoreDone?' show':'');
-
-  // Surface streak on tracker
-  const trackerStreak=document.getElementById('tracker-streak');
-  if(trackerStreak){
-    const streakVal=dayStreak;
-    if(streakVal>0){
-      trackerStreak.style.display='inline-flex';
-      trackerStreak.innerHTML='<i class="ti ti-flame" style="font-size:13px"></i> '+streakVal+'-day streak';
-    } else {
-      trackerStreak.style.display='none';
-    }
-  }
-  updateContextHint();
-}
+// The daily progress ring, category breakdown, completion banner and streak chip this drew
+// all lived on the Today tab, which no longer exists — every write here targeted a deleted
+// element, and four of them were unguarded, so setShift() threw before reaching the UI.
+// Kept as a no-op because ~5 call sites still invoke it; the body had no side effects.
+function updateBar(){ /* Today tab removed — nothing to draw */ }
 
 function resetChecks(){
   getTimeline(shift).forEach((_,i)=>{delete halfTicks[tlKey(shift,i)];delete ticks[tlKey(shift,i)];});
@@ -5907,7 +5699,7 @@ function applyTargetIncrease(){
   save();
 }
 
-function openTracker(){go('tracker');}
+function openTracker(){go('nutrition');}
 function openSleep(){go('sleep');}
 
 
@@ -7720,7 +7512,7 @@ _fitbitRedirectCatch().then(handled=>{
 });
 
 // Always land on Overview regardless of stored state
-go('tracker');
+go('nutrition');
 </script>
 
 <!-- ===== INSIGHTS ===== -->
