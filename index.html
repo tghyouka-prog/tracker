@@ -337,6 +337,11 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .ob-input input:focus{outline:none}
 .ob-input input::-webkit-outer-spin-button,.ob-input input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .ob-input span{font-size:15px;font-weight:600;color:var(--t3);flex-shrink:0}
+.ob-date{margin-top:.75rem}
+.ob-date input{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-md);color:var(--t1);font-family:inherit;font-size:16px;font-weight:600;padding:12px 14px}
+.obp-warn span{color:var(--amber)}
+.obp-warn i{color:var(--amber)}
+.pd-proj.is-warn{color:var(--amber)}
 .ob-hint{font-size:12px;color:var(--t2);line-height:1.5;margin-top:.875rem}
 .ob-build{align-items:center;justify-content:center;text-align:center}
 .ob-ring{position:relative;width:150px;height:150px;margin:0 auto}
@@ -2139,6 +2144,10 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
       <span class="pd-name">Goal</span>
       <button class="pd-goal-btn" id="pd-goal" onclick="startOnboarding()">Bulking</button>
     </div>
+    <div class="pd-row">
+      <span class="pd-name">Target date</span>
+      <button class="pd-goal-btn" id="pd-pace" onclick="startOnboarding()">Recommended</button>
+    </div>
     <div class="pd-proj" id="pd-proj"></div>
     <div class="fuel-tgt-strip">
       <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-prot-target">148–163g</div><span class="fuel-tgt-lbl">Protein</span></div>
@@ -2377,11 +2386,13 @@ let dayStreak=0;
 // Sex, age and height let the calorie target use Mifflin-St Jeor instead of a flat kcal/kg
 // estimate. Stored on its own key like the other preferences; null until answered, and
 // calcTargets falls back to the weight-only estimate rather than guessing any of them.
-let profile={sex:null,age:null,heightCm:null,goal:'bulk'};
-try{ const s=JSON.parse(localStorage.getItem('profile')||'null'); if(s&&typeof s==='object') profile={sex:s.sex||null,age:s.age||null,heightCm:s.heightCm||null,goal:s.goal||'bulk'}; }catch(e){}
+let profile={sex:null,age:null,heightCm:null,goal:'bulk',planMode:'pace',targetDate:null};
+try{ const s=JSON.parse(localStorage.getItem('profile')||'null'); if(s&&typeof s==='object') profile={sex:s.sex||null,age:s.age||null,heightCm:s.heightCm||null,goal:s.goal||'bulk',planMode:s.planMode||'pace',targetDate:s.targetDate||null}; }catch(e){}
 function _profileComplete(){ return !!(profile.sex && profile.age>0 && profile.heightCm>0); }
 function setProfile(field,value){
   if(field==='goal') profile.goal = ['bulk','cut','maintain'].includes(value) ? value : 'bulk';
+  else if(field==='planMode') profile.planMode = (value==='date') ? 'date' : 'pace';
+  else if(field==='targetDate') profile.targetDate = /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
   else if(field==='sex') profile.sex = (value==='male'||value==='female') ? value : null;
   else {
     const n=parseFloat(value);
@@ -2403,8 +2414,16 @@ function renderPlanRows(){
   set('pd-age', profile.age);
   const g=document.getElementById('pd-goal');
   if(g) g.textContent={bulk:'Bulking',cut:'Cutting',maintain:'Maintain'}[profile.goal||'bulk'];
+  const pc=document.getElementById('pd-pace');
+  if(pc) pc.textContent = (profile.planMode==='date'&&profile.targetDate)
+    ? new Date(profile.targetDate+'T12:00:00Z').toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'})
+    : 'Recommended';
   const pj=document.getElementById('pd-proj');
-  if(pj) pj.textContent=projectionText();
+  if(pj){
+    const i=paceInfo();
+    pj.textContent = i.capped ? paceText() : projectionText();
+    pj.classList.toggle('is-warn', !!i.capped);
+  }
 }
 
 // Typed weight replaces the -/+ steppers; clamp to the same range adjustWeight used.
@@ -2449,8 +2468,64 @@ function renderProfileNote(){
 // 7700 kcal/kg is the conventional energy-per-kg figure. It is an approximation — real tissue
 // change is a lean/fat mix — so the projection below is an estimate, and is labelled as one.
 const GOAL_RATE_PCT={bulk:0.0025, maintain:0, cut:-0.007};
+// Ceilings, not recommendations. Beyond ~0.5%/wk gaining, the surplus mostly becomes fat;
+// beyond 1.0%/wk losing, fat-free mass starts going with it. A deadline can ASK for more than
+// this — it just doesn't get it.
+const RATE_MAX_PCT={bulk:0.005, cut:0.01, maintain:0};
 const KCAL_PER_KG=7700;
-function _weeklyRateKg(kg){ return (kg||bodyWeight)*(GOAL_RATE_PCT[profile.goal||'bulk']||0); }
+
+// Signed kg/week. In 'date' mode the rate comes from how far away the goal is and how long is
+// left; otherwise it's the recommended pace.
+function _weeklyRateKg(kg){
+  kg = kg || bodyWeight;
+  const mode = profile.goal || 'bulk';
+  if(mode==='maintain') return 0;
+  const sign = mode==='bulk' ? 1 : -1;
+  if(profile.planMode==='date' && profile.targetDate && typeof goalWeight==='number' && goalWeight){
+    const weeks=(new Date(profile.targetDate+'T12:00:00Z').getTime()-Date.now())/(7*86400000);
+    const gap=goalWeight-bodyWeight;
+    // A date in the past, or one pulling the opposite way from the chosen mode, is not usable.
+    if(weeks>=0.5 && Math.sign(gap)===sign){
+      const needed=gap/weeks;
+      return sign*Math.min(Math.abs(needed), kg*RATE_MAX_PCT[mode]);
+    }
+  }
+  return kg*(GOAL_RATE_PCT[mode]||0);
+}
+
+// What the deadline mode is actually doing, so the UI can be honest about it.
+function paceInfo(){
+  const mode=profile.goal||'bulk';
+  if(mode==='maintain') return {kind:'maintain'};
+  if(profile.planMode!=='date' || !profile.targetDate) return {kind:'pace', rate:_weeklyRateKg(bodyWeight)};
+  if(typeof goalWeight!=='number' || !goalWeight) return {kind:'date-no-goal'};
+  const weeks=(new Date(profile.targetDate+'T12:00:00Z').getTime()-Date.now())/(7*86400000);
+  const gap=goalWeight-bodyWeight;
+  const sign=mode==='bulk'?1:-1;
+  if(weeks<0.5) return {kind:'date-past'};
+  if(Math.sign(gap)!==sign) return {kind:'date-wrong-way'};
+  const needed=Math.abs(gap/weeks);
+  const cap=bodyWeight*RATE_MAX_PCT[mode];
+  const capped=needed>cap+1e-9;
+  // Earliest date the cap allows, for when we have to say no.
+  const soonest=new Date(Date.now()+(Math.abs(gap)/cap)*7*86400000);
+  return {kind:'date', rate:_weeklyRateKg(bodyWeight), needed, cap, capped, soonest, weeks};
+}
+
+function paceText(){
+  const i=paceInfo();
+  if(i.kind==='maintain')       return 'Maintaining — no target date applies.';
+  if(i.kind==='date-no-goal')   return 'Set a goal weight to use a target date.';
+  if(i.kind==='date-past')      return 'That date has passed — pick a later one.';
+  if(i.kind==='date-wrong-way') return 'Your goal weight sits the other side of your current weight from the goal you picked.';
+  if(i.kind==='pace')           return 'Recommended pace — ' + Math.abs(i.rate).toFixed(2) + ' kg/week.';
+  if(i.capped) return 'That date needs ' + i.needed.toFixed(2) + ' kg/week, which is faster than is useful — '
+    + (profile.goal==='bulk' ? 'past about 0.5% of bodyweight a week the surplus mostly becomes fat'
+                             : 'past about 1% of bodyweight a week you start losing muscle with it')
+    + '. Held at ' + i.cap.toFixed(2) + ' kg/week, reaching it around '
+    + i.soonest.toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'}) + ' instead.';
+  return 'On track for that date at ' + Math.abs(i.rate).toFixed(2) + ' kg/week.';
+}
 
 // How long the current goal takes at the current rate, if nothing changes.
 function goalProjection(){
@@ -2477,7 +2552,7 @@ function projectionText(){
          p.date.toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'}) + '. Estimate, assuming you hold the plan.';
 }
 
-const OB_STEPS=['goal','sex','age','height','weight','goalWeight'];
+const OB_STEPS=['goal','sex','age','height','weight','goalWeight','pace'];
 let _obIdx=0, _obPhase='q';   // q = questions, build = transition, plan = reveal
 let _obTimer=null;
 function startOnboarding(){ _obIdx=0; _obPhase='q'; _renderOnboarding(); document.getElementById('onboarding').hidden=false; }
@@ -2565,11 +2640,24 @@ function _renderOnboarding(){
       body:'<div class="ob-input"><input type="number" inputmode="decimal" step="0.1" min="40" max="150" value="'+bodyWeight+'" onchange="obWeight(this.value)" aria-label="Body weight in kilograms"><span>kg</span></div>'},
     goalWeight:{t:'Where do you want to get to?', s:'This does not change your daily calories — the rate does that. It sets how far away the target is, and so how long it takes.',
       body:'<div class="ob-input"><input type="number" inputmode="decimal" step="0.5" min="40" max="150" value="'+(goalWeight!=null?goalWeight:'')+'" placeholder="--" onchange="obGoalWeight(this.value)" aria-label="Goal weight in kilograms"><span>kg</span></div>'+
-           '<div class="ob-hint">'+_obGoalHint()+'</div>'}
+           '<div class="ob-hint">'+_obGoalHint()+'</div>'},
+    pace:{t:'By when?', s:'Either let the recommended pace set the date, or name a date and the pace is worked out from it.',
+      body:'<div class="ob-opts">'+
+        '<button class="ob-opt'+((profile.planMode||'pace')!=='date'?' on':'')+'" onclick="obPick(\'planMode\',\'pace\')">'+
+          '<span class="ob-opt-t">Recommended pace</span><span class="ob-opt-s">Steady, and keeps the gain or loss the right kind</span></button>'+
+        '<button class="ob-opt'+(profile.planMode==='date'?' on':'')+'" onclick="obPick(\'planMode\',\'date\')">'+
+          '<span class="ob-opt-t">By a date</span><span class="ob-opt-s">Work backwards from a deadline</span></button>'+
+        '</div>'+
+        (profile.planMode==='date'
+          ? '<div class="ob-date"><input type="date" value="'+(profile.targetDate||'')+'" onchange="obPick(\'targetDate\',this.value)" aria-label="Target date"></div>'
+          : '')+
+        '<div class="ob-hint">'+paceText()+'</div>'}
   }[step];
 
   // Only gate on the questions that have no safe default — goal and weight always do.
-  const answered = step==='goal' ? true : step==='weight' ? true
+  const answered = step==='pace' ? (profile.planMode!=='date' || !!profile.targetDate)
+    : step==='goalWeight' ? true
+    : step==='goal' ? true : step==='weight' ? true
     : step==='sex' ? !!profile.sex : !!profile[step==='height'?'heightCm':'age'];
 
   el.innerHTML='<div class="ob-sheet">'+
@@ -2600,6 +2688,7 @@ function _renderObPlan(el){
         row('Water', (TARGETS.hydro/1000).toFixed(1)+' L')+
       '</div>'+
       '<div class="obp-note"><i class="ti ti-info-circle" aria-hidden="true"></i><span>'+projectionText()+'</span></div>'+
+      (paceInfo().capped ? '<div class="obp-note obp-warn"><i class="ti ti-alert-triangle" aria-hidden="true"></i><span>'+paceText()+'</span></div>' : '')+
       '<div class="obp-note"><i class="ti ti-refresh" aria-hidden="true"></i><span>These recalculate whenever you change your weight or goal — nothing here is fixed.</span></div>'+
     '</div>'+
     '<button class="ob-cta" onclick="_obClose()">Start tracking</button>'+
