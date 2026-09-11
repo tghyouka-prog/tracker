@@ -337,6 +337,16 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .ob-input input:focus{outline:none}
 .ob-input input::-webkit-outer-spin-button,.ob-input input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .ob-input span{font-size:15px;font-weight:600;color:var(--t3);flex-shrink:0}
+#ai-progress{margin-bottom:.75rem}
+#ai-progress[hidden]{display:none}
+.aip-bar{height:3px;border-radius:2px;background:var(--s3);overflow:hidden;position:relative}
+.aip-bar span{position:absolute;left:0;top:0;bottom:0;width:40%;border-radius:2px;background:var(--focus-ac);animation:aipSweep 1.15s cubic-bezier(.5,0,.5,1) infinite}
+@keyframes aipSweep{0%{left:-40%}100%{left:100%}}
+.aip-cap{font-size:11.5px;color:var(--t2);margin-top:6px}
+@media (prefers-reduced-motion:reduce){.aip-bar span{animation:none;left:0;width:100%;opacity:.5}}
+.pp-log{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;margin-top:.625rem;padding:7px;border-radius:var(--r-md);border:1px solid var(--b2);background:var(--s2);color:var(--t1);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.pp-log:active{transform:scale(.96)}
+.pd-hint{display:block;font-size:10px;color:var(--t3);font-weight:500;margin-top:1px}
 .ob-date{margin-top:.75rem}
 .ob-date input{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-md);color:var(--t1);font-family:inherit;font-size:16px;font-weight:600;padding:12px 14px}
 .obp-warn span{color:var(--amber)}
@@ -1869,6 +1879,10 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
       <i class="ti ti-sparkles" style="font-size:16px"></i>
       <span id="ai-btn-label">Analyse with Gemini</span>
     </button>
+    <div id="ai-progress" hidden>
+      <div class="aip-bar"><span></span></div>
+      <div class="aip-cap" id="ai-progress-cap"></div>
+    </div>
     <div id="ai-result-strip" style="display:none;margin-bottom:.75rem;padding:10px 12px;background:color-mix(in srgb,var(--teal) 5%,transparent);border:1px solid color-mix(in srgb,var(--teal) 15%,transparent);border-radius:10px;font-size:12px;color:var(--t2);line-height:1.6"></div>
 
     <!-- Manual fallback -->
@@ -2068,6 +2082,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
 <div class="shell">
 <div id="onboarding" class="ob-wrap" hidden></div>
+<div id="weighin" class="ob-wrap" hidden></div>
 
 <!-- ===== BOTTOM NAV ===== -->
 <nav class="bottom-nav" id="bottom-nav">
@@ -2132,7 +2147,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
   <div class="sec-label">Your plan</div>
   <div class="fuel-wt-card mo-rise">
     <div class="pd-row">
-      <span class="pd-name">Current weight</span>
+      <span class="pd-name">Current weight<small class="pd-hint">tap to log a weigh-in</small></span>
       <span class="pd-val"><input type="number" inputmode="decimal" step="0.1" min="40" max="150"
         id="nut-weight-display" value="74" onchange="setWeightInput(this.value)" aria-label="Current weight in kilograms"><i>kg</i></span>
     </div>
@@ -2443,7 +2458,14 @@ function setWeightInput(v){
   const n=parseFloat(v);
   if(!(n>=40&&n<=150)){ renderPlanRows(); return; }
   applyWeight(Math.round(n*10)/10);
+  // applyWeight only moves the targets — the weigh-in has to be stamped separately or the
+  // trend chart never gets a point. Deliberately only on explicit entry: calling it from
+  // applyWeight would stamp today's weight every time the app opened and draw a flat line
+  // out of days you never stepped on the scale.
+  recordWeightHistory(bodyWeight);
   renderPlanRows();
+  try{ renderCalProgress(); }catch(e){}
+  try{ showToast('Weight logged — '+bodyWeight+' kg','action'); }catch(e){}
 }
 
 // Who the plan is for, at a glance. Falls back to a prompt when setup has not been run.
@@ -2632,7 +2654,7 @@ function _obBuild(){
   },70);
 }
 function obPick(field,value){ setProfile(field,value); _renderOnboarding(); }
-function obWeight(v){ const n=parseFloat(v); if(n>=40&&n<=150){ applyWeight(Math.round(n*10)/10); _renderOnboarding(); } }
+function obWeight(v){ const n=parseFloat(v); if(n>=40&&n<=150){ applyWeight(Math.round(n*10)/10); recordWeightHistory(bodyWeight); _renderOnboarding(); } }
 function obGoalWeight(v){ setGoalWeight(v); _renderOnboarding(); }
 
 // Spell out the consequence of the goal weight as it is typed, and flag a mode that points the
@@ -3312,6 +3334,25 @@ function initGeminiKeyField(){
   });
 }
 
+// Indeterminate progress for the AI call. Captions rotate for reassurance while waiting and
+// are replaced outright when something real happens (see the retry path).
+let _aiCapTimer=null;
+const _AI_CAPS=['Looking up nutrition','Checking against known values','Working out the macros'];
+function _aiCaption(msg){
+  const el=document.getElementById('ai-progress-cap');
+  if(el) el.textContent=msg;
+}
+function _aiBusy(on,first){
+  const wrap=document.getElementById('ai-progress');
+  if(_aiCapTimer){ clearInterval(_aiCapTimer); _aiCapTimer=null; }
+  if(!wrap) return;
+  wrap.hidden=!on;
+  if(!on) return;
+  let i=0;
+  _aiCaption(first||_AI_CAPS[0]);
+  _aiCapTimer=setInterval(()=>{ i=(i+1)%_AI_CAPS.length; _aiCaption(_AI_CAPS[i]); },2200);
+}
+
 async function aiAnalyseMeal(){
   const nameEl  = document.getElementById('meal-name-input');
   const protEl  = document.getElementById('meal-prot-input');
@@ -3323,11 +3364,13 @@ async function aiAnalyseMeal(){
   const desc = ''; // desc is now merged into mainDesc
 
   // Helper — re-queries each time so stale refs after render() don't bite us
+  const photoDataPeek = ()=>!!window._mealPhotoBase64;
   const btn  = ()=>document.getElementById('ai-analyse-btn');
   const lbl  = ()=>document.getElementById('ai-btn-label');
   const strip= ()=>document.getElementById('ai-result-strip');
 
   const showStrip=(msg,isErr)=>{
+    _aiBusy(false);
     const s=strip(); if(!s) return;
     s.style.display='block';
     s.style.borderColor=isErr?'color-mix(in srgb,var(--red) 30%,transparent)':'color-mix(in srgb,var(--teal) 15%,transparent)';
@@ -3338,7 +3381,10 @@ async function aiAnalyseMeal(){
   if(!_geminiKey){ showStrip('Add your Gemini API key in Settings → AI Food Analysis first.',true); return; }
   if(!name){ showStrip('Enter a meal name above first.',true); return; }
 
-  // Loading state
+  // Loading state — an indeterminate bar rather than a percentage, because a single fetch has
+  // no measurable progress and a fake percentage would be a lie. The caption does change on a
+  // real transition (the retry at a higher token budget).
+  _aiBusy(true, photoDataPeek() ? 'Reading the photo' : 'Looking up nutrition');
   if(btn()){ btn().disabled=true; btn().style.opacity='.55'; btn().style.background='color-mix(in srgb,var(--teal) 4%,transparent)'; }
   const _mShort=_geminiModel.replace('gemini-','').replace('-',' ').replace(' flash',' Flash').replace(' lite','-Lite').replace(' pro',' Pro');
     if(lbl()) lbl().textContent='Analysing with '+_mShort+'…';
@@ -3415,6 +3461,7 @@ Rules:
     } catch(e1){
       if(e1.message==='TRUNCATED' || e1.message.startsWith('NO_JSON')){
         if(lbl()) lbl().textContent='Retrying…';
+        _aiCaption('Response was cut short — retrying');
         parsed = await callGemini(4096); // let the retry's own error surface if this also fails
       } else {
         throw e1;
@@ -7273,6 +7320,7 @@ function _renderProgPair(){
         value="${goalWeight!=null?goalWeight:''}" placeholder="--" onchange="setGoalWeight(this.value)"
         aria-label="Goal weight in kilograms"> kg
     </div>
+    <button class="pp-log" onclick="promptWeighIn()"><i class="ti ti-scale" aria-hidden="true"></i>Log weigh-in</button>
   </div>
   <div class="pp-card pp-streak">
     <i class="ti ti-flame pp-flame" aria-hidden="true"></i>
@@ -7280,6 +7328,30 @@ function _renderProgPair(){
     <div class="pp-lbl">Day streak</div>
     <div class="pp-week">${week.map(d=>`<span class="ppw${d.hit?' on':''}${d.isToday?' now':''}">${d.letter}</span>`).join('')}</div>
   </div>`;
+}
+
+// One-tap weigh-in from the Progress tab, where you are already looking at the trend.
+function promptWeighIn(){
+  const el=document.getElementById('weighin');
+  if(!el) return;
+  el.innerHTML='<div class="ob-sheet" style="justify-content:center">'+
+    '<div class="ob-body" style="flex:0 0 auto">'+
+      '<h2 class="ob-q">Log a weigh-in</h2>'+
+      '<p class="ob-s">Goes straight onto your trend and recalculates your targets.</p>'+
+      '<div class="ob-input"><input type="number" inputmode="decimal" step="0.1" min="40" max="150" id="wi-input" value="'+bodyWeight+'" aria-label="Weight in kilograms"><span>kg</span></div>'+
+    '</div>'+
+    '<button class="ob-cta" onclick="saveWeighIn()">Save</button>'+
+    '<button class="ob-cta" style="background:transparent;color:var(--t2);margin-top:.25rem" onclick="document.getElementById(\'weighin\').hidden=true">Cancel</button>'+
+    '</div>';
+  el.hidden=false;
+  setTimeout(()=>{ const i=document.getElementById('wi-input'); if(i){ i.focus(); i.select(); } },80);
+}
+function saveWeighIn(){
+  const i=document.getElementById('wi-input');
+  if(i) setWeightInput(i.value);
+  const el=document.getElementById('weighin');
+  if(el) el.hidden=true;
+  try{ renderCalProgress(); }catch(e){}
 }
 
 function _renderRangeSeg(){
