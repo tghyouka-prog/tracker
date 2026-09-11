@@ -305,6 +305,9 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .bottom-nav .nav-btn{min-width:0}
 .add-fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:110;width:56px;height:56px;border-radius:50%;border:none;background:var(--focus-ac);color:var(--focus-ac-ink);font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--sh-lg);transition:transform .12s cubic-bezier(.34,1.56,.64,1)}
 .add-fab:active{transform:scale(.9)}
+.pd-proj{display:flex;align-items:flex-start;gap:6px;font-size:11.5px;color:var(--t2);line-height:1.5;border-top:1px solid var(--b1);margin-top:.5rem;padding-top:.625rem}
+.gp-proj{display:flex;align-items:flex-start;gap:6px;font-size:11.5px;color:var(--t2);line-height:1.5;margin-top:.5rem}
+.pd-proj i,.gp-proj i{font-size:13px;color:var(--t3);flex-shrink:0;margin-top:1px}
 .pd-row{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.7rem 0;border-bottom:1px solid var(--b1)}
 .pd-row:last-of-type{border-bottom:none}
 .pd-name{font-size:13px;color:var(--t2)}
@@ -1612,6 +1615,21 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     </div>
 
     <div class="settings-section">
+      <div class="settings-section-title">Sync &amp; import</div>
+      <div class="fb-connect" id="fb-connect"></div>
+      <div class="fuel-tgt-strip" id="steps-mini" style="display:none">
+        <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="steps-mini-today">0</div><span class="fuel-tgt-lbl">Steps today</span></div>
+        <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="steps-mini-avg">0</div><span class="fuel-tgt-lbl">7-day avg</span></div>
+      </div>
+      <div class="fb-row">
+        <button class="fb-btn" onclick="document.getElementById('fb-wt-in').click()"><i class="ti ti-scale"></i>Weight CSV</button>
+        <button class="fb-btn" onclick="document.getElementById('fb-sl-in').click()"><i class="ti ti-moon"></i>Sleep JSON</button>
+        <input type="file" id="fb-wt-in" accept=".csv" style="display:none" onchange="_fbWeight(this.files[0])">
+        <input type="file" id="fb-sl-in" accept=".json" multiple style="display:none" onchange="_fbSleep(this.files)">
+      </div>
+    </div>
+
+    <div class="settings-section">
       <div class="settings-section-title">Profile</div>
       <div class="settings-row">
         <div>
@@ -2106,6 +2124,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
       <span class="pd-name">Goal</span>
       <button class="pd-goal-btn" id="pd-goal" onclick="startOnboarding()">Bulking</button>
     </div>
+    <div class="pd-proj" id="pd-proj"></div>
     <div class="fuel-tgt-strip">
       <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-prot-target">148–163g</div><span class="fuel-tgt-lbl">Protein</span></div>
       <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-kcal-target">~2,840</div><span class="fuel-tgt-lbl">Kcal</span></div>
@@ -2116,25 +2135,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     <div class="page-note" id="nut-note" style="margin-top:.25rem"></div>
   </div>
 
-  <!-- Weight history sparkline -->
-  <div class="weight-history-strip" id="weight-history-strip">
-    <div class="wh-header">
-      <span class="wh-label">Weight history</span>
-    </div>
-    <canvas id="wh-canvas" class="wh-canvas" height="48"></canvas>
-    <span class="wh-note" id="wh-note">Tap − / + above to log weight changes</span>
-    <div class="fb-connect" id="fb-connect"></div>
-    <div class="fuel-tgt-strip" id="steps-mini" style="display:none">
-      <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="steps-mini-today">0</div><span class="fuel-tgt-lbl">Steps today</span></div>
-      <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="steps-mini-avg">0</div><span class="fuel-tgt-lbl">7-day avg</span></div>
-    </div>
-    <div class="fb-row">
-      <button class="fb-btn" onclick="document.getElementById('fb-wt-in').click()"><i class="ti ti-scale"></i>Weight CSV</button>
-      <button class="fb-btn" onclick="document.getElementById('fb-sl-in').click()"><i class="ti ti-moon"></i>Sleep JSON</button>
-      <input type="file" id="fb-wt-in" accept=".csv" style="display:none" onchange="_fbWeight(this.files[0])">
-      <input type="file" id="fb-sl-in" accept=".json" multiple style="display:none" onchange="_fbSleep(this.files)">
-    </div>
-  </div>
 
   <div style="height:80px"></div>
 </div>
@@ -2388,6 +2388,8 @@ function renderPlanRows(){
   set('pd-age', profile.age);
   const g=document.getElementById('pd-goal');
   if(g) g.textContent={bulk:'Bulking',cut:'Cutting',maintain:'Maintain'}[profile.goal||'bulk'];
+  const pj=document.getElementById('pd-proj');
+  if(pj) pj.textContent=projectionText();
 }
 
 // Typed weight replaces the -/+ steppers; clamp to the same range adjustWeight used.
@@ -2401,7 +2403,9 @@ function setWeightInput(v){
 function renderProfileNote(){
   const el=document.getElementById('profile-note');
   if(!el) return;
-  const gWord={bulk:'a +250 kcal lean-gain surplus',maintain:'no surplus or deficit',cut:'a -500 kcal deficit'}[profile.goal||'bulk'];
+  const r=_weeklyRateKg(bodyWeight);
+  const gWord={bulk:'a surplus targeting +0.25%/wk',maintain:'no surplus or deficit',cut:'a deficit targeting -0.7%/wk'}[profile.goal||'bulk']
+    + (r?' (' + (r>0?'+':'') + r.toFixed(2) + ' kg/wk)':'');
   el.textContent=_profileComplete()
     ? 'Mifflin-St Jeor (' + (profile.sex==='male'?'male':'female') + ', ' + profile.age + 'y, ' + profile.heightCm + 'cm) x 1.55 activity, with ' + gWord + '. Target: ' + TARGETS.kcal.toLocaleString() + ' kcal.'
     : 'Answer sex, age and height to switch from the weight-only estimate to Mifflin-St Jeor, the standard BMR equation.';
@@ -2420,6 +2424,44 @@ function renderProfileNote(){
 
 // Cal AI's onboarding pattern: one question per screen, a progress bar, a Continue pill.
 // Shown automatically on first run (nothing answered yet), and re-runnable from Settings.
+// ── Goal rates, as % of bodyweight per week ──────────────────────────────────────────────
+// Bulk 0.25%/wk: gaining at 0.24-0.38%/wk partitions roughly 70-75% lean / 25-30% fat, and
+//   0.25% is the boundary between the beginner (0.25-0.5%) and intermediate (0.1-0.25%)
+//   recommendations — past ~0.5%/wk the extra energy mostly goes to fat.
+// Cut 0.7%/wk: Ruiz-Castellano et al. 2021 (Nutrients 13:3255) set intake to lose 0.5-1.0%/wk
+//   to preserve fat-free mass, advising the leaner you are the more conservative the deficit.
+//   0.7% sits mid-range.
+// 7700 kcal/kg is the conventional energy-per-kg figure. It is an approximation — real tissue
+// change is a lean/fat mix — so the projection below is an estimate, and is labelled as one.
+const GOAL_RATE_PCT={bulk:0.0025, maintain:0, cut:-0.007};
+const KCAL_PER_KG=7700;
+function _weeklyRateKg(kg){ return (kg||bodyWeight)*(GOAL_RATE_PCT[profile.goal||'bulk']||0); }
+
+// How long the current goal takes at the current rate, if nothing changes.
+function goalProjection(){
+  if(typeof goalWeight!=='number'||!goalWeight) return {state:'no-goal'};
+  const delta=goalWeight-bodyWeight;
+  if(Math.abs(delta)<0.25) return {state:'reached'};
+  const rate=_weeklyRateKg(bodyWeight);
+  if(!rate) return {state:'maintaining', delta};
+  if((delta>0)!==(rate>0)) return {state:'wrong-way', delta, rate};
+  const weeks=Math.abs(delta/rate);
+  const date=new Date(Date.now()+weeks*7*86400000);
+  return {state:'ok', weeks, date, rate, delta};
+}
+
+function projectionText(){
+  const p=goalProjection();
+  if(p.state==='no-goal')      return 'Set a goal weight to see a projected date.';
+  if(p.state==='reached')      return 'You are at your goal weight.';
+  if(p.state==='maintaining')  return 'Maintaining — no projected change in weight.';
+  if(p.state==='wrong-way')    return 'Your goal is ' + (p.delta>0?'above':'below') + ' your current weight, but you are ' +
+                                      (p.rate>0?'bulking':'cutting') + '. Switch goal, or change the target.';
+  const wk=p.weeks<1?'under a week':(p.weeks<2?'about a week':Math.round(p.weeks)+' weeks');
+  return 'About ' + wk + ' to ' + goalWeight + 'kg at ' + Math.abs(p.rate).toFixed(2) + ' kg/week — around ' +
+         p.date.toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'}) + '. Estimate, assuming you hold the plan.';
+}
+
 const OB_STEPS=['goal','sex','age','height','weight'];
 let _obIdx=0;
 function startOnboarding(){ _obIdx=0; _renderOnboarding(); document.getElementById('onboarding').hidden=false; }
@@ -2448,7 +2490,7 @@ function _renderOnboarding(){
 
   const Q={
     goal:{t:'What are you aiming for?', s:'This sets whether your calories run above, at, or below maintenance.',
-      body:seg('goal',[['bulk','Bulking','Lean gain, about +250 kcal'],['maintain','Maintain','Hold your current weight'],['cut','Cutting','About -500 kcal, protein goes up']])},
+      body:seg('goal',[['bulk','Bulking','+0.25% bodyweight a week — the rate that stays mostly lean'],['maintain','Maintain','Hold your current weight'],['cut','Cutting','-0.7% a week, and protein goes up to protect muscle']])},
     sex:{t:'Which should we calculate for?', s:'Sex changes the BMR equation by about 166 kcal.',
       body:seg('sex',[['male','Male',''],['female','Female','']])},
     age:{t:'How old are you?', s:'Used in the BMR equation.',
@@ -2473,18 +2515,18 @@ function _renderOnboarding(){
 }
 
 function calcTargets(kg){
-  // Protein climbs in a deficit — the evidence for a higher intake while cutting is about
-  // protecting lean mass when energy is scarce, which is exactly the V-taper risk here.
+  // Protein climbs in a deficit. Ruiz-Castellano et al. 2021 put the fat-loss-phase range at
+  // 2.2-3.0 g/kg bodyweight; Helms et al. 2014 made the same case for higher intakes in lean,
+  // resistance-trained athletes. Outside a deficit the usual 2.0-2.2 g/kg stands.
   const cutting=(profile.goal==='cut');
   const protLow=Math.round(kg*(cutting?2.2:2.0));
   const protHigh=Math.round(kg*(cutting?2.6:2.2));
   // Kcal: ~35 kcal/kg maintenance + a lean-gain surplus → aims ~0.2–0.35 kg/week.
   // Titrate LEAN_GAIN_SURPLUS by the weekly weight trend: gaining >0.35 kg/wk means it's too big
   // (fat outpacing muscle, and the waist is half the V-taper ratio). Single knob, set to the scale.
-  // Bulk aims ~0.2-0.35 kg/week; cut ~0.45 kg/week, the usual ceiling before lean mass starts
-  // going with it. Maintain sits at estimated expenditure.
-  const GOAL_DELTA={bulk:250, maintain:0, cut:-500};
-  const LEAN_GAIN_SURPLUS=GOAL_DELTA[profile.goal||'bulk'];
+  // The calorie delta is derived from a target RATE rather than being a flat number, because
+  // that is what the literature actually specifies and it scales with bodyweight.
+  const LEAN_GAIN_SURPLUS=Math.round(_weeklyRateKg(kg)*KCAL_PER_KG/7);
   // With sex/age/height answered, use Mifflin-St Jeor — the standard BMR equation and the one
   // Cal AI's onboarding is effectively asking for. 1.55 is the "moderately active" multiplier,
   // which matches 3 sessions per 4-day cycle on top of shift work. Without a full profile the
@@ -7038,7 +7080,8 @@ function _renderGoalChart(){
   const s=_weightSeries();
   if(s.length<2){
     el.innerHTML='<div class="gp-card"><div class="gp-head"><span class="gp-title">Goal progress</span></div>'+
-      '<div class="gp-empty">Log your weight on at least two days to see the trend. Use the &minus; / + on the Fuel tab.</div></div>';
+      '<div class="gp-empty">Log your weight on two or more days to see the trend — update it in the Your plan card on Home.</div>'+
+      '<div class="gp-proj"><span>'+projectionText()+'</span></div></div>';
     return;
   }
   const kgs=s.map(e=>e.kg);
@@ -7072,6 +7115,7 @@ function _renderGoalChart(){
     </div>
     <div class="gp-foot"><span>${new Date(s[0].date+'T12:00:00Z').toLocaleDateString('en-SG',{day:'numeric',month:'short',timeZone:'UTC'})}</span><span>${new Date(s[s.length-1].date+'T12:00:00Z').toLocaleDateString('en-SG',{day:'numeric',month:'short',timeZone:'UTC'})}</span></div>
     <div class="gp-note">${dirWord}</div>
+    <div class="gp-proj"><i class="ti ti-target-arrow" aria-hidden="true"></i><span>${projectionText()}</span></div>
   </div>`;
 }
 
@@ -7112,29 +7156,10 @@ function recordWeightHistory(kg){
   if(weightHistory.length>90) weightHistory=weightHistory.slice(-90);
   save();renderWeightChart();
 }
-function renderWeightChart(){
-  const canvas=document.getElementById('wh-canvas');
-  const noteEl=document.getElementById('wh-note');
-  if(!canvas) return;
-  if(weightHistory.length<2){canvas.style.display='none';if(noteEl) noteEl.textContent='Tap − / + above to log weight changes';return;}
-  canvas.style.display='block';
-  const W=canvas.offsetWidth||320;canvas.width=W*2;canvas.height=96;
-  const ctx=canvas.getContext('2d');ctx.scale(2,2);
-  const w=W,h=48,pad={t:6,r:8,b:6,l:28};
-  ctx.clearRect(0,0,w,h);
-  const kgs=weightHistory.map(e=>e.kg),minK=Math.min(...kgs)-.5,maxK=Math.max(...kgs)+.5,range=maxK-minK||1;
-  const cw=w-pad.l-pad.r,ch=h-pad.t-pad.b,n=weightHistory.length;
-  ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;
-  [0,.5,1].forEach(t=>{const y=pad.t+ch*(1-t);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();ctx.fillStyle='rgba(255,255,255,.28)';ctx.font='8px -apple-system,sans-serif';ctx.textAlign='right';ctx.fillText((minK+range*t).toFixed(1),pad.l-3,y+3);});
-  ctx.beginPath();ctx.strokeStyle=_ac();ctx.lineWidth=1.5;ctx.lineJoin='round';
-  weightHistory.forEach((e,i)=>{const x=pad.l+i/(n-1)*cw,y=pad.t+ch*(1-(e.kg-minK)/range);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
-  ctx.stroke();
-  ctx.beginPath();
-  weightHistory.forEach((e,i)=>{const x=pad.l+i/(n-1)*cw,y=pad.t+ch*(1-(e.kg-minK)/range);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
-  ctx.lineTo(pad.l+cw,pad.t+ch);ctx.lineTo(pad.l,pad.t+ch);ctx.closePath();ctx.fillStyle=_ac(.08);ctx.fill();
-  const delta=weightHistory[n-1].kg-weightHistory[0].kg;
-  if(noteEl){noteEl.textContent=(delta>0?'+':'')+delta.toFixed(1)+'kg over '+n+' entries';noteEl.style.color=delta<=0?'var(--teal)':'var(--amber)';}
-}
+// Drew the weight sparkline on the Home tab. That strip was removed — the weight trend now
+// lives on the Progress tab as an SVG chart — so the canvas it drew into no longer exists.
+// Kept as a no-op because recordWeightHistory() and others still call it.
+function renderWeightChart(){ /* weight sparkline removed from Home */ }
 
 const _origAdjustWeight=window.adjustWeight;
 window.adjustWeight=function(delta){
