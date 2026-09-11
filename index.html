@@ -302,6 +302,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .sec-label-inline{font-size:15px;font-weight:700;letter-spacing:-.01em;color:var(--t1);margin:1.25rem 0 .5rem;display:block}
 /* ── PROGRESS: calendar heatmap + stats + milestones ── */
 .prog-pair{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.75rem}
+.prof-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem}
+.prof-field{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--t3)}
+.prof-field input{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-sm);color:var(--t1);font-family:inherit;font-size:14px;font-weight:700;padding:8px 10px;width:100%}
+.custom-seg-btn.on{background:var(--focus-ac);color:var(--focus-ac-ink);font-weight:700}
 .pp-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem}
 .pp-lbl{font-size:12px;color:var(--t2)}
 .pp-big{font-size:26px;font-weight:800;letter-spacing:-.03em;color:var(--t1);line-height:1.1;margin:2px 0 8px;font-variant-numeric:tabular-nums}
@@ -689,12 +693,16 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .macro-cell.is-hit .mc-val{color:var(--focus-ac)}
 .macro-cell.is-over .mc-val{color:var(--amber)}
 .macro-cell.is-over .mc-lbl{color:var(--amber)}
-.card-deck{display:grid;grid-auto-flow:column;grid-auto-columns:100%;gap:.5rem;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin-bottom:.5rem}
+/* Without an explicit touch-action the page claimed the horizontal gesture and the whole view
+   slid instead of the deck. pan-y keeps vertical page scrolling working from on top of it. */
+.card-deck{display:grid;grid-auto-flow:column;grid-auto-columns:100%;gap:.5rem;overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x pan-y;scroll-snap-type:x mandatory;scrollbar-width:none;margin-bottom:.5rem}
 .card-deck::-webkit-scrollbar{display:none}
 .deck-page{scroll-snap-align:start;min-width:0;display:flex;flex-direction:column}
 .deck-page>*{flex:1;min-height:0}
 .deck-dots{display:flex;justify-content:center;gap:5px;margin-bottom:.75rem}
-.deck-dots span{width:5px;height:5px;border-radius:50%;background:var(--b3);transition:background .2s}
+.deck-dots button{width:22px;height:22px;padding:0;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.deck-dots button::after{content:'';width:5px;height:5px;border-radius:50%;background:var(--b3);transition:background .2s}
+.deck-dots button.on::after{background:var(--t2)}
 .deck-dots span.on{background:var(--t2)}
 .hs-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem 1rem;height:100%}
 .hs-empty{display:flex;align-items:center;font-size:12px;color:var(--t3);line-height:1.5}
@@ -714,7 +722,10 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .hs-val{font-weight:700;color:var(--t1);font-variant-numeric:tabular-nums}
 .hs-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .hs-dot.ok{background:var(--green)}.hs-dot.mid{background:var(--amber)}.hs-dot.bad{background:var(--red)}
+/* The settings + camera buttons are position:absolute at top-right with z-index 150, so a
+   right-aligned streak pill rendered underneath them and was invisible. Reserve their width. */
 .fuel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;padding:.5rem 0 0;margin-bottom:13px}
+.fuel-head>:last-child{margin-right:112px}
 .streak-pill{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:var(--t1);background:var(--s1);border:1px solid var(--b1);border-radius:20px;padding:5px 11px;min-height:30px}
 .streak-pill:empty{display:none}
 .streak-pill i{font-size:14px;color:var(--macro-carb)}
@@ -1567,6 +1578,29 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     </div>
 
     <div class="settings-section">
+      <div class="settings-section-title">Profile</div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">About you</div>
+          <div class="settings-row-sub">Used to work out your calorie target</div>
+        </div>
+      </div>
+      <div class="custom-seg" style="margin-top:.5rem">
+        <button class="custom-seg-btn" id="sex-male" onclick="setProfile('sex','male')">Male</button>
+        <button class="custom-seg-btn" id="sex-female" onclick="setProfile('sex','female')">Female</button>
+      </div>
+      <div class="prof-grid">
+        <label class="prof-field"><span>Age</span>
+          <input type="number" inputmode="numeric" id="prof-age" min="13" max="100" placeholder="--"
+            onchange="setProfile('age',this.value)"></label>
+        <label class="prof-field"><span>Height (cm)</span>
+          <input type="number" inputmode="numeric" id="prof-height" min="120" max="230" placeholder="--"
+            onchange="setProfile('heightCm',this.value)"></label>
+      </div>
+      <div class="settings-row-sub" id="profile-note" style="margin-top:.5rem"></div>
+    </div>
+
+    <div class="settings-section">
       <div class="settings-section-title">Shift</div>
       <div class="settings-row">
         <div>
@@ -1947,7 +1981,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 <!-- ===== BOTTOM NAV ===== -->
 <nav class="bottom-nav" id="bottom-nav">
   <button class="nav-btn active" id="nav-nutrition" onclick="go('nutrition')">
-    <i class="ti ti-flame"></i><span>Fuel</span>
+    <i class="ti ti-flame"></i><span>Home</span>
   </button>
   <button class="nav-btn" id="nav-training" onclick="go('training')">
     <i class="ti ti-barbell"></i><span>Train</span>
@@ -1962,7 +1996,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 <div class="page active" id="page-nutrition">
 
   <div class="fuel-head">
-    <div><div class="coach-eyebrow">Fuel</div><div class="coach-h1" style="margin-bottom:0">Intake</div></div>
+    <div><div class="coach-eyebrow">Home</div><div class="coach-h1" style="margin-bottom:0">Intake</div></div>
     <div class="streak-pill" id="fuel-streak"></div>
   </div>
   <!-- Cal AI's week strip. Backed by weekHistory (per-day macros already stamped on every
@@ -1983,7 +2017,11 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     <div class="deck-page" id="health-card"></div>
     <div class="deck-page" id="steps-card"></div>
   </div>
-  <div class="deck-dots" id="deck-dots" aria-hidden="true"><span class="on"></span><span></span><span></span></div>
+  <div class="deck-dots" id="deck-dots">
+    <button class="on" onclick="goDeckPage(0)" aria-label="Macros"></button>
+    <button onclick="goDeckPage(1)" aria-label="Health score"></button>
+    <button onclick="goDeckPage(2)" aria-label="Steps"></button>
+  </div>
 
   <button class="fuel-log-btn mo-rise" onclick="openMealLogger()"><i class="ti ti-plus" style="font-size:15px"></i>Log a meal</button>
 
@@ -2260,6 +2298,39 @@ let bodyWeight=74;
 // A real variable can't disappear when unrelated markup gets cleaned up.
 let dayStreak=0;
 
+// Sex, age and height let the calorie target use Mifflin-St Jeor instead of a flat kcal/kg
+// estimate. Stored on its own key like the other preferences; null until answered, and
+// calcTargets falls back to the weight-only estimate rather than guessing any of them.
+let profile={sex:null,age:null,heightCm:null};
+try{ const s=JSON.parse(localStorage.getItem('profile')||'null'); if(s&&typeof s==='object') profile={sex:s.sex||null,age:s.age||null,heightCm:s.heightCm||null}; }catch(e){}
+function _profileComplete(){ return !!(profile.sex && profile.age>0 && profile.heightCm>0); }
+function setProfile(field,value){
+  if(field==='sex') profile.sex = (value==='male'||value==='female') ? value : null;
+  else {
+    const n=parseFloat(value);
+    const ok = field==='age' ? (n>=13&&n<=100) : (n>=120&&n<=230);
+    profile[field] = ok ? Math.round(n) : null;
+  }
+  try{ localStorage.setItem('profile',JSON.stringify(profile)); }catch(e){}
+  applyWeight(bodyWeight);          // targets recompute from the new profile
+  renderProfileNote();
+  save();
+}
+function renderProfileNote(){
+  const el=document.getElementById('profile-note');
+  if(!el) return;
+  el.textContent=_profileComplete()
+    ? 'Calorie target uses Mifflin-St Jeor (' + (profile.sex==='male'?'male':'female') + ', ' + profile.age + 'y, ' + profile.heightCm + 'cm) x 1.55 activity, plus the lean-gain surplus.'
+    : 'Answer all three to switch from the weight-only estimate to Mifflin-St Jeor, the standard BMR equation.';
+  ['male','female'].forEach(s=>{
+    const b=document.getElementById('sex-'+s);
+    if(b) b.classList.toggle('on', profile.sex===s);
+  });
+  const a=document.getElementById('prof-age'), ht=document.getElementById('prof-height');
+  if(a && profile.age) a.value=profile.age;
+  if(ht && profile.heightCm) ht.value=profile.heightCm;
+}
+
 function calcTargets(kg){
   const protLow=Math.round(kg*2.0);
   const protHigh=Math.round(kg*2.2);
@@ -2267,7 +2338,18 @@ function calcTargets(kg){
   // Titrate LEAN_GAIN_SURPLUS by the weekly weight trend: gaining >0.35 kg/wk means it's too big
   // (fat outpacing muscle, and the waist is half the V-taper ratio). Single knob, set to the scale.
   const LEAN_GAIN_SURPLUS=250;
-  const kcalCalc=Math.round(kg*35)+LEAN_GAIN_SURPLUS;
+  // With sex/age/height answered, use Mifflin-St Jeor — the standard BMR equation and the one
+  // Cal AI's onboarding is effectively asking for. 1.55 is the "moderately active" multiplier,
+  // which matches 3 sessions per 4-day cycle on top of shift work. Without a full profile the
+  // old flat 35 kcal/kg stands in rather than guessing a sex or a height.
+  const ACTIVITY=1.55;
+  let kcalCalc;
+  if(_profileComplete()){
+    const bmr = 10*kg + 6.25*profile.heightCm - 5*profile.age + (profile.sex==='male' ? 5 : -161);
+    kcalCalc = Math.round(bmr*ACTIVITY) + LEAN_GAIN_SURPLUS;
+  } else {
+    kcalCalc = Math.round(kg*35) + LEAN_GAIN_SURPLUS;
+  }
   // Hydration: 35ml/kg total fluid minus ~800ml from food/Rokeby, rounded to nearest 250ml
   const hydroCalc=Math.max(1500,Math.min(3000,Math.round((kg*35-800)/250)*250));
   // Carbs = whatever's left after protein and fat — the standard evidence-based ordering
@@ -2593,16 +2675,32 @@ function renderStepsCard(){
   </div>`;
 }
 
+// Tapping a dot is the reliable way through the deck — swiping competes with the page.
+// Page positions in the deck's own scroll coordinates. offsetLeft is relative to the padded
+// page container, so page 0 does not start at 0 — everything is measured against it.
+function _deckPos(deck){
+  const pg=[...deck.querySelectorAll('.deck-page')];
+  const base=pg.length?pg[0].offsetLeft:0;
+  return {pg, at:i=>pg[i].offsetLeft-base};
+}
+
+function goDeckPage(i){
+  const deck=document.getElementById('card-deck');
+  if(!deck) return;
+  const {pg,at}=_deckPos(deck);
+  if(pg[i]) deck.scrollLeft=at(i);
+}
+
 // Page dots follow the deck's scroll position.
 function _syncDeckDots(){
   const deck=document.getElementById('card-deck');
   const dots=document.getElementById('deck-dots');
   if(!deck||!dots) return;
-  // Pick the page nearest the current scroll position rather than dividing by the page
-  // width — the deck has a gap between pages, so the two drift apart as you scroll.
-  const pages=[...deck.querySelectorAll(String.fromCharCode(46)+String.fromCharCode(100,101,99,107)+String.fromCharCode(45)+String.fromCharCode(112,97,103,101))];
+  // Pick the page nearest the current scroll position rather than dividing by the page width —
+  // the deck has a gap between pages, so the two drift apart as you scroll.
+  const {pg:pages,at}=_deckPos(deck);
   let i=0, best=Infinity;
-  pages.forEach((pg,n)=>{ const d=Math.abs(pg.offsetLeft-deck.scrollLeft); if(d<best){best=d;i=n;} });
+  pages.forEach((_,n)=>{ const d=Math.abs(at(n)-deck.scrollLeft); if(d<best){best=d;i=n;} });
   [...dots.children].forEach((d,n)=>d.classList.toggle('on',n===i));
 }
 
@@ -6554,6 +6652,7 @@ function updateStreakMilestoneHint(){
 
 // ── SETTINGS MODAL ──
 function openSettings(){
+  setTimeout(()=>{ try{ renderProfileNote(); }catch(e){} },0);
   const sz=new Blob([localStorage.getItem('protocol_v2')||'']).size;
   const el=document.getElementById('settings-data-size');
   if(el) el.textContent=sz>1024?Math.round(sz/1024)+'KB':sz+'B';
