@@ -302,6 +302,40 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .sec-label-inline{font-size:15px;font-weight:700;letter-spacing:-.01em;color:var(--t1);margin:1.25rem 0 .5rem;display:block}
 /* ── PROGRESS: calendar heatmap + stats + milestones ── */
 .prog-pair{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.75rem}
+.bottom-nav .nav-btn{min-width:0}
+.add-fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:110;width:56px;height:56px;border-radius:50%;border:none;background:var(--focus-ac);color:var(--focus-ac-ink);font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--sh-lg);transition:transform .12s cubic-bezier(.34,1.56,.64,1)}
+.add-fab:active{transform:scale(.9)}
+.pd-row{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.7rem 0;border-bottom:1px solid var(--b1)}
+.pd-row:last-of-type{border-bottom:none}
+.pd-name{font-size:13px;color:var(--t2)}
+.pd-val{display:inline-flex;align-items:baseline;gap:3px}
+.pd-val input{width:62px;text-align:right;background:none;border:none;border-bottom:1px dashed var(--b2);color:var(--t1);font-family:inherit;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;padding:1px 2px;-moz-appearance:textfield}
+.pd-val input:focus{outline:none;border-bottom-color:var(--focus-ac)}
+.pd-val input::-webkit-outer-spin-button,.pd-val input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.pd-val i{font-size:11px;font-style:normal;font-weight:600;color:var(--t3)}
+.pd-goal-btn{font-size:13px;font-weight:700;color:var(--focus-ac-ink);background:var(--focus-ac);border:none;border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit}
+.ob-wrap{position:fixed;inset:0;z-index:400;background:var(--bg);display:flex;flex-direction:column}
+.ob-wrap[hidden]{display:none}
+.ob-sheet{flex:1;display:flex;flex-direction:column;max-width:520px;width:100%;margin:0 auto;padding:calc(14px + env(safe-area-inset-top,0px)) 1.25rem calc(18px + env(safe-area-inset-bottom,0px))}
+.ob-top{display:flex;align-items:center;gap:.75rem;margin-bottom:1.75rem}
+.ob-back{width:34px;height:34px;border-radius:50%;border:none;background:var(--s2);color:var(--t1);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:16px}
+.ob-prog{flex:1;height:4px;border-radius:2px;background:var(--s3);overflow:hidden}
+.ob-prog span{display:block;height:100%;background:var(--t1);border-radius:2px;transition:width .3s cubic-bezier(.4,0,.2,1)}
+.ob-body{flex:1;min-height:0;overflow-y:auto}
+.ob-q{font-size:30px;font-weight:800;letter-spacing:-.035em;line-height:1.1;color:var(--t1);margin-bottom:.5rem}
+.ob-s{font-size:14px;color:var(--t2);line-height:1.5;margin-bottom:1.75rem}
+.ob-opts{display:flex;flex-direction:column;gap:.5rem}
+.ob-opt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;width:100%;padding:1rem 1.125rem;border-radius:var(--r-lg);border:1.5px solid var(--b1);background:var(--s1);color:var(--t1);cursor:pointer;font-family:inherit}
+.ob-opt.on{border-color:var(--t1);background:var(--s2)}
+.ob-opt-t{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.ob-opt-s{font-size:12px;color:var(--t2)}
+.ob-input{display:flex;align-items:baseline;gap:8px;border-bottom:2px solid var(--b2);padding-bottom:8px}
+.ob-input input{flex:1;min-width:0;background:none;border:none;color:var(--t1);font-family:inherit;font-size:40px;font-weight:800;letter-spacing:-.03em;padding:0;-moz-appearance:textfield}
+.ob-input input:focus{outline:none}
+.ob-input input::-webkit-outer-spin-button,.ob-input input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.ob-input span{font-size:15px;font-weight:600;color:var(--t3);flex-shrink:0}
+.ob-cta{width:100%;padding:16px;border-radius:var(--r-lg);border:none;background:var(--focus-ac);color:var(--focus-ac-ink);font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;flex-shrink:0;margin-top:1rem}
+.ob-cta[disabled]{opacity:.35;pointer-events:none}
 .prof-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem}
 .prof-field{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--t3)}
 .prof-field input{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-sm);color:var(--t1);font-family:inherit;font-size:14px;font-weight:700;padding:8px 10px;width:100%}
@@ -725,7 +759,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 /* The settings + camera buttons are position:absolute at top-right with z-index 150, so a
    right-aligned streak pill rendered underneath them and was invisible. Reserve their width. */
 .fuel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;padding:.5rem 0 0;margin-bottom:13px}
-.fuel-head>:last-child{margin-right:112px}
+.fuel-head>:last-child{margin-right:66px}
 .streak-pill{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:var(--t1);background:var(--s1);border:1px solid var(--b1);border-radius:20px;padding:5px 11px;min-height:30px}
 .streak-pill:empty{display:none}
 .streak-pill i{font-size:14px;color:var(--macro-carb)}
@@ -1586,6 +1620,11 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
         </div>
       </div>
       <div class="custom-seg" style="margin-top:.5rem">
+        <button class="custom-seg-btn" id="goal-cut" onclick="setProfile('goal','cut')">Cutting</button>
+        <button class="custom-seg-btn" id="goal-maintain" onclick="setProfile('goal','maintain')">Maintain</button>
+        <button class="custom-seg-btn" id="goal-bulk" onclick="setProfile('goal','bulk')">Bulking</button>
+      </div>
+      <div class="custom-seg" style="margin-top:.5rem">
         <button class="custom-seg-btn" id="sex-male" onclick="setProfile('sex','male')">Male</button>
         <button class="custom-seg-btn" id="sex-female" onclick="setProfile('sex','female')">Female</button>
       </div>
@@ -1598,6 +1637,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
             onchange="setProfile('heightCm',this.value)"></label>
       </div>
       <div class="settings-row-sub" id="profile-note" style="margin-top:.5rem"></div>
+      <button class="fb-btn" style="margin-top:.625rem;width:100%" onclick="startOnboarding()"><i class="ti ti-wand"></i>Run setup again</button>
     </div>
 
     <div class="settings-section">
@@ -1716,7 +1756,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
 
   <!-- Settings + camera quick-log buttons — top right corner, side by side -->
-<button id="settings-fab" onclick="openSettings()" aria-label="Settings"
+<button id="settings-fab" onclick="openSettings()" aria-label="Settings" hidden
   style="position:absolute;top:14px;right:68px;z-index:150;width:44px;height:44px;background:var(--s2);border:1px solid var(--b2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s cubic-bezier(.34,1.4,.5,1),background .12s">
   <i class="ti ti-settings" style="font-size:17px;color:var(--t2)" aria-hidden="true"></i>
 </button>
@@ -1978,6 +2018,8 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 </div>
 
 <div class="shell">
+<div id="onboarding" class="ob-wrap" hidden></div>
+
 <!-- ===== BOTTOM NAV ===== -->
 <nav class="bottom-nav" id="bottom-nav">
   <button class="nav-btn active" id="nav-nutrition" onclick="go('nutrition')">
@@ -1989,7 +2031,13 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
   <button class="nav-btn" id="nav-insights" onclick="go('insights')">
     <i class="ti ti-calendar-stats"></i><span>Progress</span>
   </button>
+  <button class="nav-btn" id="nav-settings" onclick="openSettings()">
+    <i class="ti ti-settings"></i><span>Settings</span>
+  </button>
 </nav>
+<!-- Cal AI's circular add button, sitting above the tab bar. Replaces the inline
+     "Log a meal" button, which did the same job in a less reachable place. -->
+<button class="add-fab" onclick="openMealLogger()" aria-label="Log a meal"><i class="ti ti-plus" aria-hidden="true"></i></button>
 </div>
 
 <!-- ===== TRACKER ===== -->
@@ -2023,7 +2071,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     <button onclick="goDeckPage(2)" aria-label="Steps"></button>
   </div>
 
-  <button class="fuel-log-btn mo-rise" onclick="openMealLogger()"><i class="ti ti-plus" style="font-size:15px"></i>Log a meal</button>
 
   <!-- Water — Cal AI's dedicated stepper row. The step button replaces the old fixed
        +250/+500/+1L trio; the minus button replaces Undo. Rendered by renderWaterCard(). -->
@@ -2032,18 +2079,32 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
   <div class="sec-label" id="meal-log-label" style="display:none">Recently logged</div>
   <div id="meal-log-list" class="mo-rise" style="margin:0 0 1.25rem"></div>
 
-  <!-- ── Body weight + live targets ── -->
+  <!-- ── Your plan — Cal AI's Personal Details row list. Every value is editable in place. ── -->
+  <div class="sec-label">Your plan</div>
   <div class="fuel-wt-card mo-rise">
-    <div class="fuel-wt-top">
-      <div>
-        <div class="fuel-wt-label">Body weight</div>
-        <div class="page-note" style="margin-top:2px">Targets recalibrate automatically</div>
-      </div>
-      <div class="weight-control">
-        <button class="wt-btn" onclick="adjustWeight(-0.5)" aria-label="Decrease weight by 0.5 kg">−</button>
-        <div class="wt-display"><span id="nut-weight-display">74</span><span class="wt-unit">kg</span></div>
-        <button class="wt-btn" onclick="adjustWeight(0.5)" aria-label="Increase weight by 0.5 kg">+</button>
-      </div>
+    <div class="pd-row">
+      <span class="pd-name">Current weight</span>
+      <span class="pd-val"><input type="number" inputmode="decimal" step="0.1" min="40" max="150"
+        id="nut-weight-display" value="74" onchange="setWeightInput(this.value)" aria-label="Current weight in kilograms"><i>kg</i></span>
+    </div>
+    <div class="pd-row">
+      <span class="pd-name">Goal weight</span>
+      <span class="pd-val"><input type="number" inputmode="decimal" step="0.5" min="40" max="150"
+        id="pd-goal-w" placeholder="--" onchange="setGoalWeight(this.value)" aria-label="Goal weight in kilograms"><i>kg</i></span>
+    </div>
+    <div class="pd-row">
+      <span class="pd-name">Height</span>
+      <span class="pd-val"><input type="number" inputmode="numeric" min="120" max="230"
+        id="pd-height" placeholder="--" onchange="setProfile('heightCm',this.value)" aria-label="Height in centimetres"><i>cm</i></span>
+    </div>
+    <div class="pd-row">
+      <span class="pd-name">Age</span>
+      <span class="pd-val"><input type="number" inputmode="numeric" min="13" max="100"
+        id="pd-age" placeholder="--" onchange="setProfile('age',this.value)" aria-label="Age in years"><i>yrs</i></span>
+    </div>
+    <div class="pd-row">
+      <span class="pd-name">Goal</span>
+      <button class="pd-goal-btn" id="pd-goal" onclick="startOnboarding()">Bulking</button>
     </div>
     <div class="fuel-tgt-strip">
       <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="nut-prot-target">148–163g</div><span class="fuel-tgt-lbl">Protein</span></div>
@@ -2301,11 +2362,12 @@ let dayStreak=0;
 // Sex, age and height let the calorie target use Mifflin-St Jeor instead of a flat kcal/kg
 // estimate. Stored on its own key like the other preferences; null until answered, and
 // calcTargets falls back to the weight-only estimate rather than guessing any of them.
-let profile={sex:null,age:null,heightCm:null};
-try{ const s=JSON.parse(localStorage.getItem('profile')||'null'); if(s&&typeof s==='object') profile={sex:s.sex||null,age:s.age||null,heightCm:s.heightCm||null}; }catch(e){}
+let profile={sex:null,age:null,heightCm:null,goal:'bulk'};
+try{ const s=JSON.parse(localStorage.getItem('profile')||'null'); if(s&&typeof s==='object') profile={sex:s.sex||null,age:s.age||null,heightCm:s.heightCm||null,goal:s.goal||'bulk'}; }catch(e){}
 function _profileComplete(){ return !!(profile.sex && profile.age>0 && profile.heightCm>0); }
 function setProfile(field,value){
-  if(field==='sex') profile.sex = (value==='male'||value==='female') ? value : null;
+  if(field==='goal') profile.goal = ['bulk','cut','maintain'].includes(value) ? value : 'bulk';
+  else if(field==='sex') profile.sex = (value==='male'||value==='female') ? value : null;
   else {
     const n=parseFloat(value);
     const ok = field==='age' ? (n>=13&&n<=100) : (n>=120&&n<=230);
@@ -2314,14 +2376,39 @@ function setProfile(field,value){
   try{ localStorage.setItem('profile',JSON.stringify(profile)); }catch(e){}
   applyWeight(bodyWeight);          // targets recompute from the new profile
   renderProfileNote();
+  renderPlanRows();
   save();
 }
+// The plan rows duplicate state that lives in several places, so repaint them from one spot.
+function renderPlanRows(){
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el && document.activeElement!==el) el.value = (v==null?'':v); };
+  set('nut-weight-display', bodyWeight);
+  set('pd-goal-w', typeof goalWeight!=='undefined' ? goalWeight : null);
+  set('pd-height', profile.heightCm);
+  set('pd-age', profile.age);
+  const g=document.getElementById('pd-goal');
+  if(g) g.textContent={bulk:'Bulking',cut:'Cutting',maintain:'Maintain'}[profile.goal||'bulk'];
+}
+
+// Typed weight replaces the -/+ steppers; clamp to the same range adjustWeight used.
+function setWeightInput(v){
+  const n=parseFloat(v);
+  if(!(n>=40&&n<=150)){ renderPlanRows(); return; }
+  applyWeight(Math.round(n*10)/10);
+  renderPlanRows();
+}
+
 function renderProfileNote(){
   const el=document.getElementById('profile-note');
   if(!el) return;
+  const gWord={bulk:'a +250 kcal lean-gain surplus',maintain:'no surplus or deficit',cut:'a -500 kcal deficit'}[profile.goal||'bulk'];
   el.textContent=_profileComplete()
-    ? 'Calorie target uses Mifflin-St Jeor (' + (profile.sex==='male'?'male':'female') + ', ' + profile.age + 'y, ' + profile.heightCm + 'cm) x 1.55 activity, plus the lean-gain surplus.'
-    : 'Answer all three to switch from the weight-only estimate to Mifflin-St Jeor, the standard BMR equation.';
+    ? 'Mifflin-St Jeor (' + (profile.sex==='male'?'male':'female') + ', ' + profile.age + 'y, ' + profile.heightCm + 'cm) x 1.55 activity, with ' + gWord + '. Target: ' + TARGETS.kcal.toLocaleString() + ' kcal.'
+    : 'Answer sex, age and height to switch from the weight-only estimate to Mifflin-St Jeor, the standard BMR equation.';
+  ['bulk','cut','maintain'].forEach(g=>{
+    const b=document.getElementById('goal-'+g);
+    if(b) b.classList.toggle('on', (profile.goal||'bulk')===g);
+  });
   ['male','female'].forEach(s=>{
     const b=document.getElementById('sex-'+s);
     if(b) b.classList.toggle('on', profile.sex===s);
@@ -2331,25 +2418,88 @@ function renderProfileNote(){
   if(ht && profile.heightCm) ht.value=profile.heightCm;
 }
 
+// Cal AI's onboarding pattern: one question per screen, a progress bar, a Continue pill.
+// Shown automatically on first run (nothing answered yet), and re-runnable from Settings.
+const OB_STEPS=['goal','sex','age','height','weight'];
+let _obIdx=0;
+function startOnboarding(){ _obIdx=0; _renderOnboarding(); document.getElementById('onboarding').hidden=false; }
+function _obClose(){ const el=document.getElementById('onboarding'); if(el) el.hidden=true; try{ localStorage.setItem('onboardingDone','1'); }catch(e){} }
+function obBack(){ if(_obIdx===0) return _obClose(); _obIdx--; _renderOnboarding(); }
+function obNext(){
+  if(_obIdx>=OB_STEPS.length-1){
+    applyWeight(bodyWeight);
+    _obClose();
+    try{ showToast('Plan set — '+TARGETS.kcal.toLocaleString()+' kcal, '+TARGETS.prot+'g protein','food'); }catch(e){}
+    return;
+  }
+  _obIdx++; _renderOnboarding();
+}
+function obPick(field,value){ setProfile(field,value); _renderOnboarding(); }
+function obWeight(v){ const n=parseFloat(v); if(n>=40&&n<=150){ applyWeight(Math.round(n*10)/10); _renderOnboarding(); } }
+
+function _renderOnboarding(){
+  const el=document.getElementById('onboarding');
+  if(!el) return;
+  const step=OB_STEPS[_obIdx];
+  const pct=((_obIdx+1)/OB_STEPS.length)*100;
+  const seg=(field,opts)=>'<div class="ob-opts">'+opts.map(o=>
+    '<button class="ob-opt'+((profile[field]||(field==='goal'?'bulk':null))===o[0]?' on':'')+'" onclick="obPick(\''+field+'\',\''+o[0]+'\')">'+
+    '<span class="ob-opt-t">'+o[1]+'</span>'+(o[2]?'<span class="ob-opt-s">'+o[2]+'</span>':'')+'</button>').join('')+'</div>';
+
+  const Q={
+    goal:{t:'What are you aiming for?', s:'This sets whether your calories run above, at, or below maintenance.',
+      body:seg('goal',[['bulk','Bulking','Lean gain, about +250 kcal'],['maintain','Maintain','Hold your current weight'],['cut','Cutting','About -500 kcal, protein goes up']])},
+    sex:{t:'Which should we calculate for?', s:'Sex changes the BMR equation by about 166 kcal.',
+      body:seg('sex',[['male','Male',''],['female','Female','']])},
+    age:{t:'How old are you?', s:'Used in the BMR equation.',
+      body:'<div class="ob-input"><input type="number" inputmode="numeric" min="13" max="100" value="'+(profile.age||'')+'" placeholder="--" onchange="obPick(\'age\',this.value)" aria-label="Age in years"><span>years</span></div>'},
+    height:{t:'How tall are you?', s:'Used in the BMR equation.',
+      body:'<div class="ob-input"><input type="number" inputmode="numeric" min="120" max="230" value="'+(profile.heightCm||'')+'" placeholder="--" onchange="obPick(\'heightCm\',this.value)" aria-label="Height in centimetres"><span>cm</span></div>'},
+    weight:{t:'What do you weigh?', s:'Everything else recalculates from this, so keep it current.',
+      body:'<div class="ob-input"><input type="number" inputmode="decimal" step="0.1" min="40" max="150" value="'+bodyWeight+'" onchange="obWeight(this.value)" aria-label="Body weight in kilograms"><span>kg</span></div>'}
+  }[step];
+
+  // Only gate on the questions that have no safe default — goal and weight always do.
+  const answered = step==='goal' ? true : step==='weight' ? true
+    : step==='sex' ? !!profile.sex : !!profile[step==='height'?'heightCm':'age'];
+
+  el.innerHTML='<div class="ob-sheet">'+
+    '<div class="ob-top"><button class="ob-back" onclick="obBack()" aria-label="Back"><i class="ti ti-arrow-left"></i></button>'+
+    '<div class="ob-prog"><span style="width:'+pct.toFixed(0)+'%"></span></div></div>'+
+    '<div class="ob-body"><h2 class="ob-q">'+Q.t+'</h2><p class="ob-s">'+Q.s+'</p>'+Q.body+'</div>'+
+    '<button class="ob-cta" onclick="obNext()"'+(answered?'':' disabled')+'>'+
+    (_obIdx===OB_STEPS.length-1?'Finish':'Continue')+'</button>'+
+    '</div>';
+}
+
 function calcTargets(kg){
-  const protLow=Math.round(kg*2.0);
-  const protHigh=Math.round(kg*2.2);
+  // Protein climbs in a deficit — the evidence for a higher intake while cutting is about
+  // protecting lean mass when energy is scarce, which is exactly the V-taper risk here.
+  const cutting=(profile.goal==='cut');
+  const protLow=Math.round(kg*(cutting?2.2:2.0));
+  const protHigh=Math.round(kg*(cutting?2.6:2.2));
   // Kcal: ~35 kcal/kg maintenance + a lean-gain surplus → aims ~0.2–0.35 kg/week.
   // Titrate LEAN_GAIN_SURPLUS by the weekly weight trend: gaining >0.35 kg/wk means it's too big
   // (fat outpacing muscle, and the waist is half the V-taper ratio). Single knob, set to the scale.
-  const LEAN_GAIN_SURPLUS=250;
+  // Bulk aims ~0.2-0.35 kg/week; cut ~0.45 kg/week, the usual ceiling before lean mass starts
+  // going with it. Maintain sits at estimated expenditure.
+  const GOAL_DELTA={bulk:250, maintain:0, cut:-500};
+  const LEAN_GAIN_SURPLUS=GOAL_DELTA[profile.goal||'bulk'];
   // With sex/age/height answered, use Mifflin-St Jeor — the standard BMR equation and the one
   // Cal AI's onboarding is effectively asking for. 1.55 is the "moderately active" multiplier,
   // which matches 3 sessions per 4-day cycle on top of shift work. Without a full profile the
   // old flat 35 kcal/kg stands in rather than guessing a sex or a height.
   const ACTIVITY=1.55;
-  let kcalCalc;
+  let kcalCalc, floor;
   if(_profileComplete()){
     const bmr = 10*kg + 6.25*profile.heightCm - 5*profile.age + (profile.sex==='male' ? 5 : -161);
     kcalCalc = Math.round(bmr*ACTIVITY) + LEAN_GAIN_SURPLUS;
+    floor = Math.round(bmr*1.2);      // never prescribe below roughly BMR + light activity
   } else {
     kcalCalc = Math.round(kg*35) + LEAN_GAIN_SURPLUS;
+    floor = Math.round(kg*22);
   }
+  kcalCalc = Math.max(floor, kcalCalc);
   // Hydration: 35ml/kg total fluid minus ~800ml from food/Rokeby, rounded to nearest 250ml
   const hydroCalc=Math.max(1500,Math.min(3000,Math.round((kg*35-800)/250)*250));
   // Carbs = whatever's left after protein and fat — the standard evidence-based ordering
@@ -2376,7 +2526,7 @@ function applyWeight(kg,save_=true){
   TARGETS.carb=t.carb;
 
   // Nutrition page stat cards
-  const wd=document.getElementById('nut-weight-display');
+  const wd=null;   // the weight field is an input now — renderPlanRows() owns its value
   const pd=document.getElementById('nut-prot-target');
   const kd=document.getElementById('nut-kcal-target');
   const cd=document.getElementById('nut-carb-target');
@@ -3394,6 +3544,7 @@ function renderCalHero(){
 // act on is the gap. Protein takes the leading slot: it's the priority macro here.
 function renderMacroRow(){
   renderWaterCard();
+  renderPlanRows();
   renderHealthScore();
   renderStepsCard();
   const el=document.getElementById('macro-row');
@@ -7796,6 +7947,12 @@ _fitbitRedirectCatch().then(handled=>{
 
 // Always land on Overview regardless of stored state
 go('nutrition');
+// First run: nobody has answered anything yet, so ask rather than silently guessing a plan.
+try{
+  if(!localStorage.getItem('onboardingDone') && !profile.sex && !profile.age && !profile.heightCm){
+    setTimeout(startOnboarding,600);
+  }
+}catch(e){}
 </script>
 
 <!-- ===== INSIGHTS ===== -->
