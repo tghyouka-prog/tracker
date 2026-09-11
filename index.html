@@ -612,6 +612,27 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .fuel-log-btn{display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600;padding:12px 20px;border-radius:var(--r-md);border:none;background:var(--focus-ac);color:var(--focus-ac-ink);cursor:pointer;transition:transform .07s cubic-bezier(.34,1.56,.64,1);width:100%}
 .fuel-log-btn:active{transform:scale(.97)}
 /* Secondary macro rows — quiet, neutral */
+/* ── Macro row (Cal AI-inspired): 3 equal ring cards, each a distinct colour ── */
+.macro-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.5rem}
+.macro-cell{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem .5rem .75rem;display:flex;flex-direction:column;align-items:center;gap:.375rem}
+.mc-ring{position:relative;width:64px;height:64px}
+.mc-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.mc-track{fill:none;stroke:var(--s3);stroke-width:5}
+.mc-fill{fill:none;stroke-width:5;stroke-linecap:round;transition:stroke-dasharray .45s cubic-bezier(.4,0,.2,1)}
+.mc-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--t1);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.mc-val small{font-size:10px;font-weight:600;color:var(--t3);margin-left:1px}
+.mc-lbl{font-size:10.5px;font-weight:600;letter-spacing:.03em;color:var(--t3);text-align:center;line-height:1.25}
+/* Distinct identity per macro — the fix for three indistinguishable grey bars.
+   NB: --teal is gold in this palette (a legacy token repointed during the redesign), so it
+   reads as amber and can't be used here. Gold is also reserved for the protein hero, which
+   keeps the priority macro visually separate from this row. */
+.m-kcal  .mc-fill{stroke:var(--amber)}
+.m-carb  .mc-fill{stroke:var(--purple)}
+.m-hydro .mc-fill{stroke:var(--blue)}
+.macro-cell.is-hit .mc-val{color:var(--focus-ac)}
+.macro-cell.is-over .mc-val{color:var(--amber)}
+.macro-cell.is-over .mc-lbl{color:var(--amber)}
+.water-quick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem}
 .fuel-sec{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem 1.125rem;margin-bottom:.5rem}
 .fuel-sec-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.5rem}
 .fuel-sec-name{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3)}
@@ -1359,7 +1380,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 /* ── SUPPHEAD ROLLOUT (stage 4): strip the explanatory micro-copy + reference sections the mock never showed ──
    Fuel: gap-hints, pace notes, and the calc/disclaimer lines under each section. "Targets recalibrate
    automatically" stays (the mock's weight card had an equivalent one-liner). */
-#kcal-gap-nut,#hydro-gap-nut,#carb-gap-nut,#hydro-pace-nut,#nut-calc-line,#nut-note{display:none!important}
+#nut-calc-line,#nut-note{display:none!important}
 .fuel-sec>.page-note{display:none!important}
 </style>
 </head>
@@ -1947,55 +1968,19 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
   <button class="fuel-log-btn mo-rise" onclick="openMealLogger()"><i class="ti ti-plus" style="font-size:15px"></i>Log a meal</button>
   <div id="meal-log-list" class="mo-rise" style="margin:.75rem 0 1.25rem"></div>
 
-  <!-- ── Secondary macros — quiet neutral rows ── -->
-  <div class="fuel-sec mo-rise">
-    <div class="fuel-sec-top">
-      <span class="fuel-sec-name">Calories</span>
-      <span class="fuel-sec-nums"><span id="kcal-cur-nut">0</span> <span class="u" id="kcal-target-label-nut">/ 2,840 kcal</span></span>
-    </div>
-    <div class="macro-bar-wrap"><div class="macro-bar-fill kcal" id="kcal-bar-nut" style="width:0%"></div></div>
-    <div class="macro-gap gap-low" id="kcal-gap-nut"></div>
-    <div id="kcal-topup" style="display:none;margin-top:.625rem;padding-top:.625rem;border-top:1px solid var(--b1)">
-      <div class="page-note" style="margin-bottom:.5rem">Top up the gap</div>
-      <div class="macro-btns">
-        <button class="mb kcal-btn" onclick="topupKcal(80,'Rice cakes ×2')"><i class="ti ti-grain"></i>+80 Rice cakes</button>
-        <button class="mb kcal-btn" onclick="topupKcal(100,'Banana')"><i class="ti ti-plant-2"></i>+100 Banana</button>
-        <button class="mb kcal-btn" onclick="topupKcal(150,'Oats 40g')"><i class="ti ti-bowl-filled"></i>+150 Oats</button>
-        <button class="mb kcal-btn" onclick="topupKcal(160,'Mixed nuts')"><i class="ti ti-nut"></i>+160 Nuts</button>
-        <button class="mb kcal-btn" onclick="topupKcal(200,'Extra rice')"><i class="ti ti-bowl-filled"></i>+200 Extra rice</button>
-        <button class="mb kcal-btn" onclick="topupKcal(300,'Extra portion')"><i class="ti ti-soup"></i>+300 Extra portion</button>
-        <button class="mb undo-btn" onclick="undoKcalTopup()"><i class="ti ti-arrow-back-up"></i>Undo</button>
-      </div>
-    </div>
-  </div>
+  <!-- Macro row — Cal AI's at-a-glance pattern: one compact ring card per macro, each framed
+       as what's LEFT rather than what's consumed, and each with its own colour so they're
+       distinguishable at a glance (previously Calories, Carbs and Water all rendered as
+       identical grey bars stacked down the page). Rendered by renderMacroRow(). -->
+  <div class="macro-row mo-rise" id="macro-row"></div>
 
-  <!-- Carbs — set as the remainder after protein and fat, so it moves with bodyweight
-       and the surplus knob rather than being a hand-picked number. -->
-  <div class="fuel-sec mo-rise">
-    <div class="fuel-sec-top">
-      <span class="fuel-sec-name">Carbs</span>
-      <span class="fuel-sec-nums"><span id="carb-cur-nut">0</span><span class="u">g</span> <span class="u" id="carb-target-label-nut">/ 370g</span></span>
-    </div>
-    <div class="macro-bar-wrap"><div class="macro-bar-fill carb" id="carb-bar-nut" style="width:0%"></div></div>
-    <div class="macro-gap gap-low" id="carb-gap-nut"></div>
-    <div class="page-note" style="margin-top:.5rem">Fuels training volume and recovery. Logged from meals — add carbs when logging.</div>
-  </div>
-
-  <div class="fuel-sec mo-rise">
-    <div class="fuel-sec-top">
-      <span class="fuel-sec-name">Water</span>
-      <span class="fuel-sec-nums"><span id="hydro-cur-nut">0</span><span class="u">ml</span> <span class="u" id="hydro-target-label-nut">/ 1,750ml</span></span>
-    </div>
-    <div class="macro-bar-wrap"><div class="macro-bar-fill hydro" id="hydro-bar-nut" style="width:0%"></div></div>
-    <div id="hydro-pace-nut" style="margin:.25rem 0;font-size:11px"></div>
-    <div class="macro-btns" style="margin-top:.5rem">
-      <button class="mb hydro-btn" onclick="addMacro('hydro',250,'Glass')"><i class="ti ti-glass-full"></i>+250ml</button>
-      <button class="mb hydro-btn" onclick="addMacro('hydro',500,'Bottle')"><i class="ti ti-bottle"></i>+500ml</button>
-      <button class="mb hydro-btn" onclick="addMacro('hydro',1000,'1L')"><i class="ti ti-droplets"></i>+1L</button>
-      <button class="mb undo-btn" onclick="undoMacro('hydro')"><i class="ti ti-arrow-back-up"></i>Undo</button>
-    </div>
-    <div class="macro-gap gap-low" id="hydro-gap-nut" style="margin-top:.5rem"></div>
-    <div class="page-note" style="margin-top:.5rem">Protocol steps auto-credit when ticked. Buttons add on-shift water only.</div>
+  <!-- Water quick-add kept as its own strip: the ring card above is read-only, and these are
+       the most-tapped controls on this page. -->
+  <div class="water-quick mo-rise">
+    <button class="mb hydro-btn" onclick="addMacro('hydro',250,'Glass')"><i class="ti ti-glass-full"></i>+250ml</button>
+    <button class="mb hydro-btn" onclick="addMacro('hydro',500,'Bottle')"><i class="ti ti-bottle"></i>+500ml</button>
+    <button class="mb hydro-btn" onclick="addMacro('hydro',1000,'1L')"><i class="ti ti-droplets"></i>+1L</button>
+    <button class="mb undo-btn" onclick="undoMacro('hydro')"><i class="ti ti-arrow-back-up"></i>Undo</button>
   </div>
 
   <!-- ── Body weight + live targets ── -->
@@ -2340,6 +2325,7 @@ function applyWeight(kg,save_=true){
 
   // Refresh all macro bars and score with new targets
   ['prot','hydro','kcal','carb'].forEach(type=>updateMacroUI(type));
+  renderMacroRow();
   updateScore();
 
   // Header weight display
@@ -2931,14 +2917,7 @@ function renderMealLog(){
     </div>`).join('');
 }
 
-function topupKcal(val,label){
-  logMeal({id:Date.now(),name:label||('Top-up +'+val+' kcal'),prot:0,kcal:val});
-}
 
-function undoKcalTopup(){
-  if(!mealLog.length) return;
-  removeLogEntry(mealLog[mealLog.length-1].ts);
-}
 
 
 
@@ -3039,9 +3018,46 @@ function updateMacroUI(type){
     }
   });
   // Sync inline hydration strip on tracker page
+  renderMacroRow();
   if(type==='hydro') syncTrackerHydro();
   // Protein ring hero on Fuel page
   if(type==='prot') _renderFuelHero();
+}
+
+// Macro row — Cal AI's framing: lead with what's LEFT, not what's consumed, because the number
+// you act on is the gap. Each macro gets its own colour and ring so they're distinguishable
+// (they were three identical grey bars before). Protein stays in its own hero card above: it's
+// the priority macro here, unlike Cal AI where calories lead.
+function renderMacroRow(){
+  const el=document.getElementById('macro-row');
+  if(!el) return;
+  const R=20, C=2*Math.PI*R;
+  const cells=[
+    {cls:'m-kcal', cur:macros.kcal||0,  tgt:TARGETS.kcal||0,  unit:'',   lbl:'kcal left'},
+    {cls:'m-carb', cur:macros.carb||0,  tgt:TARGETS.carb||0,  unit:'g',  lbl:'carbs left'},
+    {cls:'m-hydro',cur:macros.hydro||0, tgt:TARGETS.hydro||0, unit:'',   lbl:'water left'},
+  ];
+  el.innerHTML=cells.map(c=>{
+    const over=c.cur-c.tgt;
+    const left=Math.max(0,-over);
+    const pct=c.tgt?Math.min(100,(c.cur/c.tgt)*100):0;
+    const dash=(C*pct/100).toFixed(1);
+    // Over-target reads as a distinct state rather than just "0 left" — for calories that's
+    // the surplus-control signal, which is the whole point of tracking them here.
+    const isOver=over>0;
+    const big=isOver?('+'+over.toLocaleString()):left.toLocaleString();
+    const lbl=isOver?(c.unit==='g'?'g over':' over'):c.lbl;
+    return `<div class="macro-cell ${c.cls}${isOver?' is-over':''}${pct>=100&&!isOver?' is-hit':''}">
+      <div class="mc-ring">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <circle class="mc-track" cx="24" cy="24" r="${R}"></circle>
+          <circle class="mc-fill" cx="24" cy="24" r="${R}" stroke-dasharray="${dash} ${C.toFixed(1)}"></circle>
+        </svg>
+        <span class="mc-val">${big}${c.unit&&!isOver?`<small>${c.unit}</small>`:''}</span>
+      </div>
+      <div class="mc-lbl">${lbl.trim()}</div>
+    </div>`;
+  }).join('');
 }
 
 // Fuel protein record card — FocusFlight + odometer; re-rendered on protein/target change
