@@ -1437,36 +1437,33 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
 /* ── LIFT CARDS — mobile-first gym logger ── */
 .lift-header-row{display:none} /* hide old header */
-.wk-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.75rem .5rem;margin-bottom:.75rem}
+.wk-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:1rem .5rem;margin-bottom:1rem}
 .wk-stat{text-align:center;min-width:0}
-.wk-v{display:block;font-size:17px;font-weight:800;color:var(--t1);letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.wk-v{display:block;font-size:19px;font-weight:800;color:var(--t1);letter-spacing:-.025em;line-height:1.1;font-variant-numeric:tabular-nums}
 .wk-v small{font-size:10px;font-weight:600;color:var(--t3);margin-left:1px}
-.wk-l{display:block;font-size:10px;color:var(--t3);margin-top:2px}
+.wk-l{display:block;font-size:11px;color:var(--t3);margin-top:5px}
 /* Hevy's table: the column header is stated once per exercise, then a single tight row. */
-.lift-head{display:grid;grid-template-columns:1.05fr 1.5fr .7fr .8fr .7fr;gap:6px;padding:0 2px 4px;font-size:9.5px;font-weight:700;color:var(--t3);letter-spacing:.01em}
-.lift-head span{text-align:center}
-.lift-head span:first-child{text-align:left}
-.lift-prevcol{display:none}
-.lift-row{display:grid;grid-template-columns:1.05fr 1.5fr .7fr .8fr .7fr;gap:6px;align-items:center}
-.lift-prev{font-size:11px;color:var(--t3);font-variant-numeric:tabular-nums;line-height:1.25;overflow:hidden;text-overflow:ellipsis}
-.lift-in{width:100%;min-width:0;font-size:16px;font-weight:700;color:var(--t1);background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-sm);padding:9px 2px;text-align:center;outline:none;font-family:inherit;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+/* Four columns, not five — Previous lives on the line above. Same template on the header and
+   the row; keep them in step if either changes. */
+/* Four equal columns. Same template on the header and the row — keep them in step. */
+.lift-head{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;padding:0 2px 7px;font-size:11px;font-weight:600;color:var(--t3);letter-spacing:0}
+.lift-head span{text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lift-row{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;align-items:center}
+.lift-in{width:100%;min-width:0;font-size:18px;font-weight:700;color:var(--t1);background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-md);padding:13px 2px;text-align:center;outline:none;font-family:inherit;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
 .lift-in::-webkit-outer-spin-button,.lift-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .lift-in:focus{border-color:var(--focus-ac)}
 .lift-in:disabled{opacity:.35}
-.lift-wcell{display:grid;grid-template-columns:1fr auto auto;gap:3px;align-items:center;min-width:0}
-.lift-nudge{width:24px;height:32px;border-radius:var(--r-sm);border:1px solid var(--b2);background:var(--s1);color:var(--t2);font-size:14px;font-weight:700;line-height:1;cursor:pointer;font-family:inherit;flex-shrink:0}
-.lift-nudge:active{transform:scale(.9)}
-.lift-tick{width:26px;height:26px;border-radius:50%;border:1px solid var(--b2);background:transparent;color:var(--t2);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;flex-shrink:0;padding:0}
+.lift-tick{width:30px;height:30px;border-radius:50%;border:1px solid var(--b2);background:transparent;color:var(--t2);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;flex-shrink:0;padding:0}
 .lift-tick.on{background:var(--green);border-color:var(--green);color:#fff}
 .lift-card.is-done{opacity:.62}
 .lift-card.is-done .lift-card-name{text-decoration:line-through;text-decoration-color:var(--t3)}
-.lift-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem 1rem 1rem;margin-bottom:.625rem;position:relative;transition:border-color .12s}
+.lift-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-lg);padding:1.125rem 1.125rem 1.25rem;margin-bottom:1rem;position:relative;transition:border-color .12s}
 .lift-card:focus-within{border-color:color-mix(in srgb,var(--teal) 25%,transparent)}
 /* Tight gap + a slimmer delete button buy back most of the width the picker button costs,
    so long exercise names keep about as much room as they had before it was added. */
-.lift-card-name-row{display:flex;align-items:center;gap:.375rem;margin-bottom:.5rem}
+.lift-card-name-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
 .lift-card-num{width:20px;height:20px;border-radius:50%;background:var(--s3);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--t3);flex-shrink:0}
-.lift-card-name{flex:1;min-width:0;font-size:15px;font-weight:600;color:var(--t1);background:transparent;border:none;padding:2px 0;outline:none;font-family:inherit;letter-spacing:-.01em}
+.lift-card-name{flex:1;min-width:0;font-size:16px;font-weight:700;color:var(--t1);background:transparent;border:none;padding:3px 0;outline:none;font-family:inherit;letter-spacing:-.015em}
 .lift-card-name::placeholder{color:var(--t3);font-weight:400;font-size:14px}
 .lift-card-del{width:30px;height:30px;border-radius:var(--r-md);border:none;background:transparent;color:var(--b3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:color .1s}
 .lift-card-move-stack{display:flex;flex-direction:column;flex-shrink:0}
@@ -1487,7 +1484,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 /* Compact so it fits the name row at 375px without squeezing the name field */
 .lift-card-pick{width:28px;height:28px;border-radius:var(--r-sm);border:1px solid var(--b2);background:transparent;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;-webkit-tap-highlight-color:transparent}
 .lift-card-pick:active{background:var(--s3);color:var(--t1)}
-.lift-shadow{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--t2);margin:-2px 0 8px 30px;padding:6px 10px;background:color-mix(in srgb,var(--teal) 6%,transparent);border-radius:6px;border-left:2px solid color-mix(in srgb,var(--teal) 40%,transparent)}
+.lift-shadow{display:flex;align-items:center;gap:6px;font-size:12.5px;line-height:1.5;color:var(--t2);margin:0 0 .875rem 38px;padding:6px 10px;background:color-mix(in srgb,var(--teal) 6%,transparent);border-radius:6px;border-left:2px solid color-mix(in srgb,var(--teal) 40%,transparent)}
 .lift-shadow strong{color:var(--teal);font-weight:700}
 .lift-shadow-new{color:var(--t3);font-size:11.5px;background:transparent;border-left-color:var(--b2)}
 /* Double-progression instruction, sits under the "last time" line */
@@ -5448,7 +5445,6 @@ function renderLiftRows(){
       ?`<div class="lift-shadow">${shadow.html}<span class="lift-verdict${v?' '+v.cls:''}" id="lv-${i}">${v?v.txt:''}</span></div>${targetHtml}`
       :(l.name&&l.name.trim()?`<div class="lift-shadow lift-shadow-new"><i class="ti ti-sparkles" style="font-size:11px"></i> First time logging this exact name — no comparison yet</div>`:''))
       +unrecorded;
-    const prevTxt=shadow&&shadow.txt?shadow.txt:(l.name&&l.name.trim()?'First time':'—');
     return `
     <div class="lift-card${l._done?' is-done':''}">
       <div class="lift-card-name-row">
@@ -5464,16 +5460,11 @@ function renderLiftRows(){
         <button class="lift-card-del" onclick="removeLiftRow(${i})" aria-label="Remove exercise ${i+1}"><i class="ti ti-x" style="font-size:13px" aria-hidden="true"></i></button>
       </div>
       ${shadowHtml}
-      <div class="lift-head"><span>Previous</span><span>${wLbl}</span><span>Sets</span><span>${rLbl}</span><span>RIR</span></div>
+      <div class="lift-head"><span>${wLbl}</span><span>Sets</span><span>${rLbl}</span><span>RIR</span></div>
       <div class="lift-row">
-        <div class="lift-prev">${prevTxt}</div>
-        <div class="lift-wcell">
-          <input class="lift-in" type="number" inputmode="decimal" value="${l.weight||''}" placeholder="${wPh}"
-            min="0" step="${wStep}" oninput="currentLifts[${i}].weight=this.value;_updateVerdict(${i});renderWorkoutStats()"
-            aria-label="${wLbl} for exercise ${i+1}">
-          <button class="lift-nudge" onclick="stepLiftWeight(${i},-${stepBy})" aria-label="Decrease ${wLbl.toLowerCase()}, exercise ${i+1}">&minus;</button>
-          <button class="lift-nudge" onclick="stepLiftWeight(${i},${stepBy})" aria-label="Increase ${wLbl.toLowerCase()}, exercise ${i+1}">+</button>
-        </div>
+        <input class="lift-in" type="number" inputmode="decimal" value="${l.weight||''}" placeholder="${wPh}"
+          min="0" step="${wStep}" oninput="currentLifts[${i}].weight=this.value;_updateVerdict(${i});renderWorkoutStats()"
+          aria-label="${wLbl} for exercise ${i+1}">
         <input class="lift-in" type="number" inputmode="numeric" value="${l.sets||''}" placeholder="${l._defaultSets||'—'}"
           min="1" max="10" oninput="currentLifts[${i}].sets=this.value;renderWorkoutStats()" ${isCardio?'disabled':''}
           aria-label="Sets for exercise ${i+1}">
