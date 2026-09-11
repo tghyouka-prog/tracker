@@ -2990,7 +2990,7 @@ function advanceDay(){
   if(!completedDays.includes(cycleDay)) completedDays.push(cycleDay);
   cycleDay=(cycleDay+1)%getCycleLength();
   if(cycleDay===0){cycleNum++;completedDays=[];}
-  cycleAnchorDate=new Date().toISOString().slice(0,10);
+  cycleAnchorDate=_localDay();
   // Auto-select the shift for the new cycle day
   const nextShift=getActiveCycleToShift()[cycleDay]||'off';
   setShift(nextShift,false);
@@ -3005,11 +3005,11 @@ function advanceDay(){
 function autoRollCycle(){
   if(!cycleAnchorDate) {
     // First run — anchor to today
-    cycleAnchorDate=new Date().toISOString().slice(0,10);
+    cycleAnchorDate=_localDay();
     return;
   }
   const anchor=new Date(cycleAnchorDate+'T00:00:00');
-  const today=new Date(new Date().toISOString().slice(0,10)+'T00:00:00');
+  const today=new Date(_localDay()+'T00:00:00');
   const daysPassed=Math.round((today-anchor)/86400000);
   if(daysPassed<=0) return; // same day or clock weirdness — leave it
   if(daysPassed>14){
@@ -6345,7 +6345,7 @@ function _renderSaveWarning(){
   }
 }
 
-function today(){return new Date().toISOString().slice(0,10);}
+function today(){return _localDay();}
 
 function load(){
   try{
@@ -6417,15 +6417,22 @@ const _setSleep=setSleep; setSleep=function(n){_setSleep(n);};
 // Day shift / Off day: midnight reset (standard)
 // Night shift: 12:00 noon reset (captures the full night shift day correctly)
 
+// Local calendar date. toISOString() is UTC, and every "what day is it" in this app is a
+// question about the day where the user is standing.
+function _localDay(d){
+  d=d||new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
 function biologicalToday(){
   const now=new Date();
   // Night shifts (including extra night): biological day flips at 12:00 noon
   if((shift==='ns1'||shift==='ns2'||shift==='xns')&&now.getHours()<12){
     const yesterday=new Date(now);
     yesterday.setDate(yesterday.getDate()-1);
-    return yesterday.toISOString().slice(0,10);
+    return _localDay(yesterday);
   }
-  return now.toISOString().slice(0,10);
+  return _localDay(now);
 }
 
 // ═══ COACH ═══
@@ -7963,7 +7970,7 @@ function _ac(alpha){
 // ── WEIGHT HISTORY CHART ──
 let weightHistory=[];
 function recordWeightHistory(kg){
-  const today=new Date().toISOString().slice(0,10);
+  const today=biologicalToday();
   const idx=weightHistory.findIndex(e=>e.date===today);
   if(idx>=0) weightHistory[idx].kg=kg;else weightHistory.push({date:today,kg});
   if(weightHistory.length>90) weightHistory=weightHistory.slice(-90);
