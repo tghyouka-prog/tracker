@@ -332,7 +332,18 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .gp-line{fill:none;stroke:var(--t1);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
 .gp-foot{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:5px}
 .gp-note{font-size:12px;color:var(--t2);margin-top:.625rem}
-.prog-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:.75rem}
+.cons-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem 1rem}
+.cons-head{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;margin-bottom:.875rem}
+.cons-title{font-size:17px;font-weight:700;letter-spacing:-.02em;color:var(--t1)}
+.cons-sub{font-size:11px;color:var(--t3)}
+.cons-row+.cons-row{margin-top:.875rem}
+.cons-top{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;margin-bottom:6px}
+.cons-name{font-size:13px;color:var(--t2)}
+.cons-val{font-size:15px;font-weight:700;color:var(--t1);font-variant-numeric:tabular-nums}
+.cons-val small{font-size:11px;font-weight:600;color:var(--t3);margin-left:2px}
+.cons-bar{height:6px;border-radius:3px;background:var(--s3);overflow:hidden}
+.cons-bar span{display:block;height:100%;border-radius:3px;background:var(--focus-ac);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.prog-stats{margin-top:.75rem}
 .prog-stat{background:var(--s2);border-radius:var(--r-md);padding:.625rem .375rem;text-align:center}
 .prog-stat-val{font-size:19px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums;line-height:1.1}
 .prog-stat-lbl{font-size:9.5px;color:var(--t3);letter-spacing:.01em;margin-top:3px}
@@ -1181,7 +1192,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .pill-row{display:flex;flex-wrap:wrap;gap:5px}
 
 /* Sub-label within a card */
-.sub-label{font-size:11px;font-weight:600;letter-spacing:.01em;color:var(--t3);margin-bottom:.5rem}
+.sub-label{font-size:15px;font-weight:700;letter-spacing:-.01em;color:var(--t1);margin-bottom:.5rem}
 
 /* Button row */
 .btn-row{display:flex;gap:6px;flex-wrap:wrap}
@@ -2035,7 +2046,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 <!-- ===== TRAINING ===== -->
 <div class="page" id="page-training">
 
-  <div style="padding:.5rem 0 .125rem"><span style="font-size:11px;font-weight:600;letter-spacing:.01em;color:var(--t3)">Training</span></div>
+  <div style="padding:.5rem 0 0"><div class="coach-eyebrow">Training</div><div class="coach-h1">Sessions</div></div>
 
   <!-- Check-in feedback banner -->
   <div id="training-checkin-flag" style="display:none"></div>
@@ -3335,13 +3346,10 @@ function getScore(){
 // Stripped down to what's actually live: the day-streak check. Kept the name since it's
 // called from ~10 places already and renaming is pure churn for zero behavior change.
 function updateScore(){
-  // Streak — previously "every item on the daily list handled". That list was the Today tab,
-  // so the condition became unreachable and the streak would have frozen at its current value
-  // forever. Rebased on what the app actually tracks now: hitting protein and calories for the
-  // day. Both must land, so it stays a real bar rather than a participation trophy.
-  const _allHandled = TARGETS.prot>0 && TARGETS.kcal>0
-    && macros.prot >= TARGETS.prot
-    && macros.kcal >= TARGETS.kcal;
+  // Streak counts a day where you LOGGED, not one where you hit the targets. Requiring the
+  // targets punished an honest light-eating day by breaking the streak, which pushes toward
+  // not logging at all — the opposite of the habit worth building. One meal logged is the bar.
+  const _allHandled = mealLog.length > 0;
   if(_allHandled){
     const _today=biologicalToday();
     let _last=null; try{ _last=localStorage.getItem('streakLastDate'); }catch(e){}
@@ -6604,10 +6612,12 @@ function renderProgCalendar(){
     const future=key>todayKey;
     let cls='cal-cell';
     if(future) cls+=' cal-future';
-    else if(!row||row.score===undefined) cls+=' cal-none';
-    else if(row.score>=90) cls+=' cal-high';
-    else if(row.score>=50) cls+=' cal-mid';
-    else cls+=' cal-low';
+    // Was shaded by day-score. Now it answers the only question being asked of it: did you log
+    // that day, and did you train. A score-shaded grid made an honest light day look like a
+    // failure, which is the same trap the streak used to have.
+    else if(!_dayLogged(key)) cls+=' cal-none';
+    else if(_dayTrained(key)) cls+=' cal-high';
+    else cls+=' cal-mid';
     if(row&&row.hasSession) cls+=' has-session';
     if(key===todayKey) cls+=' is-today';
     html+=`<button class="${cls}" onclick="showProgDay('${key}')" aria-label="${key}"></button>`;
@@ -6627,9 +6637,9 @@ function showProgDay(key){
   }
   const sess=sessionLog.find(s=>s.date===key);
   const bits=[
-    `<strong>${row.score}%</strong> day score`,
-    row.prot!==undefined?`${row.prot}g protein`:null,
-    row.kcal!==undefined?`${row.kcal.toLocaleString()} kcal`:null,
+    _dayLogged(key)?'<strong>logged</strong>':'<strong>not logged</strong>',
+    row.prot?`${row.prot}g protein`:null,
+    row.kcal?`${row.kcal.toLocaleString()} kcal`:null,
     sess?`trained — ${sess.type}`:(row.hasSession?'trained':null),
   ].filter(Boolean);
   el.innerHTML=`<strong>${label}</strong> · `+bits.join(' · ');
@@ -6639,17 +6649,24 @@ function renderProgStats(){
   const el=document.getElementById('prog-stats');
   if(!el) return;
   const todayKey=biologicalToday();
-  let scored=0,sum=0,logged=0;
+  let calDays=0, trainDays=0;
   for(let i=0;i<30;i++){
-    const row=weekHistory[_calKey(todayKey,-i)];
-    if(row&&row.score!==undefined){ scored++; sum+=row.score; }
+    const k=_calKey(todayKey,-i);
+    if(_dayLogged(k)) calDays++;
+    if(_dayTrained(k)) trainDays++;
   }
-  logged=Object.keys(weekHistory).filter(k=>weekHistory[k]&&weekHistory[k].score!==undefined).length;
-  const cutoff=_calKey(todayKey,-29);
-  const sessions=sessionLog.filter(s=>s.date>=cutoff).length;
-  const avg=scored?Math.round(sum/scored):0;
-  const cell=(v,l)=>`<div class="prog-stat"><div class="prog-stat-val">${v}</div><div class="prog-stat-lbl">${l}</div></div>`;
-  el.innerHTML=cell(dayStreak,'Streak')+cell(logged,'Days logged')+cell(sessions,'Sessions 30d')+cell(avg?avg+'%':'—','Avg 30d');
+  // The split is 3 sessions per 4-day DNOO cycle, so ~23 sessions is a full 30 days. Using that
+  // as the denominator means a full bar is "on plan", not "trained every single day".
+  const expected=Math.round(30*3/4);
+  const row=(label,val,sub,pct)=>`<div class="cons-row">
+      <div class="cons-top"><span class="cons-name">${label}</span><span class="cons-val">${val}<small>${sub}</small></span></div>
+      <div class="cons-bar"><span style="width:${Math.max(0,Math.min(100,pct)).toFixed(0)}%"></span></div>
+    </div>`;
+  el.innerHTML=`<div class="cons-card">
+    <div class="cons-head"><span class="cons-title">Consistency</span><span class="cons-sub">last 30 days</span></div>
+    ${row('Calories logged', calDays, ' / 30 days', calDays/30*100)}
+    ${row('Gym sessions', trainDays, ' / ~'+expected+' on plan', trainDays/expected*100)}
+  </div>`;
 }
 
 function renderProgMilestones(){
@@ -6693,6 +6710,16 @@ function setGoalWeight(v){
 }
 function setProgRange(r){ progRange=r; renderCalProgress(); }
 
+// One definition of "logged", used by the streak week dots, the heatmap and the stats card so
+// they can never disagree with each other.
+function _dayLogged(key){
+  const r=weekHistory[key];
+  return !!(r && ((r.kcal||0)>0 || (r.prot||0)>0));
+}
+function _dayTrained(key){
+  return !!(weekHistory[key] && weekHistory[key].hasSession) || sessionLog.some(s=>s.date===key);
+}
+
 function _rangeDays(){ return progRange==='90d'?90:progRange==='6m'?182:progRange==='1y'?365:100000; }
 
 function _weightSeries(){
@@ -6718,8 +6745,8 @@ function _renderProgPair(){
   let pct=0;
   if(goalWeight && goalWeight!==start) pct=Math.max(0,Math.min(100,((bodyWeight-start)/(goalWeight-start))*100));
 
-  // Streak week: Mon-Sun of the current week, filled where that day hit protein AND calories —
-  // the same bar updateScore() now uses for the streak itself.
+  // Streak week: Mon-Sun of the current week, filled on the days you logged — the same bar
+  // updateScore() uses for the streak itself.
   const now=new Date(biologicalToday()+'T12:00:00Z');
   const dow=(now.getUTCDay()+6)%7;   // 0 = Monday
   const monday=new Date(now); monday.setUTCDate(now.getUTCDate()-dow);
@@ -6727,9 +6754,7 @@ function _renderProgPair(){
   for(let i=0;i<7;i++){
     const d=new Date(monday); d.setUTCDate(monday.getUTCDate()+i);
     const key=d.toISOString().slice(0,10);
-    const row=weekHistory[key]||{};
-    const hit = TARGETS.prot>0 && TARGETS.kcal>0 && row.prot>=TARGETS.prot && row.kcal>=TARGETS.kcal;
-    week.push({letter:d.toLocaleDateString('en-SG',{weekday:'narrow',timeZone:'UTC'}), hit, isToday:key===biologicalToday()});
+    week.push({letter:d.toLocaleDateString('en-SG',{weekday:'narrow',timeZone:'UTC'}), hit:_dayLogged(key), isToday:key===biologicalToday()});
   }
 
   el.innerHTML=`<div class="pp-card">
@@ -7696,11 +7721,9 @@ go('nutrition');
     <div class="cal-dow"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
     <div class="cal-grid" id="prog-calendar"></div>
     <div class="cal-legend">
-      <span class="cal-swatch cal-none"></span><span>none</span>
-      <span class="cal-swatch cal-low"></span><span>&lt;50%</span>
-      <span class="cal-swatch cal-mid"></span><span>50–89%</span>
-      <span class="cal-swatch cal-high"></span><span>90%+</span>
-      <span class="cal-legend-dot"></span><span>trained</span>
+      <span class="cal-swatch cal-none"></span><span>not logged</span>
+      <span class="cal-swatch cal-mid"></span><span>logged</span>
+      <span class="cal-swatch cal-high"></span><span>logged + trained</span>
     </div>
   </div>
 
