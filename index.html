@@ -834,7 +834,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 /* The settings + camera buttons are position:absolute at top-right with z-index 150, so a
    right-aligned streak pill rendered underneath them and was invisible. Reserve their width. */
 .fuel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;padding:.5rem 0 0;margin-bottom:13px}
-.fuel-head>:last-child{margin-right:66px}
+.fuel-head>:last-child{margin-right:60px}
 .streak-pill{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:var(--t1);background:var(--s1);border:1px solid var(--b1);border-radius:20px;padding:5px 11px;min-height:30px}
 .streak-pill:empty{display:none}
 .streak-pill i{font-size:14px;color:var(--macro-carb)}
@@ -1455,9 +1455,24 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 /* Four columns, not five — Previous lives on the line above. Same template on the header and
    the row; keep them in step if either changes. */
 /* Four equal columns. Same template on the header and the row — keep them in step. */
-.lift-head{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;padding:0 2px 7px;font-size:11px;font-weight:600;color:var(--t3);letter-spacing:0}
+.set-head{display:grid;grid-template-columns:28px 1fr 1fr 1fr 36px;gap:8px;align-items:center;padding:0 2px 6px;font-size:11px;font-weight:600;color:var(--t3)}
+.set-head span{text-align:center}
+.set-head span:nth-child(2){text-align:left}
+.set-row{display:grid;grid-template-columns:28px 1fr 1fr 1fr 36px;gap:8px;align-items:center;padding:4px 0}
+.set-n{font-size:13px;font-weight:700;color:var(--t2);text-align:center;font-variant-numeric:tabular-nums}
+.set-prev{font-size:11.5px;color:var(--t3);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.set-in{width:100%;min-width:0;font-size:17px;font-weight:700;color:var(--t1);background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-sm);padding:11px 2px;text-align:center;outline:none;font-family:inherit;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+.set-in::-webkit-outer-spin-button,.set-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.set-in:focus{border-color:var(--focus-ac)}
+.set-tick{width:36px;height:36px;border-radius:var(--r-sm);border:1px solid var(--b2);background:transparent;color:var(--t3);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.set-tick.on{background:var(--green);border-color:var(--green);color:#fff}
+.set-row.is-done .set-in{opacity:.6}
+.set-actions{display:flex;gap:.5rem;margin-top:.625rem}
+.set-add{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12.5px;font-weight:700;color:var(--t1);background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-md);padding:9px;cursor:pointer;font-family:inherit}
+.set-del{font-size:12.5px;font-weight:600;color:var(--t3);background:none;border:none;padding:9px 10px;cursor:pointer;font-family:inherit}
+.lift-head{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:0 2px 7px;font-size:11px;font-weight:600;color:var(--t3);letter-spacing:0}
 .lift-head span{text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lift-row{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;align-items:center}
+.lift-row{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;align-items:center}
 .lift-in{width:100%;min-width:0;font-size:18px;font-weight:700;color:var(--t1);background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-md);padding:13px 2px;text-align:center;outline:none;font-family:inherit;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
 .lift-in::-webkit-outer-spin-button,.lift-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .lift-in:focus{border-color:var(--focus-ac)}
@@ -1890,10 +1905,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
 
   <!-- Settings + camera quick-log buttons — top right corner, side by side -->
-<button id="settings-fab" onclick="openSettings()" aria-label="Settings" hidden
-  style="position:absolute;top:14px;right:68px;z-index:150;width:44px;height:44px;background:var(--s2);border:1px solid var(--b2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s cubic-bezier(.34,1.4,.5,1),background .12s">
-  <i class="ti ti-settings" style="font-size:17px;color:var(--t2)" aria-hidden="true"></i>
-</button>
 <button id="camera-fab" onclick="openCameraLogger()" aria-label="Scan a label or meal"
   style="position:absolute;top:14px;right:16px;z-index:150;width:44px;height:44px;background:var(--s2);border:1px solid var(--b2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s cubic-bezier(.34,1.4,.5,1),background .12s">
   <i class="ti ti-barcode" style="font-size:19px;color:var(--t2)" aria-hidden="true"></i>
@@ -2366,7 +2377,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
     <!-- Session notes -->
     <div style="margin-top:.5rem">
-      <input class="sess-notes-input" id="sess-notes" type="text" placeholder="Session notes — fatigue, observations, deload flag…" aria-label="Session notes">
     </div>
 
     <div class="btn-row" style="margin-top:.625rem">
@@ -5412,8 +5422,29 @@ function weeklySetsByMuscle(){
     (s.lifts||[]).forEach(l=>add(l.name, parseInt(l.sets)||0));
   });
   // The in-progress session isn't in sessionLog yet, but it is the reason you're looking.
-  (currentLifts||[]).forEach(l=>add(l.name, parseInt(l.sets)||0));
+  // Count only TICKED sets here: a template seeds its planned set count, so reading l.sets
+  // would credit you four sets of an exercise you have not started.
+  (currentLifts||[]).forEach(l=>{
+    const rows=Array.isArray(l.rows)?l.rows:null;
+    add(l.name, rows ? rows.filter(r=>r&&r.done).length : (parseInt(l.sets)||0));
+  });
   return out;
+}
+
+// What this set looked like last time. The stored summary is one top set per exercise, so
+// until per-set history accumulates this shows that figure against every row rather than
+// inventing a per-set breakdown that was never recorded.
+function prevSet(shadow,ri){
+  if(!shadow||!shadow.match) return '—';
+  const m=shadow.match;
+  if(Array.isArray(m.rows)&&m.rows[ri]) return (m.rows[ri].kg||'—')+'×'+(m.rows[ri].reps||'—');
+  return (m.weight?m.weight+'×'+(m.reps||'—'):'—');
+}
+function prevSetKg(shadow,ri){
+  if(!shadow||!shadow.match) return '—';
+  const m=shadow.match;
+  if(Array.isArray(m.rows)&&m.rows[ri]) return m.rows[ri].kg||'—';
+  return m.weight||'—';
 }
 
 function renderWorkoutStats(){
@@ -5467,9 +5498,9 @@ function renderLiftRows(){
       ?`<div class="lift-shadow">${shadow.html}<span class="lift-verdict${v?' '+v.cls:''}" id="lv-${i}">${v?v.txt:''}</span></div>${targetHtml}`
       :'';
     return `
-    <div class="lift-card${l._done?' is-done':''}">
+    <div class="lift-card">
       <div class="lift-card-name-row">
-        <button class="lift-tick${l._done?' on':''}" onclick="toggleLiftDone(${i})" aria-pressed="${!!l._done}" aria-label="${l._done?'Mark done':'Mark not done'} — exercise ${i+1}">${l._done?'<i class="ti ti-check" aria-hidden="true"></i>':i+1}</button>
+        <div class="lift-card-num">${i+1}</div>
         <input class="lift-card-name" type="text" value="${l.name||''}" placeholder="Exercise name"
           list="exercise-library"
           oninput="currentLifts[${i}].name=this.value" onchange="_prefillLift(currentLifts[${i}]);renderLiftRows()" autocomplete="off" autocorrect="off" spellcheck="false">
@@ -5481,20 +5512,20 @@ function renderLiftRows(){
         <button class="lift-card-del" onclick="removeLiftRow(${i})" aria-label="Remove exercise ${i+1}"><i class="ti ti-x" style="font-size:13px" aria-hidden="true"></i></button>
       </div>
       ${shadowHtml}
-      <div class="lift-head"><span>${wLbl}</span><span>Sets</span><span>${rLbl}</span><span>RIR</span></div>
-      <div class="lift-row">
-        <input class="lift-in" type="number" inputmode="decimal" value="${l.weight||''}" placeholder="${wPh}"
-          min="0" step="${wStep}" oninput="currentLifts[${i}].weight=this.value;_updateVerdict(${i});renderWorkoutStats()"
-          aria-label="${wLbl} for exercise ${i+1}">
-        <input class="lift-in" type="number" inputmode="numeric" value="${l.sets||''}" placeholder="${l._defaultSets||'—'}"
-          min="1" max="10" oninput="currentLifts[${i}].sets=this.value;renderWorkoutStats()" ${isCardio?'disabled':''}
-          aria-label="Sets for exercise ${i+1}">
-        <input class="lift-in" type="number" inputmode="numeric" value="${l.reps||''}" placeholder="${(!isCardio&&l._repRange)?l._repRange:rPh}"
-          min="0" oninput="currentLifts[${i}].reps=this.value;_updateVerdict(${i});renderWorkoutStats()" onchange="if(this.value)_autoRest()"
-          aria-label="${rLbl} for exercise ${i+1}">
-        <input class="lift-in${l.rpe?' rpe-filled':''}" type="number" inputmode="numeric" value="${l.rpe||''}" placeholder="—"
-          min="0" max="5" oninput="currentLifts[${i}].rpe=this.value;this.className='lift-in'+(this.value?' rpe-filled':'')"
-          aria-label="Reps in reserve for exercise ${i+1}">
+      <div class="set-head"><span>Set</span><span>Previous</span><span>${wPh==='km'?'km':'kg'}</span><span>Reps</span><span></span></div>
+      ${_liftRows(l).map((r,ri)=>`
+      <div class="set-row${r.done?' is-done':''}">
+        <span class="set-n">${ri+1}</span>
+        <span class="set-prev">${prevSet(shadow,ri)}</span>
+        <input class="set-in" type="number" inputmode="decimal" value="${r.kg}" placeholder="${prevSetKg(shadow,ri)}"
+          min="0" step="${wStep}" onchange="setRowVal(${i},${ri},'kg',this.value)" aria-label="Weight, set ${ri+1}">
+        <input class="set-in" type="number" inputmode="numeric" value="${r.reps}" placeholder="${(!isCardio&&l._repRange)?l._repRange:'—'}"
+          min="0" onchange="setRowVal(${i},${ri},'reps',this.value)" aria-label="Reps, set ${ri+1}">
+        <button class="set-tick${r.done?' on':''}" onclick="toggleSetDone(${i},${ri})" aria-pressed="${!!r.done}" aria-label="${r.done?'Mark set '+(ri+1)+' not done':'Mark set '+(ri+1)+' done'}"><i class="ti ti-check" aria-hidden="true"></i></button>
+      </div>`).join('')}
+      <div class="set-actions">
+        <button class="set-add" onclick="addSetRow(${i})"><i class="ti ti-plus" aria-hidden="true"></i>Add set</button>
+        ${_liftRows(l).length>1?`<button class="set-del" onclick="removeSetRow(${i},${_liftRows(l).length-1})" aria-label="Remove last set">Remove set</button>`:''}
       </div>
     </div>`;}).join('');
   _initDraftWatch();
@@ -5507,12 +5538,78 @@ function renderLiftRows(){
 // "edit the one number that changed" instead of retyping ~28 fields. Only fills BLANK
 // fields — never overwrites something already typed. RIR is deliberately NOT pre-filled:
 // it's a reading of how the set actually felt, and copying last week's defeats the point.
+// One row per set. The summary (weight/reps/sets) is derived from these, never edited directly,
+// so every existing consumer keeps working unchanged.
+function _liftRows(l){
+  if(!Array.isArray(l.rows)){
+    // Seed from whatever the lift already carried: a template's set count, or a prefilled
+    // summary from last time.
+    const n=Math.max(1, parseInt(l.sets)||parseInt(l._defaultSets)||1);
+    l.rows=Array.from({length:n},()=>({kg:l.weight||'', reps:l.reps||'', done:false}));
+  }
+  return l.rows;
+}
+
+// Top set drives progression, so it is the heaviest row, ties broken by reps. Sets counted are
+// the ones actually ticked; before anything is ticked, the rows carrying numbers stand in.
+function _syncLiftSummary(l){
+  const rows=(l.rows||[]).filter(r=>r&&(r.kg!==''||r.reps!==''));
+  if(!rows.length){ l.weight=''; l.reps=''; l.sets=''; return; }
+  let top=rows[0];
+  rows.forEach(r=>{
+    const rk=parseFloat(r.kg)||0, tk=parseFloat(top.kg)||0;
+    if(rk>tk || (rk===tk && (parseFloat(r.reps)||0)>(parseFloat(top.reps)||0))) top=r;
+  });
+  l.weight=top.kg; l.reps=top.reps;
+  const ticked=(l.rows||[]).filter(r=>r&&r.done).length;
+  l.sets=String(ticked||rows.length);
+}
+
+function setRowVal(i,ri,field,v){
+  const l=currentLifts[i]; if(!l) return;
+  const rows=_liftRows(l);
+  if(!rows[ri]) return;
+  rows[ri][field]=v;
+  _syncLiftSummary(l);
+  _updateVerdict(i);
+  renderWorkoutStats();
+  _saveDraft();
+}
+function toggleSetDone(i,ri){
+  const l=currentLifts[i]; if(!l) return;
+  const rows=_liftRows(l);
+  if(!rows[ri]) return;
+  rows[ri].done=!rows[ri].done;
+  _syncLiftSummary(l);
+  renderLiftRows();
+  if(rows[ri].done){ try{ _autoRest(); if(navigator.vibrate) navigator.vibrate(10); }catch(e){} }
+}
+function addSetRow(i){
+  const l=currentLifts[i]; if(!l) return;
+  const rows=_liftRows(l);
+  const last=rows[rows.length-1]||{};
+  // A new set starts from the previous one — you rarely change weight between sets.
+  rows.push({kg:last.kg||'', reps:last.reps||'', done:false});
+  _syncLiftSummary(l);
+  renderLiftRows();
+}
+function removeSetRow(i,ri){
+  const l=currentLifts[i]; if(!l) return;
+  const rows=_liftRows(l);
+  if(rows.length<=1) return;
+  rows.splice(ri,1);
+  _syncLiftSummary(l);
+  renderLiftRows();
+}
+
 function _prefillLift(lift){
   const prev=lastLiftFor(lift.name);
   if(!prev) return lift;
   if(!lift.weight&&prev.match.weight) lift.weight=prev.match.weight;
   if(!lift.sets&&prev.match.sets)     lift.sets=prev.match.sets;
   if(!lift.reps&&prev.match.reps)     lift.reps=prev.match.reps;
+  delete lift.rows;           // rebuild from the freshly prefilled summary
+  _liftRows(lift);
   return lift;
 }
 
@@ -5901,6 +5998,7 @@ function saveSession(){
   // Canonicalise on the way in so a legacy-named entry can't re-split a history the
   // migration just merged.
   currentLifts.forEach(l=>{ l.name=_canonicalExercise(l.name); });
+  currentLifts.forEach(l=>{ if(Array.isArray(l.rows)) _syncLiftSummary(l); });
   const filledLifts=currentLifts.filter(l=>l.name&&(l.weight||l.reps));
   // Named rows carrying no numbers are dropped — you didn't record them, so they shouldn't
   // enter history. But that used to happen SILENTLY, which meant an exercise you actually did
