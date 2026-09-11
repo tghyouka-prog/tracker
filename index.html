@@ -630,7 +630,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .ml-del:active{background:var(--s3);color:var(--red)}
 
 /* ── Macro row (Cal AI-inspired): 3 equal ring cards, each a distinct colour ── */
-.macro-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.5rem}
+.macro-row{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;margin-bottom:.5rem}
 .macro-cell{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem .5rem .75rem;display:flex;flex-direction:column;align-items:center;gap:.375rem}
 .mc-ring{position:relative;width:64px;height:64px}
 .mc-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
@@ -646,11 +646,23 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
    reads as amber and can't be used for water. */
 .m-prot  .mc-fill{stroke:var(--macro-prot)}
 .m-carb  .mc-fill{stroke:var(--macro-carb)}
-.m-hydro .mc-fill{stroke:var(--macro-water)}
 .macro-cell.is-hit .mc-val{color:var(--focus-ac)}
 .macro-cell.is-over .mc-val{color:var(--amber)}
 .macro-cell.is-over .mc-lbl{color:var(--amber)}
-.water-quick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem}
+.water-card{display:flex;align-items:center;gap:.75rem;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.7rem .8rem;margin-bottom:1.25rem}
+.wc-ring{position:relative;width:46px;height:46px;flex-shrink:0}
+.wc-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.wc-ring .mc-fill{stroke:var(--macro-water)}
+.wc-ring i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:19px;color:var(--macro-water)}
+.wc-body{flex:1;min-width:0}
+.wc-lbl{font-size:12px;color:var(--t2);line-height:1.2;margin-bottom:1px}
+.wc-val{font-size:17px;font-weight:700;color:var(--t1);letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.2;white-space:nowrap}
+.wc-val small{font-size:11px;font-weight:600;color:var(--t3);margin-left:3px;letter-spacing:0}
+.wc-step{flex-shrink:0;font-size:11px;font-weight:700;color:var(--t2);background:var(--s2);border:1px solid var(--b1);border-radius:20px;padding:4px 9px;cursor:pointer;font-family:inherit}
+.wc-btns{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.wc-btn{width:33px;height:33px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;line-height:1;cursor:pointer;border:1px solid var(--b2);background:transparent;color:var(--t1);font-family:inherit;transition:transform .12s}
+.wc-btn.plus{background:var(--focus-ac);border-color:var(--focus-ac);color:var(--focus-ac-ink)}
+.wc-btn:active,.wc-step:active{transform:scale(.9)}
 /* Meal-log macros as small colour-coded chips, same scale as the rings above — Cal AI shows
    each logged meal's macros this way rather than as one run-on grey line. */
 .meal-macros{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px}
@@ -1999,14 +2011,9 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
   <button class="fuel-log-btn mo-rise" onclick="openMealLogger()"><i class="ti ti-plus" style="font-size:15px"></i>Log a meal</button>
 
-  <!-- Water quick-add — the macro cards above are read-only and these are the most-tapped
-       controls on the page. -->
-  <div class="water-quick mo-rise">
-    <button class="mb hydro-btn" onclick="addMacro('hydro',250,'Glass')"><i class="ti ti-glass-full"></i>+250ml</button>
-    <button class="mb hydro-btn" onclick="addMacro('hydro',500,'Bottle')"><i class="ti ti-bottle"></i>+500ml</button>
-    <button class="mb hydro-btn" onclick="addMacro('hydro',1000,'1L')"><i class="ti ti-droplets"></i>+1L</button>
-    <button class="mb undo-btn" onclick="undoMacro('hydro')"><i class="ti ti-arrow-back-up"></i>Undo</button>
-  </div>
+  <!-- Water — Cal AI's dedicated stepper row. The step button replaces the old fixed
+       +250/+500/+1L trio; the minus button replaces Undo. Rendered by renderWaterCard(). -->
+  <div id="water-card" class="mo-rise"></div>
 
   <div class="sec-label" id="meal-log-label" style="display:none">Recently logged</div>
   <div id="meal-log-list" class="mo-rise" style="margin:0 0 1.25rem"></div>
@@ -2518,6 +2525,40 @@ function resetCycle(){
 // kcal also has a manual top-up store for snacks/extras.
 const TARGETS={prot:163,hydro:1750,kcal:2840,carb:370};
 const macros={prot:0,hydro:0,kcal:0,carb:0};
+// Water increment for the -/+ buttons. Cal AI makes this user-settable behind a gear; this
+// button cycles it instead, covering the same three amounts the old strip hardcoded.
+let waterStep=250;
+try{ waterStep=parseInt(localStorage.getItem('waterStep'),10)||250; }catch(e){}
+function cycleWaterStep(){
+  waterStep = waterStep===250?500 : waterStep===500?1000 : 250;
+  try{ localStorage.setItem('waterStep',waterStep); }catch(e){}
+  renderWaterCard();
+}
+function renderWaterCard(){
+  const el=document.getElementById('water-card');
+  if(!el) return;
+  const cur=macros.hydro||0, tgt=TARGETS.hydro||0;
+  const a=_ringArc(cur,tgt,20);
+  const stepLbl=waterStep>=1000?'1L':waterStep+'ml';
+  el.innerHTML=`<div class="water-card">
+    <div class="wc-ring">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <circle class="mc-track" cx="24" cy="24" r="20"></circle>
+        <circle class="mc-fill" cx="24" cy="24" r="20" stroke-dasharray="${a.dash} ${a.circ}"${a.hidden?' style="display:none"':''}></circle>
+      </svg>
+      <i class="ti ti-glass-full" aria-hidden="true"></i>
+    </div>
+    <div class="wc-body">
+      <div class="wc-lbl">Water</div>
+      <div class="wc-val">${cur.toLocaleString()}<small>ml</small></div>
+    </div>
+    <button class="wc-step" onclick="cycleWaterStep()" aria-label="Change step size, currently ${stepLbl}">${stepLbl}</button>
+    <div class="wc-btns">
+      <button class="wc-btn" onclick="addMacro('hydro',-waterStep)" aria-label="Remove ${stepLbl} of water">&minus;</button>
+      <button class="wc-btn plus" onclick="addMacro('hydro',waterStep)" aria-label="Add ${stepLbl} of water">+</button>
+    </div>
+  </div>`;
+}
 // ── MEAL LOGGER ──
 let mealLibrary=[];    // [{id, name, prot, kcal}] — persisted across days
 let mealLog=[];        // [{id, name, prot, kcal, ts}] — today only
@@ -3025,12 +3066,15 @@ function syncMacrosFromTimeline(){
 function addMacro(type,val,label){
   // Only hydration uses manual entry now
   if(type!=='hydro') return;
-  macros[type]=Math.min(macros[type]+val,TARGETS[type]*1.3);
+  const before=macros[type];
+  macros[type]=Math.max(0,Math.min(before+val,TARGETS[type]*1.3));
+  const applied=macros[type]-before;
+  if(!applied) return;
   history[type]=history[type]||[];
-  history[type].push(val);
+  history[type].push(applied);   // the applied delta, not the requested one, so undo is exact
   updateMacroUI(type);
   updateScore();
-  showToast(`+${val}ml water logged`,'hydro');
+  showToast(`${applied>0?'+':'-'}${Math.abs(applied).toLocaleString()}ml water`,'hydro');
 }
 
 function undoMacro(type){
@@ -3131,13 +3175,13 @@ function renderCalHero(){
 // Macro row — Cal AI's 3-up beneath the hero. Framed as what's LEFT, because the number you
 // act on is the gap. Protein takes the leading slot: it's the priority macro here.
 function renderMacroRow(){
+  renderWaterCard();
   const el=document.getElementById('macro-row');
   if(!el) return;
   const R=20, C=2*Math.PI*R;
   const cells=[
     {cls:'m-prot', cur:macros.prot||0,  tgt:TARGETS.prot||0,  unit:'g',  lbl:'protein left'},
     {cls:'m-carb', cur:macros.carb||0,  tgt:TARGETS.carb||0,  unit:'g',  lbl:'carbs left'},
-    {cls:'m-hydro',cur:macros.hydro||0, tgt:TARGETS.hydro||0, unit:'',   lbl:'water left'},
   ];
   el.innerHTML=cells.map(c=>{
     const over=c.cur-c.tgt;
