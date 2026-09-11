@@ -351,7 +351,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 @keyframes aipSweep{0%{left:-40%}100%{left:100%}}
 .aip-cap{font-size:11.5px;color:var(--t2);margin-top:6px}
 @media (prefers-reduced-motion:reduce){.aip-bar span{animation:none;left:0;width:100%;opacity:.5}}
-.pp-log{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;margin-top:.625rem;padding:7px;border-radius:var(--r-md);border:1px solid var(--b2);background:var(--s2);color:var(--t1);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.pp-log{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;padding:8px;border-radius:var(--r-md);border:1px solid var(--b2);background:var(--s2);color:var(--t1);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .pp-log:active{transform:scale(.96)}
 .pd-hint{display:block;font-size:10px;color:var(--t3);font-weight:500;margin-top:1px}
 .arc-card{background:var(--s2);border:1px solid var(--b2);border-radius:var(--r-lg);padding:.875rem 1rem;margin-bottom:.75rem}
@@ -423,12 +423,17 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .prof-field input{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-sm);color:var(--t1);font-family:inherit;font-size:14px;font-weight:700;padding:8px 10px;width:100%}
 .custom-seg-btn.on{background:var(--focus-ac);color:var(--focus-ac-ink);font-weight:700}
 .pp-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem}
+.pp-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:.75rem}
+.pp-col{display:flex;flex-direction:column;gap:3px;min-width:0}
+.pp-col-r{align-items:flex-end}
+.pp-btns{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.75rem}
 .pp-lbl{font-size:12px;color:var(--t2)}
-.pp-big{font-size:26px;font-weight:800;letter-spacing:-.03em;color:var(--t1);line-height:1.1;margin:2px 0 8px;font-variant-numeric:tabular-nums}
+.pp-big{font-size:26px;font-weight:800;letter-spacing:-.03em;color:var(--t1);line-height:1.1;font-variant-numeric:tabular-nums}
 .pp-big small{font-size:12px;font-weight:600;color:var(--t3);margin-left:2px}
 .pp-bar{height:5px;border-radius:3px;background:var(--s3);overflow:hidden;margin-bottom:8px}
 .pp-bar span{display:block;height:100%;border-radius:3px;background:var(--focus-ac);transition:width .5s cubic-bezier(.4,0,.2,1)}
-.pp-goal{font-size:12px;color:var(--t2);display:flex;align-items:center;gap:3px}
+.pp-goal{display:flex;align-items:baseline;gap:3px}
+.pp-goal small{font-size:12px;font-weight:600;color:var(--t3)}
 .pp-goal input{width:42px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px;font-weight:700;padding:2px 4px;text-align:center;-moz-appearance:textfield}
 .pp-goal input::-webkit-outer-spin-button,.pp-goal input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .pp-streak{display:flex;flex-direction:column;align-items:flex-start}
@@ -437,22 +442,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .ppw{width:100%;aspect-ratio:1;max-width:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;background:var(--s3);color:var(--t3)}
 .ppw.on{background:var(--focus-ac);color:var(--focus-ac-ink)}
 .ppw.now{outline:1.5px solid var(--t2);outline-offset:1px}
-.range-seg[hidden]{display:none}
-.range-seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--s2);border-radius:20px;padding:3px;margin-top:.75rem}
-.rs-btn{font-size:11px;font-weight:600;color:var(--t2);background:transparent;border:none;border-radius:17px;padding:6px 2px;cursor:pointer;font-family:inherit;white-space:nowrap}
-.rs-btn.on{background:var(--s1);color:var(--t1);font-weight:700;box-shadow:var(--sh-sm)}
-.gp-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem 1rem;margin-top:.75rem}
-.gp-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.75rem}
-.gp-title{font-size:17px;font-weight:700;letter-spacing:-.02em;color:var(--t1)}
-.gp-pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--t2);background:var(--s2);border:1px solid var(--b1);border-radius:20px;padding:3px 9px;white-space:nowrap}
-.gp-empty{font-size:12px;color:var(--t3);line-height:1.5}
-.gp-plot{display:flex;gap:8px;height:120px}
-.gp-ax{display:flex;flex-direction:column;justify-content:space-between;font-size:9px;color:var(--t3);font-variant-numeric:tabular-nums;flex-shrink:0}
-.gp-plot svg{flex:1;min-width:0;height:100%;overflow:visible}
-.gp-grid{stroke:var(--b1);stroke-width:1;stroke-dasharray:3 4;vector-effect:non-scaling-stroke}
-.gp-line{fill:none;stroke:var(--t1);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
-.gp-foot{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:5px}
-.gp-note{font-size:12px;color:var(--t2);margin-top:.625rem}
 .cons-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem 1rem}
 .cons-head{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;margin-bottom:.875rem}
 .cons-title{font-size:17px;font-weight:700;letter-spacing:-.02em;color:var(--t1)}
@@ -469,17 +458,18 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .prog-stat-val{font-size:19px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums;line-height:1.1}
 .prog-stat-lbl{font-size:9.5px;color:var(--t3);letter-spacing:.01em;margin-top:3px}
 .lp-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.25rem .875rem}
-.lp-row{display:flex;align-items:center;gap:.75rem;padding:.75rem 0;border-bottom:1px solid var(--b1)}
+/* Fixed-width number columns, so kg reads down one line and the change down another instead of
+   both ragging off a shared right edge. */
+.lp-row{display:grid;grid-template-columns:1fr 62px 66px;align-items:center;gap:.5rem;padding:.8125rem 0;border-bottom:1px solid var(--b1)}
 .lp-row:last-child{border-bottom:none}
-.lp-l{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.lp-l{min-width:0;display:flex;flex-direction:column;gap:3px}
 .lp-name{font-size:13.5px;font-weight:700;color:var(--t1);letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lp-sub{font-size:10.5px;color:var(--t3)}
+.lp-sub{font-size:10.5px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lp-pb{color:var(--t2)}
 .lp-stall{color:var(--macro-carb)}
-.lp-r{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
-.lp-kg{font-size:16px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums}
+.lp-kg{font-size:16px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums;text-align:right}
 .lp-kg small{font-size:10px;font-weight:600;color:var(--t3);margin-left:1px}
-.lp-d{font-size:10.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.lp-d{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
 .lp-d.up{color:var(--green)}
 .lp-d.down{color:var(--macro-prot)}
 .lp-d.flat{color:var(--t3)}
@@ -7570,11 +7560,11 @@ function renderProgLifts(){
     .sort((a,b)=>b.hist.length-a.hist.length)
     .slice(0,6);
   if(!rows.length){
-    el.innerHTML='<div class="sec-label">Lifts</div>'+
+    el.innerHTML='<div class="sec-label" style="margin-top:1.25rem">Lifts</div>'+
       '<div class="prog-empty">Log the same lift twice and its trend shows up here.</div>';
     return;
   }
-  el.innerHTML='<div class="sec-label">Lifts</div><div class="lp-card">'+rows.map(r=>{
+  el.innerHTML='<div class="sec-label" style="margin-top:1.25rem">Lifts</div><div class="lp-card">'+rows.map(r=>{
     const cur=r.hist[0], first=r.hist[r.hist.length-1];
     const best=Math.max(...r.hist.map(x=>x.kg));
     const d=cur.kg-first.kg;
@@ -7588,8 +7578,8 @@ function renderProgLifts(){
     return '<div class="lp-row">'+
       '<div class="lp-l"><span class="lp-name">'+String(r.name).replace(/</g,"&lt;")+'</span>'+
         '<span class="lp-sub">'+r.hist.length+' sessions'+(pb||stalled?' · ':'')+pb+stalled+'</span></div>'+
-      '<div class="lp-r"><span class="lp-kg">'+cur.kg+'<small>kg</small></span>'+
-        '<span class="lp-d '+cls+'">'+arrow+' '+delta+'</span></div>'+
+      '<span class="lp-kg">'+cur.kg+'<small>kg</small></span>'+
+      '<span class="lp-d '+cls+'">'+arrow+' '+delta+'</span>'+
       '</div>';
   }).join('')+'</div>';
 }
@@ -7629,7 +7619,6 @@ try{
 }catch(e){}
 function _saveOverrides(){ try{ localStorage.setItem('goalOverrides',JSON.stringify(goalOverrides)); }catch(e){} }
 try{ const g=parseFloat(localStorage.getItem('goalWeight')); if(g>0) goalWeight=g; }catch(e){}
-let progRange='90d';   // 90d | 6m | 1y | all
 
 function setGoalWeight(v){
   const n=parseFloat(v);
@@ -7640,7 +7629,6 @@ function setGoalWeight(v){
   }catch(e){}
   renderCalProgress();
 }
-function setProgRange(r){ progRange=r; renderCalProgress(); }
 
 // One definition of "logged", used by the streak week dots, the heatmap and the stats card so
 // they can never disagree with each other.
@@ -7652,19 +7640,10 @@ function _dayTrained(key){
   return !!(weekHistory[key] && weekHistory[key].hasSession) || sessionLog.some(s=>s.date===key);
 }
 
-function _rangeDays(){ return progRange==='90d'?90:progRange==='6m'?182:progRange==='1y'?365:100000; }
 
-function _weightSeries(){
-  const cutoff=Date.now()-_rangeDays()*86400000;
-  return (weightHistory||[])
-    .filter(e=>new Date(e.date+'T12:00:00Z').getTime()>=cutoff)
-    .sort((a,b)=>a.date<b.date?-1:1);
-}
 
 function renderCalProgress(){
   _renderProgPair();
-  _renderRangeSeg();
-  _renderGoalChart();
 }
 
 function _renderProgPair(){
@@ -7677,17 +7656,28 @@ function _renderProgPair(){
   let pct=0;
   if(goalWeight && goalWeight!==start) pct=Math.max(0,Math.min(100,((bodyWeight-start)/(goalWeight-start))*100));
 
+  // Current and goal are one comparison, so they read as a pair across the top rather than as
+  // two entries in a left-hand stack. The projected date moved here from the chart card, which
+  // is the only line of it that said anything a slow-moving weight line couldn't.
   el.innerHTML=`<div class="pp-card">
-    <div class="pp-lbl">My weight</div>
-    <div class="pp-big">${bodyWeight}<small>kg</small></div>
-    <div class="pp-bar"><span style="width:${pct.toFixed(0)}%"></span></div>
-    <div class="pp-goal">Goal
-      <input type="number" inputmode="decimal" step="0.5" min="40" max="150" id="goal-w"
-        value="${goalWeight!=null?goalWeight:''}" placeholder="--" onchange="setGoalWeight(this.value)"
-        aria-label="Goal weight in kilograms"> kg
+    <div class="pp-head">
+      <div class="pp-col">
+        <span class="pp-lbl">My weight</span>
+        <span class="pp-big">${bodyWeight}<small>kg</small></span>
+      </div>
+      <div class="pp-col pp-col-r">
+        <span class="pp-lbl">Goal</span>
+        <span class="pp-goal"><input type="number" inputmode="decimal" step="0.5" min="40" max="150" id="goal-w"
+          value="${goalWeight!=null?goalWeight:''}" placeholder="--" onchange="setGoalWeight(this.value)"
+          aria-label="Goal weight in kilograms"><small>kg</small></span>
+      </div>
     </div>
-    <button class="pp-log" onclick="promptWeighIn()"><i class="ti ti-scale" aria-hidden="true"></i>Log weigh-in</button>
-    <button class="pp-log" onclick="openWeightHistory()"><i class="ti ti-history" aria-hidden="true"></i>History</button>
+    <div class="pp-bar"><span style="width:${pct.toFixed(0)}%"></span></div>
+    <div class="pp-btns">
+      <button class="pp-log" onclick="promptWeighIn()"><i class="ti ti-scale" aria-hidden="true"></i>Log weigh-in</button>
+      <button class="pp-log" onclick="openWeightHistory()"><i class="ti ti-history" aria-hidden="true"></i>History</button>
+    </div>
+    <div class="gp-proj"><i class="ti ti-target-arrow" aria-hidden="true"></i><span>${projectionText()}</span></div>
   </div>
   `;
 }
@@ -7846,56 +7836,7 @@ function saveWeighIn(){
   try{ renderCalProgress(); }catch(e){}
 }
 
-function _renderRangeSeg(){
-  const el=document.getElementById('range-seg');
-  if(!el) return;
-  // A range switch above a chart that has no data yet is a control for nothing.
-  el.hidden=_weightSeries().length<2 && (weightHistory||[]).length<2;
-  if(el.hidden) return;
-  const opts=[['90d','90 days'],['6m','6 months'],['1y','1 year'],['all','All time']];
-  el.innerHTML=opts.map(o=>`<button class="rs-btn${progRange===o[0]?' on':''}" onclick="setProgRange('${o[0]}')">${o[1]}</button>`).join('');
-}
 
-function _renderGoalChart(){
-  const el=document.getElementById('goal-progress');
-  if(!el) return;
-  const s=_weightSeries();
-  if(s.length<2){
-    el.innerHTML='<div class="gp-card"><div class="gp-head"><span class="gp-title">Goal progress</span></div>'+
-      '<div class="gp-empty">Log your weight on two or more days to see the trend.</div>'+
-      '<div class="gp-proj"><span>'+projectionText()+'</span></div></div>';
-    return;
-  }
-  const kgs=s.map(e=>e.kg);
-  let lo=Math.min(...kgs), hi=Math.max(...kgs);
-  if(hi-lo<1){ const mid=(hi+lo)/2; lo=mid-0.5; hi=mid+0.5; }
-  const pad=(hi-lo)*0.15; lo-=pad; hi+=pad;
-  const W=300,H=120;
-  const x=i=>(i/(s.length-1))*W;
-  const y=kg=>H-((kg-lo)/(hi-lo))*H;
-  const pts=s.map((e,i)=>x(i).toFixed(1)+','+y(e.kg).toFixed(1)).join(' ');
-
-  const start=s[0].kg;
-  // No "% of goal" pill — the bar in the weight card above is the same number.
-  const delta=bodyWeight-start;
-  const dirWord=Math.abs(delta)<0.1?'Holding steady':(delta>0?('Up '+delta.toFixed(1)+'kg'):('Down '+Math.abs(delta).toFixed(1)+'kg'))+' since '+new Date(s[0].date+'T12:00:00Z').toLocaleDateString('en-SG',{day:'numeric',month:'short',timeZone:'UTC'});
-
-  el.innerHTML=`<div class="gp-card">
-    <div class="gp-head"><span class="gp-title">Goal progress</span></div>
-    <div class="gp-plot">
-      <div class="gp-ax"><span>${hi.toFixed(1)}</span><span>${((hi+lo)/2).toFixed(1)}</span><span>${lo.toFixed(1)}</span></div>
-      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
-        <line class="gp-grid" x1="0" y1="0.5" x2="${W}" y2="0.5"></line>
-        <line class="gp-grid" x1="0" y1="${H/2}" x2="${W}" y2="${H/2}"></line>
-        <line class="gp-grid" x1="0" y1="${H-0.5}" x2="${W}" y2="${H-0.5}"></line>
-        <polyline class="gp-line" points="${pts}"></polyline>
-      </svg>
-    </div>
-    <div class="gp-foot"><span>${new Date(s[0].date+'T12:00:00Z').toLocaleDateString('en-SG',{day:'numeric',month:'short',timeZone:'UTC'})}</span><span>${new Date(s[s.length-1].date+'T12:00:00Z').toLocaleDateString('en-SG',{day:'numeric',month:'short',timeZone:'UTC'})}</span></div>
-    <div class="gp-note">${dirWord}</div>
-    <div class="gp-proj"><i class="ti ti-target-arrow" aria-hidden="true"></i><span>${projectionText()}</span></div>
-  </div>`;
-}
 
 function renderProgress(){
   renderCalProgress();
@@ -8588,13 +8529,8 @@ try{
 
   <div style="padding:.5rem 0 0"><div class="coach-eyebrow">Journey</div><div class="coach-h1">Progress</div></div>
 
-  <!-- Cal AI's progress screen: weight-vs-goal and the streak side by side, a range selector,
-       then the goal chart. Rendered by renderCalProgress(). -->
   <div class="prog-pair mo-rise" id="prog-pair"></div>
 
-  <div class="range-seg mo-rise" id="range-seg"></div>
-
-  <div class="mo-rise" id="goal-progress"></div>
 
   <!-- Headline numbers — populated by renderProgress() -->
   <div class="prog-stats mo-rise" id="prog-stats"></div>
