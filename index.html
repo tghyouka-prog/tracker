@@ -353,6 +353,19 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .arc-conf{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;text-transform:capitalize;padding:2px 8px;border-radius:20px;flex-shrink:0;background:var(--s3);color:var(--t3)}
 .arc-conf.ok{color:var(--green);background:color-mix(in srgb,var(--green) 14%,transparent)}
 .arc-conf.mid{color:var(--amber);background:color-mix(in srgb,var(--amber) 14%,transparent)}
+.arc-sinput{width:56px;text-align:center;background:var(--s1);border:1px solid var(--b2);border-radius:var(--r-sm);color:var(--t1);font-family:inherit;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;padding:5px 4px;-moz-appearance:textfield}
+.arc-sinput::-webkit-outer-spin-button,.arc-sinput::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.arc-cal-card{display:flex;align-items:center;gap:.75rem;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-md);padding:.75rem .875rem;margin-bottom:.5rem}
+.arc-cal-card i{font-size:22px;color:var(--t2)}
+.arc-cc-l{font-size:12px;color:var(--t2)}
+.arc-cc-v{font-size:24px;font-weight:800;color:var(--t1);letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums}
+.arc-mgrid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.75rem}
+.arc-mcard{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-md);padding:.7rem .75rem}
+.arc-mcard i{font-size:17px;display:block;margin-bottom:3px}
+.arc-mcard.m-prot i{color:var(--macro-prot)}
+.arc-mcard.m-carb i{color:var(--macro-carb)}
+.arc-mc-l{font-size:11px;color:var(--t2)}
+.arc-mc-v{font-size:17px;font-weight:800;color:var(--t1);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .arc-kcal{display:flex;align-items:baseline;gap:5px;font-size:26px;font-weight:800;color:var(--t1);letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin-bottom:.5rem}
 .arc-kcal i{font-size:16px;color:var(--t3)}
 .arc-kcal small{font-size:12px;font-weight:600;color:var(--t3);letter-spacing:0}
@@ -2662,7 +2675,15 @@ function projectionText(){
 const OB_STEPS=['goal','sex','age','height','weight','goalWeight','pace'];
 let _obIdx=0, _obPhase='q';   // q = questions, build = transition, plan = reveal
 let _obTimer=null;
-function startOnboarding(){ _obIdx=0; _obPhase='q'; _renderOnboarding(); document.getElementById('onboarding').hidden=false; }
+function startOnboarding(){
+  _obIdx=0; _obPhase='q';
+  _renderOnboarding();
+  _showOverlay('onboarding');
+  // Marked as seen on open, not on finish. Leaving early — including via the Android back
+  // gesture — used to leave this unset, so setup ambushed you again on the next launch.
+  // Settings still shows "Finish your setup" until the profile is actually complete.
+  try{ localStorage.setItem('onboardingDone','1'); }catch(e){}
+}
 function _obClose(){
   if(_obTimer){ clearInterval(_obTimer); _obTimer=null; }
   const el=document.getElementById('onboarding');
@@ -3392,6 +3413,14 @@ function initGeminiKeyField(){
 let _aiResult=null, _aiServings=1;
 const _SERVING_STEPS=[0.25,0.5,0.75,1,1.25,1.5,2,2.5,3];
 
+// Typed servings — Cal AI lets you edit the number directly, not only step it.
+function aiServingsSet(v){
+  const n=parseFloat(v);
+  if(!(n>0 && n<=10)){ renderAiResult(); return; }
+  _aiServings=Math.round(n*100)/100;
+  renderAiResult();
+}
+
 function aiServings(dir){
   if(!_aiResult) return;
   const i=_SERVING_STEPS.indexOf(_aiServings);
@@ -3432,27 +3461,32 @@ function renderAiResult(){
 
   const conf=_aiResult.confidence;
   const confCls=conf==='high'?'ok':conf==='medium'?'mid':'low';
-  const servLbl=_aiServings===1?'1 serving':_aiServings+' servings';
   el.hidden=false;
+  // Cal AI's food detail: the name, a serving count you can type into, one calories card, then
+  // macro cards side by side — not a row of chips.
   el.innerHTML=`<div class="arc-card">
     <div class="arc-top">
       <span class="arc-name">${String(v.name).replace(/</g,'&lt;')}</span>
       <span class="arc-conf ${confCls}">${_aiResult.grounded?'<i class="ti ti-world" aria-hidden="true"></i>':''}${conf||'—'}</span>
     </div>
-    <div class="arc-kcal"><i class="ti ti-flame" aria-hidden="true"></i>${v.kcal.toLocaleString()}<small>calories</small></div>
-    <div class="arc-macros">
-      <span class="mm mm-prot">${v.prot}g<small>protein</small></span>
-      <span class="mm mm-carb">${v.carb}g<small>carbs</small></span>
-    </div>
     <div class="arc-serv">
-      <span class="arc-serv-l">Servings</span>
+      <span class="arc-serv-l">Number of servings</span>
       <div class="arc-serv-r">
         <button class="arc-sbtn" onclick="aiServings(-1)" aria-label="Fewer servings">&minus;</button>
-        <span class="arc-sval">${servLbl}</span>
+        <input class="arc-sinput" type="number" inputmode="decimal" step="0.25" min="0.25" max="10"
+          value="${_aiServings}" onchange="aiServingsSet(this.value)" aria-label="Number of servings">
         <button class="arc-sbtn" onclick="aiServings(1)" aria-label="More servings">+</button>
       </div>
     </div>
-    <button class="arc-log" onclick="logAiResult()"><i class="ti ti-plus" aria-hidden="true"></i>Log it</button>
+    <div class="arc-cal-card">
+      <i class="ti ti-flame" aria-hidden="true"></i>
+      <div><div class="arc-cc-l">Calories</div><div class="arc-cc-v">${v.kcal.toLocaleString()}</div></div>
+    </div>
+    <div class="arc-mgrid">
+      <div class="arc-mcard m-prot"><i class="ti ti-meat" aria-hidden="true"></i><div class="arc-mc-l">Protein</div><div class="arc-mc-v">${v.prot}g</div></div>
+      <div class="arc-mcard m-carb"><i class="ti ti-bread" aria-hidden="true"></i><div class="arc-mc-l">Carbs</div><div class="arc-mc-v">${v.carb}g</div></div>
+    </div>
+    <button class="arc-log" onclick="logAiResult()">Done</button>
   </div>`;
 }
 
@@ -7508,6 +7542,34 @@ function _renderProgPair(){
 }
 
 // One-tap weigh-in from the Progress tab, where you are already looking at the trend.
+// ── Android back handling ────────────────────────────────────────────────────────────────
+// A full-screen overlay that the system back gesture can't dismiss is a trap: on Android it
+// exits the PWA instead. Each overlay pushes a history entry when it opens, so back pops it
+// and closes the overlay rather than the app.
+const _OVERLAY_IDS=['onboarding','weighin','goaledit','weighhist'];
+function _showOverlay(id){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.hidden=false;
+  try{ window.history.pushState({overlay:id},''); }catch(e){}
+}
+function _hideOverlay(id){
+  const el=document.getElementById(id);
+  if(el) el.hidden=true;
+}
+function _openOverlays(){
+  return _OVERLAY_IDS.filter(i=>{ const e=document.getElementById(i); return e && !e.hidden; });
+}
+window.addEventListener('popstate',function(){
+  const open=_openOverlays();
+  if(open.length){ _hideOverlay(open[open.length-1]); return; }
+  // Nothing of ours was open — close a modal if one is up rather than dropping out of the app.
+  const settings=document.getElementById('settings-overlay');
+  if(settings && settings.classList.contains('open')){ try{ closeSettings(); }catch(e){} return; }
+  const meal=document.getElementById('meal-modal');
+  if(meal && getComputedStyle(meal).display!=='none'){ try{ closeMealLogger(); }catch(e){} }
+});
+
 // ── Edit daily goals (Cal AI: "Edit Daily Goals" / "Auto Generate Goals") ──
 const GOAL_FIELDS=[
   {k:'kcal', label:'Calories', unit:'kcal', min:800,  max:6000, step:10},
@@ -7542,7 +7604,7 @@ function openGoalEditor(){
     '</div>'+
     '<button class="ob-cta" onclick="document.getElementById(\'goaledit\').hidden=true">Done</button>'+
     '</div>';
-  el.hidden=false;
+  _showOverlay('goaledit');
 }
 function setGoalOverride(k,v){
   const f=GOAL_FIELDS.find(x=>x.k===k);
@@ -7584,7 +7646,7 @@ function openWeightHistory(){
     '</div>'+
     '<button class="ob-cta" onclick="document.getElementById(\'weighhist\').hidden=true">Done</button>'+
     '</div>';
-  el.hidden=false;
+  _showOverlay('weighhist');
 }
 function editWeighIn(date,v){
   const n=parseFloat(v);
@@ -7621,7 +7683,7 @@ function promptWeighIn(){
     '<button class="ob-cta" onclick="saveWeighIn()">Save</button>'+
     '<button class="ob-cta" style="background:transparent;color:var(--t2);margin-top:.25rem" onclick="document.getElementById(\'weighin\').hidden=true">Cancel</button>'+
     '</div>';
-  el.hidden=false;
+  _showOverlay('weighin');
   setTimeout(()=>{ const i=document.getElementById('wi-input'); if(i){ i.focus(); i.select(); } },80);
 }
 function saveWeighIn(){
