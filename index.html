@@ -982,8 +982,12 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .week-day-sleep{font-size:11px;margin-top:2px}
 
 /* SESSION LOGGER */
-.sess-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-md);padding:.875rem 1rem;margin-bottom:.5rem}
-.sess-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem}
+.sess-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:1rem 1.125rem;margin-bottom:.625rem}
+/* The logger is a grouping element, not a surface — its children are the cards. Nesting them
+   inside another card is what made this page read differently from Home and Progress. */
+#sess-card-logger{background:none;border:none;border-radius:0;padding:0;margin:0}
+.sess-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.sess-pick{margin-bottom:.625rem}
 .sess-title{font-size:13px;font-weight:600;color:var(--t1)}
 .sess-meta{font-size:11px;color:var(--t3)}
 .sess-history{margin-top:.875rem;padding-top:.875rem;border-top:1px solid var(--b1)}
@@ -1014,7 +1018,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .the-title{font-size:14px;font-weight:600;color:var(--t2);margin-bottom:.25rem}
 .the-sub{font-size:12px;color:var(--t3);line-height:1.5}
 /* Train CTA — single filled accent button */
-.train-cta{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;font-size:13px;font-weight:600;padding:11px;border-radius:var(--r-md);border:none;background:var(--focus-ac);color:var(--focus-ac-ink);cursor:pointer;transition:transform .07s cubic-bezier(.34,1.56,.64,1);margin-bottom:1.25rem}
+.train-cta{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;font-size:14px;font-weight:700;padding:14px;border-radius:var(--r-lg);border:none;background:var(--focus-ac);color:var(--focus-ac-ink);cursor:pointer;transition:transform .07s cubic-bezier(.34,1.56,.64,1);margin-bottom:1.25rem}
 .train-cta:active{transform:scale(.98)}
 /* History rows — FocusFlight record cards */
 .train-hist-row{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.75rem .95rem;margin-bottom:.5rem}
@@ -1437,7 +1441,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
 /* ── LIFT CARDS — mobile-first gym logger ── */
 .lift-header-row{display:none} /* hide old header */
-.wk-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:1rem .5rem;margin-bottom:1rem}
+.wk-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:1rem .5rem;margin:0 0 .625rem}
 .wk-stat{text-align:center;min-width:0}
 .wk-v{display:block;font-size:19px;font-weight:800;color:var(--t1);letter-spacing:-.025em;line-height:1.1;font-variant-numeric:tabular-nums}
 .wk-v small{font-size:10px;font-weight:600;color:var(--t3);margin-left:1px}
@@ -1449,7 +1453,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .lift-head{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;padding:0 2px 7px;font-size:11px;font-weight:600;color:var(--t3);letter-spacing:0}
 .lift-head span{text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lift-row{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;align-items:center}
-.lift-in{width:100%;min-width:0;font-size:18px;font-weight:700;color:var(--t1);background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-md);padding:13px 2px;text-align:center;outline:none;font-family:inherit;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+.lift-in{width:100%;min-width:0;font-size:18px;font-weight:700;color:var(--t1);background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-md);padding:13px 2px;text-align:center;outline:none;font-family:inherit;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
 .lift-in::-webkit-outer-spin-button,.lift-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .lift-in:focus{border-color:var(--focus-ac)}
 .lift-in:disabled{opacity:.35}
@@ -1457,7 +1461,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .lift-tick.on{background:var(--green);border-color:var(--green);color:#fff}
 .lift-card.is-done{opacity:.62}
 .lift-card.is-done .lift-card-name{text-decoration:line-through;text-decoration-color:var(--t3)}
-.lift-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-lg);padding:1.125rem 1.125rem 1.25rem;margin-bottom:1rem;position:relative;transition:border-color .12s}
+.lift-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:1.125rem 1.125rem 1.25rem;margin-bottom:.75rem;position:relative;transition:border-color .12s}
 .lift-card:focus-within{border-color:color-mix(in srgb,var(--teal) 25%,transparent)}
 /* Tight gap + a slimmer delete button buy back most of the width the picker button costs,
    so long exercise names keep about as much room as they had before it was added. */
@@ -1550,7 +1554,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 }
 
 /* Rest timer */
-.rest-timer{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.75rem .875rem;margin-top:.625rem}
+.rest-timer{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:1rem 1.125rem;margin:0 0 .625rem}
 .rt-display{font-size:13px;font-weight:700;color:var(--t2);text-align:center;font-variant-numeric:tabular-nums;margin-bottom:.5rem}
 .rt-display.running{color:var(--teal);font-size:22px}
 .rt-display.done{color:var(--amber)}
@@ -2299,6 +2303,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
          than just training whichever pattern actually fits that day. value= attributes keep the
          old day-prefixed keys so existing logged history and per-exercise PBs don't orphan —
          only the visible label and the auto-select machinery changed. -->
+    <div class="sess-card sess-pick">
     <div class="sess-header">
       <div style="display:flex;gap:5px;align-items:center;width:100%">
         <select id="sess-type-select" onchange="updateSessType()" class="sel-input">
@@ -2328,6 +2333,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     </div>
 
     <!-- Last session reference -->
+    </div>
     <div class="last-sess-ref" id="last-sess-ref" style="display:none">
       <div class="lsr-label"><i class="ti ti-history" style="font-size:11px"></i>Last session</div>
       <div id="lsr-content"></div>
@@ -2347,7 +2353,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
     <!-- Lift rows — now includes sets + RPE -->
     <div class="wk-stats" id="wk-stats"></div>
-  <div class="sub-label" style="margin-top:.625rem">Primary lifts</div>
+  <div class="sec-label" style="margin:1.25rem 0 .625rem">Primary lifts</div>
     <!-- Native datalist: gives the exercise-name field a picker with zero JS/library cost.
          Populated by renderExerciseLibrary(). -->
     <datalist id="exercise-library"></datalist>
