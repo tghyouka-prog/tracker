@@ -301,6 +301,37 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 /* Heatmap */
 .sec-label-inline{font-size:15px;font-weight:700;letter-spacing:-.01em;color:var(--t1);margin:1.25rem 0 .5rem;display:block}
 /* ── PROGRESS: calendar heatmap + stats + milestones ── */
+.prog-pair{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.75rem}
+.pp-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem}
+.pp-lbl{font-size:12px;color:var(--t2)}
+.pp-big{font-size:26px;font-weight:800;letter-spacing:-.03em;color:var(--t1);line-height:1.1;margin:2px 0 8px;font-variant-numeric:tabular-nums}
+.pp-big small{font-size:12px;font-weight:600;color:var(--t3);margin-left:2px}
+.pp-bar{height:5px;border-radius:3px;background:var(--s3);overflow:hidden;margin-bottom:8px}
+.pp-bar span{display:block;height:100%;border-radius:3px;background:var(--focus-ac);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.pp-goal{font-size:12px;color:var(--t2);display:flex;align-items:center;gap:3px}
+.pp-goal input{width:42px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px;font-weight:700;padding:2px 4px;text-align:center;-moz-appearance:textfield}
+.pp-goal input::-webkit-outer-spin-button,.pp-goal input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.pp-streak{display:flex;flex-direction:column;align-items:flex-start}
+.pp-flame{font-size:24px;color:var(--macro-carb);margin-bottom:2px}
+.pp-week{display:flex;gap:3px;margin-top:auto;padding-top:8px}
+.ppw{width:100%;aspect-ratio:1;max-width:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;background:var(--s3);color:var(--t3)}
+.ppw.on{background:var(--focus-ac);color:var(--focus-ac-ink)}
+.ppw.now{outline:1.5px solid var(--t2);outline-offset:1px}
+.range-seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--s2);border-radius:20px;padding:3px;margin-top:.75rem}
+.rs-btn{font-size:11px;font-weight:600;color:var(--t2);background:transparent;border:none;border-radius:17px;padding:6px 2px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.rs-btn.on{background:var(--s1);color:var(--t1);font-weight:700;box-shadow:var(--sh-sm)}
+.gp-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem 1rem;margin-top:.75rem}
+.gp-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.75rem}
+.gp-title{font-size:17px;font-weight:700;letter-spacing:-.02em;color:var(--t1)}
+.gp-pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--t2);background:var(--s2);border:1px solid var(--b1);border-radius:20px;padding:3px 9px;white-space:nowrap}
+.gp-empty{font-size:12px;color:var(--t3);line-height:1.5}
+.gp-plot{display:flex;gap:8px;height:120px}
+.gp-ax{display:flex;flex-direction:column;justify-content:space-between;font-size:9px;color:var(--t3);font-variant-numeric:tabular-nums;flex-shrink:0}
+.gp-plot svg{flex:1;min-width:0;height:100%;overflow:visible}
+.gp-grid{stroke:var(--b1);stroke-width:1;stroke-dasharray:3 4;vector-effect:non-scaling-stroke}
+.gp-line{fill:none;stroke:var(--t1);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.gp-foot{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:5px}
+.gp-note{font-size:12px;color:var(--t2);margin-top:.625rem}
 .prog-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:.75rem}
 .prog-stat{background:var(--s2);border-radius:var(--r-md);padding:.625rem .375rem;text-align:center}
 .prog-stat-val{font-size:19px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums;line-height:1.1}
@@ -601,7 +632,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .fuel-gap{font-size:12px;color:var(--t2);line-height:1.45;margin:.5rem 0 .875rem;max-width:240px;min-height:1.2em}
 /* updateMacroUI() overwrites the gap class to .macro-gap — neutralize the boxed look inside the hero, keep semantic text color */
 .fuel-hero .macro-gap{background:transparent;border:none;padding:0;margin:.5rem 0 .875rem;max-width:250px;font-size:12px;line-height:1.45;text-align:center}
-.fuel-log-btn{display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600;padding:12px 20px;border-radius:var(--r-md);border:none;background:var(--focus-ac);color:var(--focus-ac-ink);cursor:pointer;transition:transform .07s cubic-bezier(.34,1.56,.64,1);width:100%}
+.fuel-log-btn{display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600;padding:12px 20px;border-radius:var(--r-md);border:none;background:var(--focus-ac);color:var(--focus-ac-ink);cursor:pointer;transition:transform .07s cubic-bezier(.34,1.56,.64,1);width:100%;margin-bottom:.625rem}
 .fuel-log-btn:active{transform:scale(.97)}
 /* Secondary macro rows — quiet, neutral */
 /* ── Calories hero (Cal AI's top card): big figure left, ring right ── */
@@ -2304,6 +2335,8 @@ function applyWeight(kg,save_=true){
 }
 
 function adjustWeight(delta){
+  // The Progress chart reads bodyWeight/weightHistory, so keep it in step.
+  setTimeout(()=>{ try{ renderCalProgress(); }catch(e){} },0);
   const newKg=Math.max(40,Math.min(150,Math.round((bodyWeight+delta)*10)/10));
   applyWeight(newKg);
 }
@@ -6642,7 +6675,133 @@ function renderProgMilestones(){
   }).join('');
 }
 
+// Goal weight — Cal AI anchors its whole progress screen on one. Persisted on its own key
+// like themeMode and waterStep rather than inside STORE. null until the user sets it, and
+// every consumer degrades rather than guessing a number.
+let goalWeight=null;
+try{ const g=parseFloat(localStorage.getItem('goalWeight')); if(g>0) goalWeight=g; }catch(e){}
+let progRange='90d';   // 90d | 6m | 1y | all
+
+function setGoalWeight(v){
+  const n=parseFloat(v);
+  goalWeight = (n>=40 && n<=150) ? Math.round(n*10)/10 : null;
+  try{
+    if(goalWeight) localStorage.setItem('goalWeight',goalWeight);
+    else localStorage.removeItem('goalWeight');
+  }catch(e){}
+  renderCalProgress();
+}
+function setProgRange(r){ progRange=r; renderCalProgress(); }
+
+function _rangeDays(){ return progRange==='90d'?90:progRange==='6m'?182:progRange==='1y'?365:100000; }
+
+function _weightSeries(){
+  const cutoff=Date.now()-_rangeDays()*86400000;
+  return (weightHistory||[])
+    .filter(e=>new Date(e.date+'T12:00:00Z').getTime()>=cutoff)
+    .sort((a,b)=>a.date<b.date?-1:1);
+}
+
+function renderCalProgress(){
+  _renderProgPair();
+  _renderRangeSeg();
+  _renderGoalChart();
+}
+
+function _renderProgPair(){
+  const el=document.getElementById('prog-pair');
+  if(!el) return;
+  // Weight bar: start is the earliest logged weight, so "progress" means movement from where
+  // you began toward the goal, in whichever direction the goal lies.
+  const series=(weightHistory||[]).slice().sort((a,b)=>a.date<b.date?-1:1);
+  const start=series.length?series[0].kg:bodyWeight;
+  let pct=0;
+  if(goalWeight && goalWeight!==start) pct=Math.max(0,Math.min(100,((bodyWeight-start)/(goalWeight-start))*100));
+
+  // Streak week: Mon-Sun of the current week, filled where that day hit protein AND calories —
+  // the same bar updateScore() now uses for the streak itself.
+  const now=new Date(biologicalToday()+'T12:00:00Z');
+  const dow=(now.getUTCDay()+6)%7;   // 0 = Monday
+  const monday=new Date(now); monday.setUTCDate(now.getUTCDate()-dow);
+  const week=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(monday); d.setUTCDate(monday.getUTCDate()+i);
+    const key=d.toISOString().slice(0,10);
+    const row=weekHistory[key]||{};
+    const hit = TARGETS.prot>0 && TARGETS.kcal>0 && row.prot>=TARGETS.prot && row.kcal>=TARGETS.kcal;
+    week.push({letter:d.toLocaleDateString('en-SG',{weekday:'narrow',timeZone:'UTC'}), hit, isToday:key===biologicalToday()});
+  }
+
+  el.innerHTML=`<div class="pp-card">
+    <div class="pp-lbl">My weight</div>
+    <div class="pp-big">${bodyWeight}<small>kg</small></div>
+    <div class="pp-bar"><span style="width:${pct.toFixed(0)}%"></span></div>
+    <div class="pp-goal">Goal
+      <input type="number" inputmode="decimal" step="0.5" min="40" max="150" id="goal-w"
+        value="${goalWeight!=null?goalWeight:''}" placeholder="--" onchange="setGoalWeight(this.value)"
+        aria-label="Goal weight in kilograms"> kg
+    </div>
+  </div>
+  <div class="pp-card pp-streak">
+    <i class="ti ti-flame pp-flame" aria-hidden="true"></i>
+    <div class="pp-big">${dayStreak}</div>
+    <div class="pp-lbl">Day streak</div>
+    <div class="pp-week">${week.map(d=>`<span class="ppw${d.hit?' on':''}${d.isToday?' now':''}">${d.letter}</span>`).join('')}</div>
+  </div>`;
+}
+
+function _renderRangeSeg(){
+  const el=document.getElementById('range-seg');
+  if(!el) return;
+  const opts=[['90d','90 days'],['6m','6 months'],['1y','1 year'],['all','All time']];
+  el.innerHTML=opts.map(o=>`<button class="rs-btn${progRange===o[0]?' on':''}" onclick="setProgRange('${o[0]}')">${o[1]}</button>`).join('');
+}
+
+function _renderGoalChart(){
+  const el=document.getElementById('goal-progress');
+  if(!el) return;
+  const s=_weightSeries();
+  if(s.length<2){
+    el.innerHTML='<div class="gp-card"><div class="gp-head"><span class="gp-title">Goal progress</span></div>'+
+      '<div class="gp-empty">Log your weight on at least two days to see the trend. Use the &minus; / + on the Fuel tab.</div></div>';
+    return;
+  }
+  const kgs=s.map(e=>e.kg);
+  let lo=Math.min(...kgs), hi=Math.max(...kgs);
+  if(hi-lo<1){ const mid=(hi+lo)/2; lo=mid-0.5; hi=mid+0.5; }
+  const pad=(hi-lo)*0.15; lo-=pad; hi+=pad;
+  const W=300,H=120;
+  const x=i=>(i/(s.length-1))*W;
+  const y=kg=>H-((kg-lo)/(hi-lo))*H;
+  const pts=s.map((e,i)=>x(i).toFixed(1)+','+y(e.kg).toFixed(1)).join(' ');
+
+  const start=s[0].kg;
+  let pill='';
+  if(goalWeight!=null && goalWeight!==start){
+    const pct=Math.max(0,Math.min(100,((bodyWeight-start)/(goalWeight-start))*100));
+    pill=`<span class="gp-pill"><i class="ti ti-flag" aria-hidden="true"></i>${pct.toFixed(0)}% of goal</span>`;
+  }
+  const delta=bodyWeight-start;
+  const dirWord=Math.abs(delta)<0.1?'Holding steady':(delta>0?('Up '+delta.toFixed(1)+'kg'):('Down '+Math.abs(delta).toFixed(1)+'kg'))+' since '+new Date(s[0].date+'T12:00:00Z').toLocaleDateString('en-SG',{day:'numeric',month:'short',timeZone:'UTC'});
+
+  el.innerHTML=`<div class="gp-card">
+    <div class="gp-head"><span class="gp-title">Goal progress</span>${pill}</div>
+    <div class="gp-plot">
+      <div class="gp-ax"><span>${hi.toFixed(1)}</span><span>${((hi+lo)/2).toFixed(1)}</span><span>${lo.toFixed(1)}</span></div>
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+        <line class="gp-grid" x1="0" y1="0.5" x2="${W}" y2="0.5"></line>
+        <line class="gp-grid" x1="0" y1="${H/2}" x2="${W}" y2="${H/2}"></line>
+        <line class="gp-grid" x1="0" y1="${H-0.5}" x2="${W}" y2="${H-0.5}"></line>
+        <polyline class="gp-line" points="${pts}"></polyline>
+      </svg>
+    </div>
+    <div class="gp-foot"><span>${new Date(s[0].date+'T12:00:00Z').toLocaleDateString('en-SG',{day:'numeric',month:'short',timeZone:'UTC'})}</span><span>${new Date(s[s.length-1].date+'T12:00:00Z').toLocaleDateString('en-SG',{day:'numeric',month:'short',timeZone:'UTC'})}</span></div>
+    <div class="gp-note">${dirWord}</div>
+  </div>`;
+}
+
 function renderProgress(){
+  renderCalProgress();
   renderProgStats();
   renderProgCalendar();
   renderProgMilestones();
@@ -7518,7 +7677,15 @@ go('nutrition');
 <!-- ===== INSIGHTS ===== -->
 <div class="page" id="page-insights">
 
-  <div style="padding:.5rem 0 0"><div class="coach-eyebrow">Progress</div><div class="coach-h1">Consistency</div></div>
+  <div style="padding:.5rem 0 0"><div class="coach-eyebrow">Journey</div><div class="coach-h1">Progress</div></div>
+
+  <!-- Cal AI's progress screen: weight-vs-goal and the streak side by side, a range selector,
+       then the goal chart. Rendered by renderCalProgress(). -->
+  <div class="prog-pair mo-rise" id="prog-pair"></div>
+
+  <div class="range-seg mo-rise" id="range-seg"></div>
+
+  <div class="mo-rise" id="goal-progress"></div>
 
   <!-- Headline numbers — populated by renderProgress() -->
   <div class="prog-stats mo-rise" id="prog-stats"></div>
