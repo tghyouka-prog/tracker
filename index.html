@@ -1426,6 +1426,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .ts-sub{font-size:11px;color:var(--t3);margin-top:1px}
 .ts-finish{flex-shrink:0;padding:9px 20px;border-radius:20px;border:none;background:var(--focus-ac);color:var(--focus-ac-ink);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
 .ts-finish:active{transform:scale(.95)}
+.ex-pick-warn{color:var(--macro-carb);font-weight:700}
 .ex-pick-head{font-size:11px;font-weight:700;color:var(--t3);padding:.75rem 2px .375rem}
 .wk-head{grid-column:1/-1;font-size:11px;color:var(--t3);margin-bottom:.5rem;text-align:center}
 .wk-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:1rem .5rem;margin:0 0 .625rem}
@@ -5202,11 +5203,15 @@ function _renderExercisePickerList(filterText){
   }
   list.innerHTML=addRow+names.map((n,idx)=>{
     const prev=lastLiftFor(n);
-    // Muscle first, then history. An exercise whose name matches no rule shows no muscle —
-    // which is also the signal that it won't count toward the weekly set totals.
+    // Muscle first, then history. A name matching no rule used to render nothing here, which
+    // reads the same as a name that merely has no history — so an exercise silently worth zero
+    // sets looked identical to a normal one. Cardio is the honest exception: it is supposed to
+    // count toward no muscle, so it says so instead of flagging itself.
     const mus=_muscleOf(n);
-    const hist=prev?(prev.match.weight?`Last: ${prev.match.weight}kg · ${prev.match.sets||'?'}×${prev.match.reps||'?'}`:'Logged before'):'Not logged yet';
-    const sub=(mus?mus+' · ':'')+hist;
+    const isCardioName=/zone ?2|treadmill|cardio|\brun\b|\bwalk\b|\bcycle\b|elliptical|stair ?master/i.test(n);
+    const musLbl=mus||(isCardioName?'Cardio':'<span class="ex-pick-warn">No muscle · won\u2019t count</span>');
+    const hist=prev?(prev.match.weight?`Last: ${prev.match.weight}kg \u00b7 ${prev.match.sets||'?'}\u00d7${prev.match.reps||'?'}`:'Logged before'):'Not logged yet';
+    const sub=musLbl+' \u00b7 '+hist;
     const isCustom=customExercises.includes(n);
     // Remove is offered on custom entries only — template exercises aren't the user's to delete.
     const del=isCustom
