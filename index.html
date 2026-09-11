@@ -5366,7 +5366,9 @@ function _saveDraft(){
     const notes=document.getElementById('sess-notes')?.value||'';
     // nothing worth keeping — drop any stale draft rather than storing an empty shell
     const hasContent=currentLifts.some(l=>l.name&&(l.weight||l.reps||l.sets||l.rpe));
-    if(!type&&!hasContent){ localStorage.removeItem(DRAFT_KEY); _draftTs=null; return; }
+    // A preselected session type is not work in progress — the select is populated from the
+    // cycle day on every render, so keying off it stored an empty shell every time.
+    if(!hasContent){ localStorage.removeItem(DRAFT_KEY); _draftTs=null; return; }
     // ts is when this draft was STARTED, not last touched — it's rewritten on every keystroke
     // otherwise, and an abandoned session would always look brand new.
     if(!_draftTs) _draftTs=Date.now();
@@ -5383,7 +5385,7 @@ function _restoreDraft(){
     const d=JSON.parse(raw);
     if(!d||!Array.isArray(d.lifts)) return false;
     const hasContent=d.lifts.some(l=>l&&l.name&&(l.weight||l.reps||l.sets||l.rpe));
-    if(!hasContent&&!d.type) return false;
+    if(!hasContent) return false;   // nothing actually logged — don't restore or announce
     _draftTs=d.ts||null;
     currentLifts=d.lifts;
     const sel=document.getElementById('sess-type-select');
@@ -5395,7 +5397,10 @@ function _restoreDraft(){
     // reveal the logger, otherwise the restored work sits behind a collapsed card
     const card=document.getElementById('sess-card-logger');
     if(card) card.style.display='block';
-    setTimeout(()=>showToast('Unsaved session restored','action'),600);
+    // Say what came back and when, so it is obvious why the app reopened the logger.
+    const _n=d.lifts.filter(l=>l&&l.name&&(l.weight||l.reps||l.sets||l.rpe)).length;
+    const _when=_draftTs?new Date(_draftTs).toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short'}):'';
+    setTimeout(()=>showToast('Unfinished workout restored — '+_n+' lift'+(_n===1?'':'s')+(_when?' from '+_when:'')+'. Save it or clear the rows.','action'),600);
     return true;
   }catch(e){ return false; }
 }
