@@ -619,6 +619,31 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .fuel-log-btn{display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600;padding:12px 20px;border-radius:var(--r-md);border:none;background:var(--focus-ac);color:var(--focus-ac-ink);cursor:pointer;transition:transform .07s cubic-bezier(.34,1.56,.64,1);width:100%}
 .fuel-log-btn:active{transform:scale(.97)}
 /* Secondary macro rows — quiet, neutral */
+/* ── Calories hero (Cal AI's top card): big figure left, ring right ── */
+.cal-hero-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-xl,20px);padding:1.125rem 1.25rem;margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.ch-left{min-width:0}
+.ch-val{font-size:40px;font-weight:800;letter-spacing:-.035em;line-height:1;color:var(--t1);font-variant-numeric:tabular-nums}
+.ch-lbl{font-size:13px;font-weight:500;color:var(--t3);margin-top:.375rem}
+.ch-ring{position:relative;width:78px;height:78px;flex-shrink:0}
+.ch-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ch-ring .mc-fill{stroke:var(--t1)}
+.ch-ring i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--t1)}
+.cal-hero-card.is-over .ch-val,.cal-hero-card.is-over .ch-lbl{color:var(--amber)}
+.cal-hero-card.is-over .ch-ring .mc-fill,.cal-hero-card.is-over .ch-ring i{stroke:var(--amber);color:var(--amber)}
+
+/* ── Meal cards (Cal AI): photo thumb, name + time, calories headline, macro chips ── */
+.meal-card{display:flex;align-items:center;gap:.75rem;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.625rem;margin-bottom:.5rem}
+.ml-thumb{width:56px;height:56px;border-radius:12px;object-fit:cover;flex-shrink:0;background:var(--s3)}
+.ml-thumb-fallback{display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:20px}
+.ml-body{flex:1;min-width:0}
+.ml-top{display:flex;align-items:baseline;gap:.5rem}
+.ml-name{font-size:14px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.ml-time{font-size:10.5px;color:var(--t3);flex-shrink:0}
+.ml-kcal{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--t1);margin-top:2px}
+.ml-kcal i{font-size:13px;color:var(--t3)}
+.ml-del{width:30px;height:30px;border-radius:var(--r-sm);border:none;background:transparent;color:var(--b3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:13px;-webkit-tap-highlight-color:transparent}
+.ml-del:active{background:var(--s3);color:var(--red)}
+
 /* ── Macro row (Cal AI-inspired): 3 equal ring cards, each a distinct colour ── */
 .macro-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.5rem}
 .macro-cell{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem .5rem .75rem;display:flex;flex-direction:column;align-items:center;gap:.375rem}
@@ -634,7 +659,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
    app (near-black on light, near-white on dark). The supporting macros carry the accent hues.
    NB: --teal is gold in this palette (a legacy token repointed during the redesign), so it
    reads as amber and can't be used for water. */
-.m-kcal  .mc-fill{stroke:var(--t1)}
+.m-prot  .mc-fill{stroke:var(--macro-prot)}
 .m-carb  .mc-fill{stroke:var(--macro-carb)}
 .m-hydro .mc-fill{stroke:var(--macro-water)}
 .macro-cell.is-hit .mc-val{color:var(--focus-ac)}
@@ -1979,25 +2004,27 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
   <div style="padding:.5rem 0 0"><div class="coach-eyebrow">Fuel · Today</div><div class="coach-h1">Intake</div></div>
 
-  <!-- Protein record card (odometer) — populated by _renderFuelHero() -->
-  <div id="fuel-hero-wrap"></div>
-  <button class="fuel-log-btn mo-rise" onclick="openMealLogger()"><i class="ti ti-plus" style="font-size:15px"></i>Log a meal</button>
-  <div id="meal-log-list" class="mo-rise" style="margin:.75rem 0 1.25rem"></div>
+  <!-- Cal AI layout: the goal figure leads as a big number with its ring alongside, then a
+       3-up macro row, then the meal list. Rendered by renderCalHero / renderMacroRow /
+       renderMealLog. Uses this app's own tokens, so it follows the light/dark theme rather
+       than being locked to Cal AI's light-only palette. -->
+  <div id="cal-hero" class="mo-rise"></div>
 
-  <!-- Macro row — Cal AI's at-a-glance pattern: one compact ring card per macro, each framed
-       as what's LEFT rather than what's consumed, and each with its own colour so they're
-       distinguishable at a glance (previously Calories, Carbs and Water all rendered as
-       identical grey bars stacked down the page). Rendered by renderMacroRow(). -->
   <div class="macro-row mo-rise" id="macro-row"></div>
 
-  <!-- Water quick-add kept as its own strip: the ring card above is read-only, and these are
-       the most-tapped controls on this page. -->
+  <button class="fuel-log-btn mo-rise" onclick="openMealLogger()"><i class="ti ti-plus" style="font-size:15px"></i>Log a meal</button>
+
+  <!-- Water quick-add — the macro cards above are read-only and these are the most-tapped
+       controls on the page. -->
   <div class="water-quick mo-rise">
     <button class="mb hydro-btn" onclick="addMacro('hydro',250,'Glass')"><i class="ti ti-glass-full"></i>+250ml</button>
     <button class="mb hydro-btn" onclick="addMacro('hydro',500,'Bottle')"><i class="ti ti-bottle"></i>+500ml</button>
     <button class="mb hydro-btn" onclick="addMacro('hydro',1000,'1L')"><i class="ti ti-droplets"></i>+1L</button>
     <button class="mb undo-btn" onclick="undoMacro('hydro')"><i class="ti ti-arrow-back-up"></i>Undo</button>
   </div>
+
+  <div class="sec-label" id="meal-log-label" style="display:none">Recently logged</div>
+  <div id="meal-log-list" class="mo-rise" style="margin:0 0 1.25rem"></div>
 
   <!-- ── Body weight + live targets ── -->
   <div class="fuel-wt-card mo-rise">
@@ -2206,7 +2233,7 @@ function go(id){
     setTimeout(()=>{renderProgress();_playTabEntrance('page-insights',null);},50);
   }
   // Render training check-in flag when Training tab is opened
-  if(id==='nutrition'){_renderFuelHero();renderMealLog();setTimeout(()=>_playTabEntrance('page-nutrition','fuel-hero-wrap'),50);}
+  if(id==='nutrition'){renderCalHero();renderMacroRow();renderMealLog();setTimeout(()=>_playTabEntrance('page-nutrition',null),50);}
   if(id==='training'){renderTrainingCheckinFlag();renderSessionHistory();setTimeout(()=>_playTabEntrance('page-training',null),50);}
   if(id==='tracker') setTimeout(applyBridgeState,100);
   // Activate the correct nav button
@@ -2341,7 +2368,7 @@ function applyWeight(kg,save_=true){
 
   // Refresh all macro bars and score with new targets
   ['prot','hydro','kcal','carb'].forEach(type=>updateMacroUI(type));
-  renderMacroRow();
+  renderMacroRow();renderCalHero();
   updateScore();
 
   // Header weight display
@@ -2602,9 +2629,35 @@ function handleCameraCapture(event){
   reader.readAsDataURL(file);
 }
 
+// Small square thumbnail for the meal card. The full photo is only ever sent to the model and
+// then dropped — storing it would be megabytes in localStorage. 112px at 0.6 quality is a few
+// KB, which is affordable given mealLog is cleared daily by resetDay().
+let _mealPhotoThumb = null;
+function _makeThumb(dataUrl){
+  return new Promise(res=>{
+    try{
+      const img=new Image();
+      img.onload=()=>{
+        try{
+          const S=112, c=document.createElement('canvas');
+          c.width=S; c.height=S;
+          const ctx=c.getContext('2d');
+          // cover-crop to a square so the card's thumbnails are uniform
+          const side=Math.min(img.width,img.height);
+          ctx.drawImage(img,(img.width-side)/2,(img.height-side)/2,side,side,0,0,S,S);
+          res(c.toDataURL('image/jpeg',0.6));
+        }catch(e){ res(null); }
+      };
+      img.onerror=()=>res(null);
+      img.src=dataUrl;
+    }catch(e){ res(null); }
+  });
+}
+
 function _attachMealPhoto(dataUrl, mime){
   _mealPhotoMime = mime || 'image/jpeg';
   _mealPhotoBase64 = dataUrl.split(',')[1];
+  _makeThumb(dataUrl).then(t=>{ _mealPhotoThumb=t; });
   const preview = document.getElementById('meal-photo-preview');
   const img     = document.getElementById('meal-photo-img');
   if(img)     img.src = dataUrl;
@@ -2614,7 +2667,7 @@ function _attachMealPhoto(dataUrl, mime){
 }
 
 function clearMealPhoto(){
-  _mealPhotoBase64 = null; _mealPhotoMime = 'image/jpeg';
+  _mealPhotoBase64 = null; _mealPhotoMime = 'image/jpeg'; _mealPhotoThumb = null;
   const preview = document.getElementById('meal-photo-preview');
   const img     = document.getElementById('meal-photo-img');
   if(preview) preview.style.display = 'none';
@@ -2851,6 +2904,8 @@ function saveMealToLibrary(){
     return;
   }
   const meal={id:Date.now(),name,prot,kcal,carb};
+  // Thumbnail rides on the logged entry only, never the reusable library item.
+  if(_mealPhotoThumb) meal.thumb=_mealPhotoThumb;
   mealLibrary.push(meal);
   // Auto-log it immediately
   logMeal(meal);
@@ -2923,18 +2978,29 @@ function renderMealLog(){
     el.innerHTML='<div class="meal-log-empty"><i class="ti ti-salad" style="font-size:16px;color:var(--t3);margin-bottom:4px"></i><div>No meals logged yet</div></div>';
     return;
   }
-  el.innerHTML=mealLog.map(m=>`
-    <div style="display:flex;align-items:center;gap:.5rem;padding:5px 0;border-bottom:1px solid var(--b1)">
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:500;color:var(--t1)">${m.name}</div>
+  // Cal AI's meal card: photo thumbnail, name + time, the calorie figure as the headline, then
+  // colour-matched macro chips. Falls back to an icon tile when there's no photo — meals logged
+  // by hand or before thumbnails were stored.
+  el.innerHTML=mealLog.map(m=>{
+    const t=m.ts?new Date(m.ts).toLocaleTimeString('en-SG',{hour:'numeric',minute:'2-digit'}):'';
+    const thumb=m.thumb
+      ?`<img class="ml-thumb" src="${m.thumb}" alt="">`
+      :`<div class="ml-thumb ml-thumb-fallback"><i class="ti ti-salad" aria-hidden="true"></i></div>`;
+    return `<div class="meal-card">
+      ${thumb}
+      <div class="ml-body">
+        <div class="ml-top"><span class="ml-name">${String(m.name||'').replace(/</g,'&lt;')}</span><span class="ml-time">${t}</span></div>
+        <div class="ml-kcal"><i class="ti ti-flame" aria-hidden="true"></i>${(m.kcal||0).toLocaleString()} calories</div>
         <div class="meal-macros">${[
           m.prot?`<span class="mm mm-prot">${m.prot}g<small>protein</small></span>`:'',
-          m.kcal?`<span class="mm mm-kcal">${m.kcal}<small>kcal</small></span>`:'',
           m.carb?`<span class="mm mm-carb">${m.carb}g<small>carbs</small></span>`:''
         ].filter(Boolean).join('')}</div>
       </div>
-      <button onclick="removeLogEntry(${m.ts})" aria-label="Remove ${m.name} from today's log" style="width:36px;height:36px;background:transparent;border:1px solid var(--b2);border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t3);flex-shrink:0" title="Remove log entry"><i class="ti ti-x" style="font-size:11px" aria-hidden="true"></i></button>
-    </div>`).join('');
+      <button class="ml-del" onclick="removeLogEntry(${m.ts})" aria-label="Remove ${String(m.name||'').replace(/"/g,'')} from today's log"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>`;
+  }).join('');
+  const lbl=document.getElementById('meal-log-label');
+  if(lbl) lbl.style.display=mealLog.length?'block':'none';
 }
 
 
@@ -3038,22 +3104,53 @@ function updateMacroUI(type){
     }
   });
   // Sync inline hydration strip on tracker page
-  renderMacroRow();
+  renderMacroRow();renderCalHero();
   if(type==='hydro') syncTrackerHydro();
   // Protein ring hero on Fuel page
-  if(type==='prot') _renderFuelHero();
+  if(type==='prot'){renderMacroRow();renderCalHero();}
 }
 
-// Macro row — Cal AI's framing: lead with what's LEFT, not what's consumed, because the number
-// you act on is the gap. Each macro gets its own colour and ring so they're distinguishable
-// (they were three identical grey bars before). Protein stays in its own hero card above: it's
-// the priority macro here, unlike Cal AI where calories lead.
+// Shared ring geometry for the hero and macro cards.
+function _ringArc(cur,tgt,r){
+  const C=2*Math.PI*r;
+  const pct=tgt?Math.min(100,(cur/tgt)*100):0;
+  // stroke-linecap:round paints a visible dot at zero length, so hide the arc entirely at 0
+  // rather than showing a stray mark on an untouched macro.
+  return {dash:(C*pct/100).toFixed(1), circ:C.toFixed(1), pct, hidden:pct<=0};
+}
+
+// Calories hero — Cal AI's top card: the goal figure as a large number on the left with its
+// ring alongside. Calories leads because that's the structure being matched; protein moves
+// into the macro row below, in the leading position.
+function renderCalHero(){
+  const el=document.getElementById('cal-hero');
+  if(!el) return;
+  const cur=Math.round(macros.kcal||0), tgt=Math.round(TARGETS.kcal||0);
+  const over=cur-tgt, isOver=over>0;
+  const a=_ringArc(cur,tgt,26);
+  el.innerHTML=`<div class="cal-hero-card${isOver?' is-over':''}">
+    <div class="ch-left">
+      <div class="ch-val">${isOver?('+'+over.toLocaleString()):Math.max(0,-over).toLocaleString()}</div>
+      <div class="ch-lbl">${isOver?'calories over':'calories left'}</div>
+    </div>
+    <div class="ch-ring">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <circle class="mc-track" cx="32" cy="32" r="26"></circle>
+        <circle class="mc-fill" cx="32" cy="32" r="26" stroke-dasharray="${a.dash} ${a.circ}"${a.hidden?' style="display:none"':''}></circle>
+      </svg>
+      <i class="ti ti-flame" aria-hidden="true"></i>
+    </div>
+  </div>`;
+}
+
+// Macro row — Cal AI's 3-up beneath the hero. Framed as what's LEFT, because the number you
+// act on is the gap. Protein takes the leading slot: it's the priority macro here.
 function renderMacroRow(){
   const el=document.getElementById('macro-row');
   if(!el) return;
   const R=20, C=2*Math.PI*R;
   const cells=[
-    {cls:'m-kcal', cur:macros.kcal||0,  tgt:TARGETS.kcal||0,  unit:'',   lbl:'kcal left'},
+    {cls:'m-prot', cur:macros.prot||0,  tgt:TARGETS.prot||0,  unit:'g',  lbl:'protein left'},
     {cls:'m-carb', cur:macros.carb||0,  tgt:TARGETS.carb||0,  unit:'g',  lbl:'carbs left'},
     {cls:'m-hydro',cur:macros.hydro||0, tgt:TARGETS.hydro||0, unit:'',   lbl:'water left'},
   ];
@@ -3071,7 +3168,7 @@ function renderMacroRow(){
       <div class="mc-ring">
         <svg viewBox="0 0 48 48" aria-hidden="true">
           <circle class="mc-track" cx="24" cy="24" r="${R}"></circle>
-          <circle class="mc-fill" cx="24" cy="24" r="${R}" stroke-dasharray="${dash} ${C.toFixed(1)}"></circle>
+          <circle class="mc-fill" cx="24" cy="24" r="${R}" stroke-dasharray="${dash} ${C.toFixed(1)}"${pct<=0?' style="display:none"':''}></circle>
         </svg>
         <span class="mc-val">${big}${c.unit&&!isOver?`<small>${c.unit}</small>`:''}</span>
       </div>
@@ -3081,24 +3178,6 @@ function renderMacroRow(){
 }
 
 // Fuel protein record card — FocusFlight + odometer; re-rendered on protein/target change
-function _renderFuelHero(){
-  const wrap=document.getElementById('fuel-hero-wrap');
-  if(!wrap) return;
-  const cur=Math.round(macros.prot||0), tgt=Math.round(TARGETS.prot||0);
-  const rem=Math.max(0,tgt-cur);
-  const pct=tgt?cur/tgt*100:0;
-  const meals=(typeof mealLog!=='undefined'&&mealLog)?mealLog.length:0;
-  const st=pct>=100?{l:'Hit',c:'ac'}:pct>=60?{l:'On track',c:'ac'}:{l:'Building',c:''};
-  wrap.innerHTML=`<div class="cs-card mo-rise-card">
-    <div class="cs-top"><span class="cs-lab">Protein</span><span class="cs-pill ${st.c}">${st.l}</span></div>
-    <div class="cs-score"><span class="cs-odo">${_csOdoHTML(cur)}</span><span class="cs-su">/${tgt}g</span></div>
-    <div class="cs-foot">
-      <div class="cs-fc"><div class="cs-fl">Remaining</div><div class="cs-fv">${rem}<small>g</small></div></div>
-      <div class="cs-fc"><div class="cs-fl">Meals</div><div class="cs-fv">${meals}</div></div>
-      <div class="cs-fc"><div class="cs-fl">Vault</div><div class="cs-fv">+22<small>g</small></div></div>
-    </div>
-  </div>`;
-}
 
 function getScore(){
   const p=Math.min(100,macros.prot/TARGETS.prot*100);
@@ -5611,14 +5690,6 @@ function openSleep(){go('sleep');}
 
 // Odometer digit columns — keep 52 in sync with .cs-digit/.cs-num height in CSS
 const _CS_H=52, _CS_CYCLES=4;
-function _csOdoHTML(score){
-  return String(score).split('').map(d=>{
-    let strip='';
-    for(let c=0;c<_CS_CYCLES;c++) for(let n=0;n<10;n++) strip+=`<span class="cs-num">${n}</span>`;
-    const idx=(_CS_CYCLES-1)*10+parseInt(d);
-    return `<span class="cs-digit"><span class="cs-strip" data-d="${d}" style="transform:translateY(-${idx*_CS_H}px)">${strip}</span></span>`;
-  }).join('');
-}
 
 
 // Odometer spin — resets digits to 0 then rolls to final, with a landing pop.
