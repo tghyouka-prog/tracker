@@ -1426,6 +1426,14 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .ts-sub{font-size:11px;color:var(--t3);margin-top:1px}
 .ts-finish{flex-shrink:0;padding:9px 20px;border-radius:20px;border:none;background:var(--focus-ac);color:var(--focus-ac-ink);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
 .ts-finish:active{transform:scale(.95)}
+.mus-name{font-size:15px;font-weight:700;color:var(--t1);margin:-.5rem 0 .25rem}
+.mus-note{font-size:11.5px;color:var(--t3);margin-bottom:.875rem}
+.mus-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.mus-chip{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:.75rem;border-radius:var(--r-md);border:1.5px solid var(--b1);background:var(--s2);color:var(--t1);font-family:inherit;font-size:13.5px;font-weight:700;letter-spacing:-.01em;cursor:pointer;text-align:left}
+.mus-chip.on{border-color:var(--focus-ac);background:color-mix(in srgb,var(--focus-ac) 10%,transparent)}
+.mus-chip:active{transform:scale(.97)}
+.mus-s{font-size:10px;font-weight:600;color:var(--t3)}
+.ex-pick-warn{cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 .ex-pick-warn{color:var(--macro-carb);font-weight:700}
 .ex-pick-head{font-size:11px;font-weight:700;color:var(--t3);padding:.75rem 2px .375rem}
 .wk-head{grid-column:1/-1;font-size:11px;color:var(--t3);margin-bottom:.5rem;text-align:center}
@@ -2091,6 +2099,18 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
   </div>
 </div>
 
+
+<div class="custom-modal-overlay" id="muscle-picker-overlay" onclick="closeMusclePicker(event)">
+  <div class="custom-modal">
+    <div class="custom-modal-title">Which muscle does it train?</div>
+    <div class="mus-name" id="muscle-picker-name"></div>
+    <div class="mus-note">This is what the weekly sets-per-muscle count uses.</div>
+    <div class="mus-grid" id="muscle-picker-list"></div>
+    <div class="custom-modal-actions">
+      <button class="custom-cancel-btn" onclick="closeMusclePicker()">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <div id="toast-container"></div>
 
@@ -5189,6 +5209,7 @@ function _renderExercisePickerList(filterText){
   const firstOther=recent.length?recent.length:-1;
   const esc=s=>String(s).replace(/</g,'&lt;');
   const arg=s=>JSON.stringify(s).replace(/"/g,'&quot;');
+  const arg2=arg;   // same escaping, used inside the subtitle's own attribute
   // Offer to add whatever's typed as a permanent custom exercise whenever it isn't already
   // known — not only when the list comes back empty, since a partial match ("cable r") can
   // still hide a name you meant to create.
@@ -5209,7 +5230,9 @@ function _renderExercisePickerList(filterText){
     // count toward no muscle, so it says so instead of flagging itself.
     const mus=_muscleOf(n);
     const isCardioName=/zone ?2|treadmill|cardio|\brun\b|\bwalk\b|\bcycle\b|elliptical|stair ?master/i.test(n);
-    const musLbl=mus||(isCardioName?'Cardio':'<span class="ex-pick-warn">No muscle · won\u2019t count</span>');
+    const answered=_muscleAnswer(n);
+    const musLbl=mus||(answered==='Cardio'||isCardioName?'Cardio'
+      :'<span class="ex-pick-warn" role="button" onclick="event.stopPropagation();openMusclePicker('+arg2(n)+',false)">No muscle · tap to set</span>');
     const hist=prev?(prev.match.weight?`Last: ${prev.match.weight}kg \u00b7 ${prev.match.sets||'?'}\u00d7${prev.match.reps||'?'}`:'Logged before'):'Not logged yet';
     const sub=musLbl+' \u00b7 '+hist;
     const isCustom=customExercises.includes(n);
@@ -5224,9 +5247,42 @@ function _renderExercisePickerList(filterText){
 }
 
 // Save a typed name to the library, then use it for the row that opened the picker.
-function addAndPickExercise(name){
-  addCustomExercise(name);
-  pickExercise(_canonicalExercise((name||'').trim()));
+// Ask before saving, not after. A name the rules can't read is otherwise saved as an exercise
+// that quietly counts zero, and nothing prompts you again.
+let _muscleTarget=null;
+
+function addAndPickExercise(name,skipAsk){
+  const n=(name||'').trim();
+  if(!skipAsk && !_muscleOf(n) && !_muscleAnswer(n)){
+    openMusclePicker(n,true);
+    return;
+  }
+  addCustomExercise(n);
+  pickExercise(_canonicalExercise(n));
+}
+
+function openMusclePicker(name,thenPick){
+  _muscleTarget={name:name,thenPick:!!thenPick};
+  const ov=document.getElementById('muscle-picker-overlay');
+  const ttl=document.getElementById('muscle-picker-name');
+  const list=document.getElementById('muscle-picker-list');
+  if(!ov||!list) return;
+  if(ttl) ttl.textContent='\u201c'+name+'\u201d';
+  const cur=_muscleAnswer(name)||_muscleOf(name);
+  const groups=MUSCLE_RULES.map(r=>r[0]).concat(['Cardio']);
+  list.innerHTML=groups.map(g=>
+    '<button class="mus-chip'+(cur===g?' on':'')+'" onclick="setCustomMuscle('+JSON.stringify(name).replace(/"/g,'&quot;')+',\''+g+'\')">'+
+      '<span class="mus-l">'+g+'</span>'+
+      (g==='Cardio'?'<span class="mus-s">counts toward none</span>':'')+
+    '</button>').join('');
+  ov.classList.add('show');
+  try{ window.history.pushState({overlay:'muscle-picker-overlay'},''); }catch(e){}
+}
+
+function closeMusclePicker(e){
+  if(e&&e.target!==document.getElementById('muscle-picker-overlay')) return;
+  const ov=document.getElementById('muscle-picker-overlay');
+  if(ov) ov.classList.remove('show');
 }
 
 function pickExercise(name){
@@ -5403,11 +5459,38 @@ const MUSCLE_RULES=[
   ['Back',   [/row/i, /pulldown/i, /pull-?up/i, /chin-?up/i, /pullover/i, /back extension/i, /shrug/i]],
   ['Chest',  [/press/i, /fly|flyes/i, /pec deck/i, /crossover/i, /dip/i]]
 ];
+// name(lowercased) -> group, or 'Cardio' for something deliberately counted toward no muscle.
+// An explicit answer always beats a keyword guess, so this also fixes a built-in the rules read
+// wrong.
+let customMuscles={};
+
 function _muscleOf(name){
   const s=String(name||'').trim();
   if(!s) return null;
+  const ov=customMuscles[s.toLowerCase()];
+  if(ov) return ov==='Cardio'?null:ov;
   for(const [group,pats] of MUSCLE_RULES){ if(pats.some(p=>p.test(s))) return group; }
   return null;
+}
+
+// Set apart from _muscleOf because the picker needs to tell "answered: cardio" from "no idea".
+function _muscleAnswer(name){
+  return customMuscles[String(name||'').trim().toLowerCase()]||null;
+}
+
+function setCustomMuscle(name,group){
+  const k=String(name||'').trim().toLowerCase();
+  if(!k) return;
+  if(group) customMuscles[k]=group; else delete customMuscles[k];
+  save();
+  closeMusclePicker();
+  if(_muscleTarget&&_muscleTarget.thenPick) addAndPickExercise(_muscleTarget.name,true);
+  else {
+    _renderExercisePickerList(document.getElementById('exercise-picker-filter')?.value||'');
+    try{ renderWorkoutStats(); }catch(e){}
+    showToast(group==='Cardio'?'Counts toward no muscle':'Counts toward '+group,'action');
+  }
+  _muscleTarget=null;
 }
 
 // Sets logged per muscle since Monday, including whatever is in the session in progress.
@@ -6228,7 +6311,7 @@ function save(){
   try{
     localStorage.setItem(STORE,JSON.stringify({
       date:biologicalToday(),shift,ticks,macros,history,
-      mealLibrary,mealLog,weekHistory,sessionLog,customExercises,
+      mealLibrary,mealLog,weekHistory,sessionLog,customExercises,customMuscles,
       cycleDay,cycleNum,cycleAnchorDate,completedDays,
       streak:dayStreak,
       sleepRating,sleepHistory,yesterdayData,
@@ -6305,6 +6388,7 @@ function load(){
     if(d.weekHistory) weekHistory=d.weekHistory;
     if(d.sessionLog) sessionLog=d.sessionLog;
     if(Array.isArray(d.customExercises)) customExercises=d.customExercises;
+    if(d.customMuscles && typeof d.customMuscles==='object') customMuscles=d.customMuscles;
       Object.assign(ticks,d.ticks||{});
       if(d.shift) shift=d.shift;
       sleepRating=d.sleepRating||0;
@@ -7349,7 +7433,7 @@ function exportData(){
     version:'4.1',
     exportedAt:new Date().toISOString(),
     date:biologicalToday(),shift,ticks,macros,history,
-    mealLibrary,mealLog,weekHistory,sessionLog,customExercises,
+    mealLibrary,mealLog,weekHistory,sessionLog,customExercises,customMuscles,
     cycleDay,cycleNum,cycleAnchorDate,completedDays,
     streak:dayStreak,
     sleepRating,sleepHistory,yesterdayData,
@@ -7392,6 +7476,7 @@ function importData(){
     if(d.mealLibrary) mealLibrary=d.mealLibrary;
     if(d.sessionLog) sessionLog=d.sessionLog;
     if(Array.isArray(d.customExercises)) customExercises=d.customExercises;
+    if(d.customMuscles && typeof d.customMuscles==='object') customMuscles=d.customMuscles;
     if(d.customItems) customItems=d.customItems;
     if(d.skippedToday) skippedToday=d.skippedToday;
     if(d.halfTicks) halfTicks=d.halfTicks;
@@ -7694,6 +7779,8 @@ function _renderProgPair(){
 // exits the PWA instead. Each overlay pushes a history entry when it opens, so back pops it
 // and closes the overlay rather than the app.
 const _OVERLAY_IDS=['onboarding','weighin','goaledit','weighhist'];
+// Class-toggled rather than [hidden], so the popstate handler checks it separately.
+const _MODAL_OVERLAY_IDS=['muscle-picker-overlay'];
 function _showOverlay(id){
   const el=document.getElementById(id);
   if(!el) return;
@@ -7710,6 +7797,8 @@ function _openOverlays(){
 window.addEventListener('popstate',function(){
   const open=_openOverlays();
   if(open.length){ _hideOverlay(open[open.length-1]); return; }
+  const modal=_MODAL_OVERLAY_IDS.map(i=>document.getElementById(i)).find(e=>e&&e.classList.contains('show'));
+  if(modal){ modal.classList.remove('show'); return; }
   // Nothing of ours was open — close a modal if one is up rather than dropping out of the app.
   const settings=document.getElementById('settings-overlay');
   if(settings && settings.classList.contains('open')){ try{ closeSettings(); }catch(e){} return; }
