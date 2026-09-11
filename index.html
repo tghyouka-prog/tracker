@@ -2338,13 +2338,15 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
     <!-- Last session reference -->
     </div>
-    <div class="last-sess-ref" id="last-sess-ref" style="display:none">
+    <div class="last-sess-ref" id="last-sess-ref" hidden style="display:none">
       <div class="lsr-label"><i class="ti ti-history" style="font-size:11px"></i>Last session</div>
       <div id="lsr-content"></div>
     </div>
 
     <!-- Rest timer — tap a preset between sets -->
-    <div class="rest-timer" id="rest-timer">
+    <!-- Only present while a rest is running. _autoRest() starts it when an exercise is
+         ticked or reps are entered, and the presets inside change the duration mid-rest. -->
+    <div class="rest-timer" id="rest-timer" hidden>
       <div class="rt-display" id="rt-display">Rest timer</div>
       <div class="rt-bar-wrap"><div class="rt-bar" id="rt-bar"></div></div>
       <div class="rt-presets">
@@ -5334,7 +5336,8 @@ function updateSessType(){
   renderLiftRows();
 
   // Show last session of same type for reference
-  showLastSessionRef(sessType);
+  // Dropped: each lift card carries its own previous numbers, which beats a summary of the
+  // whole last session sitting above them.
 }
 
 function showLastSessionRef(sessType){
@@ -5464,6 +5467,7 @@ function renderLiftRows(){
   _initDraftWatch();
   _saveDraft();
   renderUnsavedFlag();
+  _collapseTrainBanners();
 }
 
 // Seed a lift row from the last time this exercise was logged, so a normal session is
@@ -5550,7 +5554,6 @@ function _restoreDraft(){
     const notesEl=document.getElementById('sess-notes');
     if(notesEl&&d.notes) notesEl.value=d.notes;
     renderLiftRows();
-    if(d.type) showLastSessionRef(d.type);
     // reveal the logger, otherwise the restored work sits behind a collapsed card
     const card=document.getElementById('sess-card-logger');
     if(card) card.style.display='block';
@@ -5671,6 +5674,19 @@ function _stalledLifts(){
 
 // One stalled lift is noise — a bad night's sleep, a busy gym. Several at once is the signal
 // the programme's deload rule is actually describing.
+// Only the most actionable banner shows. Three stacked strips pushed the logger below the
+// fold on exactly the days something had gone wrong. Priority is by urgency: a draft you could
+// lose > a stall worth acting on > a check-in note that keeps.
+function _collapseTrainBanners(){
+  let shown=false;
+  ['unsaved-flag','stall-flag','training-checkin-flag'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    if(el.innerHTML.trim() && !shown){ el.style.display=''; shown=true; }
+    else el.style.display='none';
+  });
+}
+
 function renderStallFlag(){
   const el=document.getElementById('stall-flag');
   if(!el) return;
@@ -5752,6 +5768,8 @@ function lastLiftFor(name){
 let _rtInterval=null,_rtRemaining=0,_rtTotal=0;
 function startRestTimer(seconds){
   stopRestTimer(true);
+  const wrap=document.getElementById('rest-timer');
+  if(wrap) wrap.hidden=false;
   _rtTotal=seconds;_rtRemaining=seconds;
   const disp=document.getElementById('rt-display');
   const stopBtn=document.getElementById('rt-stop');
@@ -5766,6 +5784,7 @@ function startRestTimer(seconds){
       clearInterval(_rtInterval);_rtInterval=null;
       if(disp){disp.className='rt-display done';disp.textContent='Rest done — go';}
       if(navigator.vibrate) navigator.vibrate([80,60,80,60,120]);
+      setTimeout(()=>{ const w=document.getElementById('rest-timer'); if(w&&!_rtInterval) w.hidden=true; },4000);
       if(stopBtn) stopBtn.style.display='none';
       setTimeout(()=>{ if(disp&&!_rtInterval){disp.className='rt-display';disp.textContent='Rest timer';const b=document.getElementById('rt-bar');if(b)b.style.width='0%';} },4000);
       return;
@@ -5783,7 +5802,11 @@ function stopRestTimer(silent){
   if(disp){disp.className='rt-display';disp.textContent='Rest timer';}
   if(bar) bar.style.width='0%';
   if(stopBtn) stopBtn.style.display='none';
-  if(!silent&&navigator.vibrate) navigator.vibrate(4);
+  if(!silent){
+    const wrap=document.getElementById('rest-timer');
+    if(wrap) wrap.hidden=true;
+    if(navigator.vibrate) navigator.vibrate(4);
+  }
 }
 
 // ── EDIT / DELETE A LOGGED SESSION ──
@@ -5831,7 +5854,6 @@ function editSession(i){
   const card=document.getElementById('sess-card-logger');
   if(card){ card.style.display='block'; }
   renderLiftRows();
-  showLastSessionRef(s.type);
   renderSessionHistory();renderWeekStrip();renderProgress();
   save();
   if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
@@ -5972,6 +5994,7 @@ function renderSessionHistory(){
   renderTrainHero();
   renderStallFlag();
   renderUnsavedFlag();
+  _collapseTrainBanners();
   const list=document.getElementById('sess-history-list');
   const label=document.getElementById('train-hist-label');
   if(!list) return;
