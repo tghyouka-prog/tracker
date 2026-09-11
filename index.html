@@ -337,6 +337,21 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .ob-input input:focus{outline:none}
 .ob-input input::-webkit-outer-spin-button,.ob-input input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .ob-input span{font-size:15px;font-weight:600;color:var(--t3);flex-shrink:0}
+.ob-hint{font-size:12px;color:var(--t2);line-height:1.5;margin-top:.875rem}
+.ob-build{align-items:center;justify-content:center;text-align:center}
+.ob-ring{position:relative;width:150px;height:150px;margin:0 auto}
+.ob-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.obr-track{fill:none;stroke:var(--s3);stroke-width:7}
+.obr-fill{fill:none;stroke:var(--focus-ac);stroke-width:7;stroke-linecap:round;transition:stroke-dasharray .12s linear}
+.obr-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;color:var(--t1);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.obr-num small{font-size:14px;font-weight:600;color:var(--t3);margin-left:1px}
+.ob-build-cap{font-size:15px;font-weight:600;color:var(--t2);margin-top:1.5rem}
+.obp-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.25rem 1rem;margin-bottom:1rem}
+.obp-row{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.8rem 0;border-bottom:1px solid var(--b1);font-size:14px;color:var(--t2)}
+.obp-row:last-child{border-bottom:none}
+.obp-row strong{font-size:17px;font-weight:800;color:var(--t1);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.obp-note{display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:.625rem}
+.obp-note i{font-size:14px;color:var(--t3);flex-shrink:0;margin-top:1px}
 .ob-cta{width:100%;padding:16px;border-radius:var(--r-lg);border:none;background:var(--focus-ac);color:var(--focus-ac-ink);font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;flex-shrink:0;margin-top:1rem}
 .ob-cta[disabled]{opacity:.35;pointer-events:none}
 .prof-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem}
@@ -2462,26 +2477,75 @@ function projectionText(){
          p.date.toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'}) + '. Estimate, assuming you hold the plan.';
 }
 
-const OB_STEPS=['goal','sex','age','height','weight'];
-let _obIdx=0;
-function startOnboarding(){ _obIdx=0; _renderOnboarding(); document.getElementById('onboarding').hidden=false; }
-function _obClose(){ const el=document.getElementById('onboarding'); if(el) el.hidden=true; try{ localStorage.setItem('onboardingDone','1'); }catch(e){} }
-function obBack(){ if(_obIdx===0) return _obClose(); _obIdx--; _renderOnboarding(); }
+const OB_STEPS=['goal','sex','age','height','weight','goalWeight'];
+let _obIdx=0, _obPhase='q';   // q = questions, build = transition, plan = reveal
+let _obTimer=null;
+function startOnboarding(){ _obIdx=0; _obPhase='q'; _renderOnboarding(); document.getElementById('onboarding').hidden=false; }
+function _obClose(){
+  if(_obTimer){ clearInterval(_obTimer); _obTimer=null; }
+  const el=document.getElementById('onboarding');
+  if(el) el.hidden=true;
+  try{ localStorage.setItem('onboardingDone','1'); }catch(e){}
+}
+function obBack(){
+  if(_obPhase!=='q'){ _obPhase='q'; _obIdx=OB_STEPS.length-1; if(_obTimer){clearInterval(_obTimer);_obTimer=null;} return _renderOnboarding(); }
+  if(_obIdx===0) return _obClose();
+  _obIdx--; _renderOnboarding();
+}
 function obNext(){
-  if(_obIdx>=OB_STEPS.length-1){
-    applyWeight(bodyWeight);
-    _obClose();
-    try{ showToast('Plan set — '+TARGETS.kcal.toLocaleString()+' kcal, '+TARGETS.prot+'g protein','food'); }catch(e){}
-    return;
-  }
+  if(_obIdx>=OB_STEPS.length-1){ applyWeight(bodyWeight); _obBuild(); return; }
   _obIdx++; _renderOnboarding();
+}
+
+// Build transition. Real work is instantaneous, so this is a paced reveal rather than a fake
+// loader — each caption names a step that genuinely happened.
+function _obBuild(){
+  _obPhase='build';
+  const el=document.getElementById('onboarding');
+  if(!el) return;
+  const CAPS=['Working out your energy needs','Setting protein for your goal','Checking the rate is safe','Building your plan'];
+  let pct=0, ci=0;
+  const paint=()=>{
+    el.innerHTML='<div class="ob-sheet ob-build">'+
+      '<div class="ob-ring"><svg viewBox="0 0 120 120" aria-hidden="true">'+
+      '<circle class="obr-track" cx="60" cy="60" r="52"></circle>'+
+      '<circle class="obr-fill" cx="60" cy="60" r="52" stroke-dasharray="'+(2*Math.PI*52*pct/100).toFixed(1)+' '+(2*Math.PI*52).toFixed(1)+'"></circle>'+
+      '</svg><span class="obr-num">'+Math.round(pct)+'<small>%</small></span></div>'+
+      '<div class="ob-build-cap">'+CAPS[Math.min(ci,CAPS.length-1)]+'</div>'+
+      '</div>';
+  };
+  paint();
+  _obTimer=setInterval(()=>{
+    pct=Math.min(100,pct+4);
+    ci=Math.floor(pct/26);
+    paint();
+    if(pct>=100){ clearInterval(_obTimer); _obTimer=null; setTimeout(()=>{ _obPhase='plan'; _renderOnboarding(); },320); }
+  },70);
 }
 function obPick(field,value){ setProfile(field,value); _renderOnboarding(); }
 function obWeight(v){ const n=parseFloat(v); if(n>=40&&n<=150){ applyWeight(Math.round(n*10)/10); _renderOnboarding(); } }
+function obGoalWeight(v){ setGoalWeight(v); _renderOnboarding(); }
+
+// Spell out the consequence of the goal weight as it is typed, and flag a mode that points the
+// wrong way — this is the only place the two numbers meet before the plan is built.
+function _obGoalHint(){
+  if(goalWeight==null) return 'Leave it blank if you would rather not set one.';
+  const d=goalWeight-bodyWeight;
+  if(Math.abs(d)<0.25) return 'Same as your current weight — nothing to travel.';
+  const mode=profile.goal||'bulk';
+  const wantsUp=d>0;
+  if(mode==='maintain') return (wantsUp?'+':'') + d.toFixed(1) + 'kg away, but you picked Maintain, so there is no projected change. Go back and pick ' + (wantsUp?'Bulking':'Cutting') + ' to move toward it.';
+  if(wantsUp!==(mode==='bulk')) return (wantsUp?'+':'') + d.toFixed(1) + 'kg away, but you picked ' + (mode==='bulk'?'Bulking':'Cutting') + '. Go back and pick ' + (wantsUp?'Bulking':'Cutting') + ' instead.';
+  const p=goalProjection();
+  return p.state==='ok'
+    ? (wantsUp?'+':'') + d.toFixed(1) + 'kg away — about ' + Math.round(p.weeks) + ' weeks at ' + Math.abs(p.rate).toFixed(2) + ' kg/week.'
+    : (wantsUp?'+':'') + d.toFixed(1) + 'kg away.';
+}
 
 function _renderOnboarding(){
   const el=document.getElementById('onboarding');
   if(!el) return;
+  if(_obPhase==='plan') return _renderObPlan(el);
   const step=OB_STEPS[_obIdx];
   const pct=((_obIdx+1)/OB_STEPS.length)*100;
   const seg=(field,opts)=>'<div class="ob-opts">'+opts.map(o=>
@@ -2498,7 +2562,10 @@ function _renderOnboarding(){
     height:{t:'How tall are you?', s:'Used in the BMR equation.',
       body:'<div class="ob-input"><input type="number" inputmode="numeric" min="120" max="230" value="'+(profile.heightCm||'')+'" placeholder="--" onchange="obPick(\'heightCm\',this.value)" aria-label="Height in centimetres"><span>cm</span></div>'},
     weight:{t:'What do you weigh?', s:'Everything else recalculates from this, so keep it current.',
-      body:'<div class="ob-input"><input type="number" inputmode="decimal" step="0.1" min="40" max="150" value="'+bodyWeight+'" onchange="obWeight(this.value)" aria-label="Body weight in kilograms"><span>kg</span></div>'}
+      body:'<div class="ob-input"><input type="number" inputmode="decimal" step="0.1" min="40" max="150" value="'+bodyWeight+'" onchange="obWeight(this.value)" aria-label="Body weight in kilograms"><span>kg</span></div>'},
+    goalWeight:{t:'Where do you want to get to?', s:'This does not change your daily calories — the rate does that. It sets how far away the target is, and so how long it takes.',
+      body:'<div class="ob-input"><input type="number" inputmode="decimal" step="0.5" min="40" max="150" value="'+(goalWeight!=null?goalWeight:'')+'" placeholder="--" onchange="obGoalWeight(this.value)" aria-label="Goal weight in kilograms"><span>kg</span></div>'+
+           '<div class="ob-hint">'+_obGoalHint()+'</div>'}
   }[step];
 
   // Only gate on the questions that have no safe default — goal and weight always do.
@@ -2511,6 +2578,31 @@ function _renderOnboarding(){
     '<div class="ob-body"><h2 class="ob-q">'+Q.t+'</h2><p class="ob-s">'+Q.s+'</p>'+Q.body+'</div>'+
     '<button class="ob-cta" onclick="obNext()"'+(answered?'':' disabled')+'>'+
     (_obIdx===OB_STEPS.length-1?'Finish':'Continue')+'</button>'+
+    '</div>';
+}
+
+// The plan itself, stated plainly — setup used to end on a toast, so the numbers it had just
+// worked out were never actually shown.
+function _renderObPlan(el){
+  const row=(k,v)=>'<div class="obp-row"><span>'+k+'</span><strong>'+v+'</strong></div>';
+  const goalWord={bulk:'Bulking',cut:'Cutting',maintain:'Maintaining'}[profile.goal||'bulk'];
+  const r=_weeklyRateKg(bodyWeight);
+  el.innerHTML='<div class="ob-sheet">'+
+    '<div class="ob-top"><button class="ob-back" onclick="obBack()" aria-label="Back"><i class="ti ti-arrow-left"></i></button>'+
+    '<div class="ob-prog"><span style="width:100%"></span></div></div>'+
+    '<div class="ob-body">'+
+      '<h2 class="ob-q">Your plan is ready</h2>'+
+      '<p class="ob-s">'+goalWord+(r?' at '+(r>0?'+':'')+r.toFixed(2)+' kg per week':'')+'. Hit these daily.</p>'+
+      '<div class="obp-card">'+
+        row('Calories', TARGETS.kcal.toLocaleString()+' kcal')+
+        row('Protein', TARGETS.prot+' g')+
+        row('Carbs', '~'+TARGETS.carb+' g')+
+        row('Water', (TARGETS.hydro/1000).toFixed(1)+' L')+
+      '</div>'+
+      '<div class="obp-note"><i class="ti ti-info-circle" aria-hidden="true"></i><span>'+projectionText()+'</span></div>'+
+      '<div class="obp-note"><i class="ti ti-refresh" aria-hidden="true"></i><span>These recalculate whenever you change your weight or goal — nothing here is fixed.</span></div>'+
+    '</div>'+
+    '<button class="ob-cta" onclick="_obClose()">Start tracking</button>'+
     '</div>';
 }
 
