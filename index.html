@@ -1834,9 +1834,9 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
   style="position:absolute;top:14px;right:68px;z-index:150;width:44px;height:44px;background:var(--s2);border:1px solid var(--b2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s cubic-bezier(.34,1.4,.5,1),background .12s">
   <i class="ti ti-settings" style="font-size:17px;color:var(--t2)" aria-hidden="true"></i>
 </button>
-<button id="camera-fab" onclick="openCameraLogger()" aria-label="Log a meal from a photo"
+<button id="camera-fab" onclick="openCameraLogger()" aria-label="Scan a label or meal"
   style="position:absolute;top:14px;right:16px;z-index:150;width:44px;height:44px;background:var(--s2);border:1px solid var(--b2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s cubic-bezier(.34,1.4,.5,1),background .12s">
-  <i class="ti ti-camera" style="font-size:17px;color:var(--t2)" aria-hidden="true"></i>
+  <i class="ti ti-barcode" style="font-size:19px;color:var(--t2)" aria-hidden="true"></i>
 </button>
 <input type="file" id="camera-file-input" style="display:none" onchange="handleCameraCapture(event)">
 
@@ -2454,6 +2454,17 @@ function setProfile(field,value){
   save();
 }
 // The plan rows duplicate state that lives in several places, so repaint them from one spot.
+// App-icon badge as a nudge: present while today has nothing logged, gone once it does.
+// The only home-screen surface a PWA gets — widgets are native-only on both platforms.
+// Silent no-op where unsupported or where notification permission was never granted.
+function updateAppBadge(){
+  try{
+    if(!('setAppBadge' in navigator)) return;
+    if(mealLog.length>0) navigator.clearAppBadge().catch(()=>{});
+    else navigator.setAppBadge(1).catch(()=>{});
+  }catch(e){}
+}
+
 function renderPlanRows(){
   const set=(id,v)=>{ const el=document.getElementById(id); if(el && document.activeElement!==el) el.value = (v==null?'':v); };
   set('nut-weight-display', bodyWeight);
@@ -3597,6 +3608,7 @@ function logMeal(meal){
   mealLog.push(entry);
   syncMacrosFromTimeline(); // recalculates everything including mealLog
   renderMealLog();
+  updateAppBadge();
   const today=biologicalToday();
   const crossedProt = TARGETS.prot>0 && protBefore<TARGETS.prot && macros.prot>=TARGETS.prot && _protHitDay!==today;
   if(crossedProt){ _protHitDay=today; }
@@ -3620,6 +3632,7 @@ function removeLogEntry(ts){
   mealLog.splice(idx,1);
   syncMacrosFromTimeline();
   renderMealLog();
+  updateAppBadge();
   save();
 }
 
@@ -6869,6 +6882,18 @@ function downloadInfographic(){
       background_color:'#000000',
       theme_color:'#0d0d0d',
       orientation:'portrait-primary',
+      // Long-press the installed icon on Android to land straight in the meal logger.
+      shortcuts:[{
+        name:'Log a meal',
+        short_name:'Log',
+        description:'Open the meal logger',
+        url:'./?action=log',
+        icons:[{
+          src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' rx='22' fill='%230d0d0d'/><path d='M48 26v44M26 48h44' stroke='%23ffffff' stroke-width='9' stroke-linecap='round'/></svg>",
+          sizes:'96x96',
+          type:'image/svg+xml'
+        }]
+      }],
       icons:[{
         src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='114' fill='%230d0d0d'/><circle cx='256' cy='256' r='176' fill='none' stroke='%2326c98a' stroke-width='32'/><path d='M176 256l64 64 96-128' stroke='%2326c98a' stroke-width='32' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>",
         sizes:'512x512',
@@ -8397,6 +8422,14 @@ _fitbitRedirectCatch().then(handled=>{
 
 // Always land on Overview regardless of stored state
 go('nutrition');
+updateAppBadge();
+// Launched from the home-screen shortcut — go straight to logging.
+try{
+  if(new URLSearchParams(location.search).get('action')==='log'){
+    setTimeout(()=>{ try{ openMealLogger(); }catch(e){} },400);
+    window.history.replaceState(null,'',location.pathname);   // shadowed: the app has its own global `history`
+  }
+}catch(e){}
 // First run: nobody has answered anything yet, so ask rather than silently guessing a plan.
 try{
   if(!localStorage.getItem('onboardingDone') && !profile.sex && !profile.age && !profile.heightCm){
