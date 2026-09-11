@@ -468,6 +468,21 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .prog-stat{background:var(--s2);border-radius:var(--r-md);padding:.625rem .375rem;text-align:center}
 .prog-stat-val{font-size:19px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums;line-height:1.1}
 .prog-stat-lbl{font-size:9.5px;color:var(--t3);letter-spacing:.01em;margin-top:3px}
+.lp-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.25rem .875rem}
+.lp-row{display:flex;align-items:center;gap:.75rem;padding:.75rem 0;border-bottom:1px solid var(--b1)}
+.lp-row:last-child{border-bottom:none}
+.lp-l{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.lp-name{font-size:13.5px;font-weight:700;color:var(--t1);letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lp-sub{font-size:10.5px;color:var(--t3)}
+.lp-pb{color:var(--t2)}
+.lp-stall{color:var(--macro-carb)}
+.lp-r{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.lp-kg{font-size:16px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums}
+.lp-kg small{font-size:10px;font-weight:600;color:var(--t3);margin-left:1px}
+.lp-d{font-size:10.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.lp-d.up{color:var(--green)}
+.lp-d.down{color:var(--macro-prot)}
+.lp-d.flat{color:var(--t3)}
 .prog-empty{font-size:12px;color:var(--t3);line-height:1.55;padding:.75rem .875rem;background:var(--s2);border-radius:var(--r-md)}
 .prog-ms{display:flex;align-items:flex-start;gap:.625rem;padding:.625rem .75rem;background:var(--s2);border-radius:var(--r-md);margin-bottom:5px}
 .prog-ms-ic{font-size:15px;color:var(--focus-ac);flex-shrink:0;margin-top:1px}
@@ -3535,6 +3550,12 @@ function logAiResult(){
   const v=_aiScaled();
   const meal={id:Date.now(), name:v.name, prot:v.prot, kcal:v.kcal, carb:v.carb};
   if(v.micros && (v.micros.fiber!=null||v.micros.sugar!=null||v.micros.sodium!=null)) meal.micros=v.micros;
+  // The manual form puts what it logs into the library too. Without this, the AI path — the
+  // one you'd use most — produced meals you could never log a second time. Deduped by name so
+  // scanning the same food twice doesn't stack duplicates.
+  if(!mealLibrary.some(m=>(m.name||'').toLowerCase()===String(v.name).toLowerCase())){
+    mealLibrary.push({id:meal.id, name:v.name, prot:v.prot, kcal:v.kcal, carb:v.carb});
+  }
   logMeal(meal);
   _aiResult=null; _aiServings=1; _mealMicros=null;
   renderAiResult();
@@ -4140,6 +4161,18 @@ function getScore(){
 // function kept computing and writing to its ids, all silent no-ops via the `if(el)` guards.
 // Stripped down to what's actually live: the day-streak check. Kept the name since it's
 // called from ~10 places already and renaming is pure churn for zero behavior change.
+// A streak that only ever counts up is a lifetime total, not a streak. If the last logged day
+// is older than yesterday the run is over, so it resets before today can extend it. Yesterday
+// still counts as live — you haven't missed a day until a whole one passes unlogged.
+function _breakStreakIfStale(){
+  let last=null; try{ last=localStorage.getItem('streakLastDate'); }catch(e){}
+  if(!last) return;
+  const today=biologicalToday();
+  if(last===today) return;
+  const y=new Date(today+'T12:00:00Z'); y.setUTCDate(y.getUTCDate()-1);
+  if(last < y.toISOString().slice(0,10)) dayStreak=0;
+}
+
 function updateScore(){
   // Streak counts a day where you LOGGED, not one where you hit the targets. Requiring the
   // targets punished an honest light-eating day by breaking the streak, which pushes toward
@@ -4149,8 +4182,10 @@ function updateScore(){
     const _today=biologicalToday();
     let _last=null; try{ _last=localStorage.getItem('streakLastDate'); }catch(e){}
     if(_last!==_today){
+      _breakStreakIfStale();
       dayStreak++;
       try{ localStorage.setItem('streakLastDate',_today); }catch(e){}
+      checkMilestones();
       save();
     }
   }
@@ -6155,6 +6190,7 @@ function saveSession(){
   renderWeekStrip();
   renderProgress(); // an edited/back-dated session changes the heatmap
   checkPBMilestones(session);
+  checkMilestones();
   recordJourneyEvent('session',session.type+' session','Logged training session',{type:session.type,lifts:filledLifts.length});
   const beatTxt=comparable?` · ${beaten}/${comparable} beaten`:'';
   showToast(`${session.type} logged ✓${beatTxt}`,'action');
@@ -6390,6 +6426,7 @@ function load(){
     if(d.insightsLastRead) insightsLastRead=d.insightsLastRead;
     if(d._lastInsightCount) _lastInsightCount=d._lastInsightCount;
     dayStreak=d.streak||0;
+    _breakStreakIfStale();
     if(d.date===biologicalToday()){
       Object.assign(macros,d.macros||{});
       if(d.history) Object.assign(history,d.history);
@@ -7013,31 +7050,15 @@ function recordJourneyEvent(type,title,sub,data){
   save();
 }
 
-// Hook: called from tlTick when all items are done
+// Called after a log extends the streak, and after a session is saved.
 function checkMilestones(){
-  const today=biologicalToday();
-  const score=getScore();
-  const streakVal=dayStreak;
-
-  // First 100% day
-  const prev100=journeyLog.filter(e=>e.type==='milestone'&&e.title==='First perfect day');
-  if(score===100&&!prev100.length){
-    recordJourneyEvent('milestone','First perfect day','100% on all four arcs — protocol fully executed.',{score:100});
-  }
-
-  // Streak milestones
-  const streakMilestones=[3,7,14,30,60];
-  streakMilestones.forEach(n=>{
-    if(streakVal>=n){
-      const exists=journeyLog.find(e=>e.title===`${n}-day streak`);
-      if(!exists) recordJourneyEvent('streak',`${n}-day streak`,`${n} consecutive days at 100%.`,{streak:n});
+  [3,7,14,30,60,100].forEach(n=>{
+    if(dayStreak>=n && !journeyLog.some(e=>e.title===n+'-day streak')){
+      recordJourneyEvent('streak',n+'-day streak',n+' days in a row logged.',{streak:n});
     }
   });
-
-  // Deload milestone
-  if(cycleNum%4===0){
-    const exists=journeyLog.find(e=>e.title===`Deload cycle ${cycleNum}`);
-    if(!exists) recordJourneyEvent('milestone',`Deload cycle ${cycleNum}`,`Completed ${cycleNum} microcycles — earned recovery.`,{cycle:cycleNum});
+  if(cycleNum>0 && cycleNum%4===0 && !journeyLog.some(e=>e.title==='Deload cycle '+cycleNum)){
+    recordJourneyEvent('milestone','Deload cycle '+cycleNum,'Completed '+cycleNum+' microcycles — earned recovery.',{cycle:cycleNum});
   }
 }
 
@@ -7655,6 +7676,49 @@ function renderProgStats(){
   </div>`;
 }
 
+// "Is my top set going up." sessionLog already holds every answer; nothing read it back.
+// Ranked by how often a lift appears, so the ones you actually run float to the top rather
+// than a single curiosity session from two months ago.
+function renderProgLifts(){
+  const el=document.getElementById('prog-lifts');
+  if(!el) return;
+  const by={};
+  // sessionLog is newest-first.
+  (sessionLog||[]).forEach(s=>(s.lifts||[]).forEach(l=>{
+    const kg=parseFloat(l.weight);
+    if(!l.name||!(kg>0)) return;
+    (by[l.name]=by[l.name]||[]).push({kg, reps:l.reps, date:s.date});
+  }));
+  const rows=Object.keys(by)
+    .map(n=>({name:n, hist:by[n]}))
+    .filter(r=>r.hist.length>=2)
+    .sort((a,b)=>b.hist.length-a.hist.length)
+    .slice(0,6);
+  if(!rows.length){
+    el.innerHTML='<div class="sec-label">Lifts</div>'+
+      '<div class="prog-empty">Log the same lift twice and its trend shows up here.</div>';
+    return;
+  }
+  el.innerHTML='<div class="sec-label">Lifts</div><div class="lp-card">'+rows.map(r=>{
+    const cur=r.hist[0], first=r.hist[r.hist.length-1];
+    const best=Math.max(...r.hist.map(x=>x.kg));
+    const d=cur.kg-first.kg;
+    const cls=d>0.01?'up':d<-0.01?'down':'flat';
+    const arrow=d>0.01?'&uarr;':d<-0.01?'&darr;':'&rarr;';
+    const delta=Math.abs(d)<0.01?'holding':(d>0?'+':'&minus;')+Math.abs(d).toFixed(1)+'kg';
+    // Best-ever is only worth showing when today isn't it — otherwise it restates the number
+    // immediately to its left.
+    const pb=best>cur.kg+0.01?'<span class="lp-pb">best '+best+'kg</span>':'';
+    const stalled=_liftStall(r.name)?'<span class="lp-stall">stalled</span>':'';
+    return '<div class="lp-row">'+
+      '<div class="lp-l"><span class="lp-name">'+String(r.name).replace(/</g,"&lt;")+'</span>'+
+        '<span class="lp-sub">'+r.hist.length+' sessions'+(pb||stalled?' · ':'')+pb+stalled+'</span></div>'+
+      '<div class="lp-r"><span class="lp-kg">'+cur.kg+'<small>kg</small></span>'+
+        '<span class="lp-d '+cls+'">'+arrow+' '+delta+'</span></div>'+
+      '</div>';
+  }).join('')+'</div>';
+}
+
 function renderProgMilestones(){
   const el=document.getElementById('prog-milestones');
   if(!el) return;
@@ -7961,6 +8025,7 @@ function _renderGoalChart(){
 function renderProgress(){
   renderCalProgress();
   renderProgStats();
+  renderProgLifts();
   renderProgMilestones();
   // "Since <first logged day>" + disable Export until there's something worth exporting
   const sinceEl=document.getElementById('prog-since');
@@ -8846,6 +8911,9 @@ try{
   <div class="prog-stats mo-rise" id="prog-stats"></div>
 
   <!-- Calendar heatmap -->
+
+  <!-- Top-set trend per lift -->
+  <div class="mo-rise" id="prog-lifts"></div>
 
   <!-- Milestones from the journey log -->
   <div class="sec-label" style="margin-top:1.25rem">Milestones</div>
