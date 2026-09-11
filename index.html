@@ -1062,11 +1062,20 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 /* Settings modal */
 .settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:250;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s}
 .settings-overlay.open{opacity:1;pointer-events:all}
-.settings-modal{background:var(--s1);border:1px solid var(--b2);border-radius:var(--r-xl) var(--r-xl) 0 0;padding:1.5rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom,0px));width:100%;max-width:480px;transform:translateY(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);max-height:85vh;overflow-y:auto}
+.settings-modal{background:var(--bg);border:1px solid var(--b2);border-radius:var(--r-xl) var(--r-xl) 0 0;padding:1.5rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom,0px));width:100%;max-width:480px;transform:translateY(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);max-height:85vh;overflow-y:auto}
 .settings-overlay.open .settings-modal{transform:translateY(0)}
-.settings-section{margin-bottom:1.25rem}
-.settings-section-title{font-size:17px;font-weight:700;letter-spacing:-.02em;color:var(--t1);margin-bottom:.625rem}
+.settings-section{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem 1rem;margin-bottom:.625rem}
+.settings-section-title{font-size:15px;font-weight:700;letter-spacing:-.02em;color:var(--t1);margin-bottom:.5rem;display:flex;align-items:center;gap:7px}
+.settings-section-title i{font-size:16px;color:var(--t3)}
 .settings-row{display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--b1);gap:.75rem}
+.settings-section .settings-row:last-of-type{border-bottom:none}
+/* Profile summary — Cal AI leads its settings with who the plan is for. */
+.set-me{display:flex;align-items:center;gap:.875rem;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem 1rem;margin-bottom:.625rem}
+.set-me-av{width:46px;height:46px;border-radius:50%;background:var(--focus-ac);color:var(--focus-ac-ink);display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}
+.set-me-b{flex:1;min-width:0}
+.set-me-1{font-size:17px;font-weight:800;letter-spacing:-.02em;color:var(--t1);line-height:1.2}
+.set-me-2{font-size:12px;color:var(--t2);margin-top:2px;line-height:1.4}
+.set-me-cta{font-size:12px;font-weight:700;color:var(--focus-ac-ink);background:var(--focus-ac);border:none;border-radius:20px;padding:6px 13px;cursor:pointer;font-family:inherit;flex-shrink:0}
 .settings-row:last-child{border-bottom:none}
 .settings-row-label{font-size:13px;font-weight:500;color:var(--t1)}
 .settings-row-sub{font-size:11px;color:var(--t3);margin-top:1px}
@@ -1578,8 +1587,10 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
       <button class="modal-close" onclick="closeSettings()" aria-label="Close settings"><i class="ti ti-x" style="font-size:13px" aria-hidden="true"></i></button>
     </div>
 
+    <div class="set-me" id="set-me"></div>
+
     <div class="settings-section">
-      <div class="settings-section-title">Data</div>
+      <div class="settings-section-title"><i class="ti ti-database" aria-hidden="true"></i>Data</div>
       <div class="settings-row">
         <div>
           <div class="settings-row-label">Export all data</div>
@@ -1605,7 +1616,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     </div>
 
     <div class="settings-section">
-      <div class="settings-section-title">AI Food Analysis</div>
+      <div class="settings-section-title"><i class="ti ti-sparkles" aria-hidden="true"></i>AI Food Analysis</div>
       <div class="settings-row">
         <div>
           <div class="settings-row-label">Gemini API Key</div>
@@ -1635,7 +1646,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     </div>
 
     <div class="settings-section">
-      <div class="settings-section-title">Sync &amp; import</div>
+      <div class="settings-section-title"><i class="ti ti-refresh" aria-hidden="true"></i>Sync &amp; import</div>
       <div class="fb-connect" id="fb-connect"></div>
       <div class="fuel-tgt-strip" id="steps-mini" style="display:none">
         <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="steps-mini-today">0</div><span class="fuel-tgt-lbl">Steps today</span></div>
@@ -1650,7 +1661,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     </div>
 
     <div class="settings-section">
-      <div class="settings-section-title">Profile</div>
+      <div class="settings-section-title"><i class="ti ti-user" aria-hidden="true"></i>Profile</div>
       <div class="settings-row">
         <div>
           <div class="settings-row-label">About you</div>
@@ -1679,7 +1690,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     </div>
 
     <div class="settings-section">
-      <div class="settings-section-title">Shift</div>
+      <div class="settings-section-title"><i class="ti ti-clock" aria-hidden="true"></i>Shift</div>
       <div class="settings-row">
         <div>
           <div class="settings-row-label">Today's shift</div>
@@ -1722,7 +1733,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     </div>
 
     <div class="settings-section">
-      <div class="settings-section-title">Appearance</div>
+      <div class="settings-section-title"><i class="ti ti-palette" aria-hidden="true"></i>Appearance</div>
       <div class="settings-row">
         <div>
           <div class="settings-row-label">Theme</div>
@@ -1737,12 +1748,12 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     </div>
 
     <div class="settings-section" id="removed-items-section" style="display:none">
-      <div class="settings-section-title">Removed timeline items</div>
+      <div class="settings-section-title"><i class="ti ti-eye-off" aria-hidden="true"></i>Removed timeline items</div>
       <div id="removed-items-list"></div>
     </div>
 
     <div class="settings-section">
-      <div class="settings-section-title">Reset</div>
+      <div class="settings-section-title"><i class="ti ti-trash" aria-hidden="true"></i>Reset</div>
       <div class="settings-row">
         <div>
           <div class="settings-row-label">Reset today's tracker</div>
@@ -1767,7 +1778,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     </div>
 
     <div class="settings-section">
-      <div class="settings-section-title">About</div>
+      <div class="settings-section-title"><i class="ti ti-info-circle" aria-hidden="true"></i>About</div>
       <div class="settings-row">
         <div class="settings-row-label">Protocol version</div>
         <div style="font-size:12px;color:var(--t3)">v4.1 · 74kg · Singapore</div>
@@ -2402,6 +2413,7 @@ function setProfile(field,value){
   try{ localStorage.setItem('profile',JSON.stringify(profile)); }catch(e){}
   applyWeight(bodyWeight);          // targets recompute from the new profile
   renderProfileNote();
+  renderSettingsProfile();
   renderPlanRows();
   save();
 }
@@ -2432,6 +2444,28 @@ function setWeightInput(v){
   if(!(n>=40&&n<=150)){ renderPlanRows(); return; }
   applyWeight(Math.round(n*10)/10);
   renderPlanRows();
+}
+
+// Who the plan is for, at a glance. Falls back to a prompt when setup has not been run.
+function renderSettingsProfile(){
+  const el=document.getElementById('set-me');
+  if(!el) return;
+  if(!_profileComplete()){
+    el.innerHTML='<div class="set-me-av"><i class="ti ti-user" aria-hidden="true"></i></div>'+
+      '<div class="set-me-b"><div class="set-me-1">Finish your setup</div>'+
+      '<div class="set-me-2">Sex, age and height sharpen your calorie target.</div></div>'+
+      '<button class="set-me-cta" onclick="startOnboarding()">Set up</button>';
+    return;
+  }
+  const r=_weeklyRateKg(bodyWeight);
+  const goalWord={bulk:'Bulking',cut:'Cutting',maintain:'Maintaining'}[profile.goal||'bulk'];
+  el.innerHTML='<div class="set-me-av"><i class="ti ti-user" aria-hidden="true"></i></div>'+
+    '<div class="set-me-b">'+
+      '<div class="set-me-1">'+bodyWeight+' kg · '+profile.heightCm+' cm</div>'+
+      '<div class="set-me-2">'+(profile.sex==='male'?'Male':'Female')+' · '+profile.age+' years · '+
+        goalWord+(r?' at '+(r>0?'+':'')+r.toFixed(2)+' kg/wk':'')+'</div>'+
+    '</div>'+
+    '<button class="set-me-cta" onclick="startOnboarding()">Edit</button>';
 }
 
 function renderProfileNote(){
@@ -7026,7 +7060,7 @@ function updateStreakMilestoneHint(){
 
 // ── SETTINGS MODAL ──
 function openSettings(){
-  setTimeout(()=>{ try{ renderProfileNote(); }catch(e){} },0);
+  setTimeout(()=>{ try{ renderProfileNote(); renderSettingsProfile(); }catch(e){} },0);
   const sz=new Blob([localStorage.getItem('protocol_v2')||'']).size;
   const el=document.getElementById('settings-data-size');
   if(el) el.textContent=sz>1024?Math.round(sz/1024)+'KB':sz+'B';
