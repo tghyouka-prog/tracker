@@ -1098,8 +1098,8 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .streak-milestone-hint i{font-size:13px;flex-shrink:0}
 
 /* Settings modal */
-.settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:250;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s}
-.settings-overlay.open{opacity:1;pointer-events:all}
+.settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:250;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;visibility:hidden;transition:opacity .18s,visibility 0s linear .18s}
+.settings-overlay.open{visibility:visible;transition:opacity .18s,visibility 0s;opacity:1;pointer-events:all}
 .settings-modal{background:var(--bg);border:1px solid var(--b2);border-radius:var(--r-xl) var(--r-xl) 0 0;padding:1.5rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom,0px));width:100%;max-width:480px;transform:translateY(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);max-height:85vh;overflow-y:auto}
 .settings-overlay.open .settings-modal{transform:translateY(0)}
 .settings-section{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem 1rem;margin-bottom:.625rem}
@@ -1212,8 +1212,8 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .tl-empty-sub{font-size:12px;color:var(--t3);line-height:1.5}
 
 /* ═══ EXPORT INFOGRAPHIC ═══ */
-.export-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;padding:1rem}
-.export-overlay.open{opacity:1;pointer-events:all}
+.export-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;visibility:hidden;transition:opacity .2s,visibility 0s linear .2s;padding:1rem}
+.export-overlay.open{opacity:1;pointer-events:all;visibility:visible;transition:opacity .2s,visibility 0s}
 .export-modal{background:var(--s1);border:1px solid var(--b2);border-radius:var(--r-xl);padding:1.5rem;width:100%;max-width:440px;transform:scale(.9);transition:transform .22s cubic-bezier(.34,1.56,.64,1)}
 .export-overlay.open .export-modal{transform:scale(1)}
 .export-modal-title{font-size:15px;font-weight:700;color:var(--t1);margin-bottom:.25rem;display:flex;align-items:center;gap:8px}
@@ -2345,6 +2345,8 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 // ── TAB NAV ──
 function go(id){
   const ids=['nutrition','training','insights'];
+  // A page that does not exist would otherwise hide all of them and leave a blank screen.
+  if(!document.getElementById('page-'+id)) return;
   if(id==='insights'){
     setTimeout(()=>{renderProgress();_playTabEntrance('page-insights',null);},50);
   }
@@ -8020,7 +8022,10 @@ function renderProgress(){
     sinceEl.textContent='Since '+new Date(first.date+'T12:00:00Z')
       .toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'});
   }
-  const exportBtn=document.querySelector('[onclick="downloadInfographic()"]');
+  // By id. The attribute selector matched the export modal's own Save button first — the one
+  // inside a closed overlay — and writing pointer-events onto it made it tappable through the
+  // page.
+  const exportBtn=document.getElementById('prog-export-btn');
   if(exportBtn){
     const empty=journeyLog.length===0;
     exportBtn.disabled=empty;
@@ -8515,7 +8520,9 @@ setInterval(updateContextHint,60000);
 
 // ── 3. SWIPE BETWEEN TABS ──
 (function(){
-  const pageOrder=['tracker','nutrition','training','insights'];
+  // Only the pages that exist. 'tracker' was still listed after its page was deleted, so a
+  // right-swipe from Home ran go('tracker'), which matched nothing and hid every page.
+  const pageOrder=['nutrition','training','insights'];
   let touchStartX=0, touchStartY=0, touchStartTime=0;
   let currentTab='tracker';
 
@@ -8538,7 +8545,9 @@ setInterval(updateContextHint,60000);
     // (it has its own left/right swipe = skip/complete — letting both fire on one
     // gesture was switching tabs AND advancing the card at the same time).
     const target=e.target;
-    if(target.closest('.bottom-sheet,.action-sheet,.supp-timing-table,.focus-hero')) return;
+    // Anything with its own horizontal gesture keeps it. The card deck is a scroll-snap
+    // strip, so a swipe there is meant to move the deck, not the tab.
+    if(target.closest('.card-deck,.bottom-sheet,.supp-timing-table,.ex-pick-list,.custom-modal,.export-modal')) return;
     // Find current tab
     const cur=pageOrder.findIndex(p=>document.getElementById('page-'+p)?.style.display==='block'||document.getElementById('page-'+p)?.classList.contains('active')&&document.getElementById('page-'+p)?.style.display!=='none');
     if(cur<0) return;
@@ -8716,7 +8725,7 @@ try{
 
   <div style="display:flex;align-items:center;gap:.75rem;margin-top:1rem">
     <div class="page-note" id="prog-since">Starting out</div>
-    <button class="action-btn" onclick="downloadInfographic()" style="margin-left:auto;font-size:12px;padding:6px 12px"><i class="ti ti-download" style="font-size:12px"></i>Export</button>
+    <button class="action-btn" id="prog-export-btn" onclick="downloadInfographic()" style="margin-left:auto;font-size:12px;padding:6px 12px"><i class="ti ti-download" style="font-size:12px"></i>Export</button>
   </div>
 
   <div style="height:80px"></div>
