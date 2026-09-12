@@ -797,11 +797,24 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .hs-dot.na{background:var(--s4,rgba(255,255,255,.18))}
 .hs-advice{display:flex;align-items:flex-start;gap:7px;margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--b1);font-size:11.5px;line-height:1.5;color:var(--t2)}
 .hs-advice i{font-size:13px;color:var(--t3);flex-shrink:0;margin-top:1px}
-.hs-row{display:flex;align-items:center;gap:.5rem;font-size:12px}
-.hs-name{flex:1;color:var(--t2)}
-.hs-val{font-weight:700;color:var(--t1);font-variant-numeric:tabular-nums}
-.hs-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.hs-dot.ok{background:var(--green)}.hs-dot.mid{background:var(--amber)}.hs-dot.bad{background:var(--red)}
+.hs-row{font-size:12px}
+.hs-row+.hs-row{margin-top:.75rem}
+.hs-rtop{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;margin-bottom:5px}
+.hs-name{color:var(--t2)}
+.hs-val{font-weight:700;color:var(--t1);font-variant-numeric:tabular-nums;flex-shrink:0}
+.hs-bar{height:6px;border-radius:3px;background:var(--s3);overflow:hidden}
+.hs-bar span{display:block;height:100%;border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.hs-bar span.ok{background:var(--green)}
+.hs-bar span.mid{background:var(--amber)}
+.hs-bar span.bad{background:var(--red)}
+.hs-bar span.na{background:transparent}
+.hist-toggle{display:flex;align-items:center;gap:.5rem;width:100%;margin-top:1rem;padding:11px 14px;border-radius:var(--r-md);border:1px solid var(--b1);background:var(--s1);color:var(--t2);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.hist-toggle .ht-l{flex:1;text-align:left}
+.hist-toggle .ht-n{font-size:11px;font-weight:700;color:var(--t3);background:var(--s3);border-radius:10px;padding:1px 7px}
+.hist-toggle i{font-size:14px;color:var(--t3);transition:transform .2s}
+.hist-toggle.open i{transform:rotate(180deg)}
+#sess-history-list[hidden]{display:none}
+#sess-history-list{margin-top:.625rem}
 /* The settings + camera buttons are position:absolute at top-right with z-index 150, so a
    right-aligned streak pill rendered underneath them and was invisible. Reserve their width. */
 .fuel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;padding:.5rem 0 0;margin-bottom:13px}
@@ -2223,8 +2236,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
   <div id="stall-flag"></div>
 
   <!-- ── Recent sessions — hairline record list ── -->
-  <div class="sec-label" id="train-hist-label" style="display:none">Recent sessions</div>
-  <div id="sess-history-list"></div>
 
 
   <!-- ── SESSION LOGGER (collapsed by default, revealed by the CTA above) ── -->
@@ -2311,6 +2322,13 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     </div>
 
   </div>
+
+  <!-- Past sessions live below the logger and start collapsed: their one job the rest of the
+       page cannot do is letting you edit or delete an entry you got wrong. -->
+  <button class="hist-toggle" id="hist-toggle" onclick="toggleSessHistory()" aria-expanded="false" aria-controls="sess-history-list" style="display:none">
+    <span class="ht-l">Past sessions</span><span class="ht-n" id="hist-count"></span><i class="ti ti-chevron-down" aria-hidden="true"></i>
+  </button>
+  <div id="sess-history-list" hidden></div>
 
   <!-- Shift-timing reference. Lives inside Train so it renders on one page only — it was
        previously a body-level sibling and leaked onto every tab. -->
@@ -3138,11 +3156,17 @@ function renderHealthScore(){
         '<span class="hs-num">'+score+'<small>/10</small></span>'+
       '</div>'+
     '</div>'+
-    '<div class="hs-rows">'+rows.map(r=>'<div class="hs-row">'+
-      '<span class="hs-name">'+r.lbl+'<small class="hs-sub">'+r.sub+'</small></span>'+
-      '<span class="hs-val">'+r.val+'</span>'+
-      '<span class="hs-dot '+(r.sc==null?'na':r.sc>=.66?'ok':r.sc>=.33?'mid':'bad')+'"></span>'+
-    '</div>').join('')+'</div>'+
+    // A bar rather than a dot: three colours told you which band you were in but never how far
+    // off you were, which is the only part you can act on.
+    '<div class="hs-rows">'+rows.map(r=>{
+      const cls=r.sc==null?'na':r.sc>=.66?'ok':r.sc>=.33?'mid':'bad';
+      const pct=r.sc==null?0:Math.round(Math.max(0,Math.min(1,r.sc))*100);
+      return '<div class="hs-row">'+
+        '<div class="hs-rtop"><span class="hs-name">'+r.lbl+'<small class="hs-sub">'+r.sub+'</small></span>'+
+        '<span class="hs-val">'+r.val+'</span></div>'+
+        '<div class="hs-bar"><span class="'+cls+'" style="width:'+pct+'%"></span></div>'+
+      '</div>';
+    }).join('')+'</div>'+
     '<div class="hs-advice"><i class="ti ti-bulb" aria-hidden="true"></i><span>'+_healthAdvice(P)+'</span></div>'+
   '</div>';
 }
@@ -6295,16 +6319,31 @@ function renderTrainHero(){
   </div>`;
 }
 
+// Collapsed by default — it is an archive, not something you read between sets.
+function toggleSessHistory(){
+  const list=document.getElementById('sess-history-list');
+  const toggle=document.getElementById('hist-toggle');
+  if(!list||!toggle) return;
+  const open=list.hidden;
+  list.hidden=!open;
+  toggle.setAttribute('aria-expanded',String(open));
+  toggle.classList.toggle('open',open);
+}
+
 function renderSessionHistory(){
   renderTrainHero();
   renderStallFlag();
   renderUnsavedFlag();
   _collapseTrainBanners();
   const list=document.getElementById('sess-history-list');
-  const label=document.getElementById('train-hist-label');
+  const toggle=document.getElementById('hist-toggle');
+  const count=document.getElementById('hist-count');
   if(!list) return;
-  if(!sessionLog.length){list.innerHTML='';if(label)label.style.display='none';return;}
-  if(label) label.style.display=sessionLog.length>1?'block':'none';
+  // The hero card already shows the newest session, so the list starts at index 1.
+  const n=Math.max(0,sessionLog.length-1);
+  if(toggle) toggle.style.display=n?'flex':'none';
+  if(count) count.textContent=n||'';
+  if(!sessionLog.length){list.innerHTML='';return;}
   // Show prior sessions (the most recent already lives in the hero card)
   const recent=sessionLog.slice(1,7);
   if(!recent.length){list.innerHTML='';return;}
