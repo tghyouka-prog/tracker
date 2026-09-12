@@ -793,6 +793,10 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .hs-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums}
 .hs-num small{font-size:9px;font-weight:600;color:var(--t3)}
 .hs-rows{margin-top:.625rem;display:flex;flex-direction:column;gap:5px}
+.hs-sub{display:block;font-size:10px;font-weight:500;color:var(--t3);margin-top:1px}
+.hs-dot.na{background:var(--s4,rgba(255,255,255,.18))}
+.hs-advice{display:flex;align-items:flex-start;gap:7px;margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--b1);font-size:11.5px;line-height:1.5;color:var(--t2)}
+.hs-advice i{font-size:13px;color:var(--t3);flex-shrink:0;margin-top:1px}
 .hs-row{display:flex;align-items:center;gap:.5rem;font-size:12px}
 .hs-name{flex:1;color:var(--t2)}
 .hs-val{font-weight:700;color:var(--t1);font-variant-numeric:tabular-nums}
@@ -3042,10 +3046,19 @@ const macros={prot:0,hydro:0,kcal:0,carb:0};
 // Water increment for the -/+ buttons. Cal AI makes this user-settable behind a gear; this
 // button cycles it instead, covering the same three amounts the old strip hardcoded.
 let _mealMicros=null;   // micronutrients from the last AI parse, pending attachment to a meal
-// Health Score reference intakes (adult daily): fibre 30g is the target to REACH; added sugar
-// and sodium are ceilings to stay under. Sourced to the same guidance the app's macro maths
-// uses — deliberately simple, and only shown once at least one meal carries the data.
-const MICRO_REF={fiber:30, sugar:50, sodium:2300};
+// Health Score reference intakes. Fibre and added sugar are scored per 1000 kcal so the number
+// reflects what you ate rather than how far through the day you are — the previous version
+// scored fibre against a whole-day 30g target, which marked a single breakfast "Poor", while
+// sugar and sodium sat at full marks every morning because a ceiling is easy to be under when
+// you have barely eaten.
+//   fibre     14 g / 1000 kcal   US Dietary Guidelines / IOM Adequate Intake
+//   sugar     25 g / 1000 kcal   WHO free sugars < 10% of energy
+//   sodium    < 2000 mg/day      WHO
+//   potassium >= 3510 mg/day     WHO
+// Sodium and potassium are scored together as the molar ratio WHO puts at about 1:1 — it is the
+// lever with the evidence behind it, and raising potassium is far easier than cutting salt.
+const MICRO_REF={fiberPer1k:14, sugarPer1k:25, sodium:2000, potassium:3510};
+const MM_NA=23, MM_K=39.1;          // g/mol, for the molar ratio
 let waterStep=250;
 try{ waterStep=parseInt(localStorage.getItem('waterStep'),10)||250; }catch(e){}
 function cycleWaterStep(){
@@ -3053,49 +3066,85 @@ function cycleWaterStep(){
   try{ localStorage.setItem('waterStep',waterStep); }catch(e){}
   renderWaterCard();
 }
+
+// 0-1, where a ceiling gives full marks up to half of it and ramps down over the top half.
+function _ceilScore(val,ceil){ return Math.max(0,Math.min(1, 1-Math.max(0,(val/ceil)-0.5)/0.5)); }
+
+function _healthParts(){
+  const kcal=macros.kcal||0;
+  const per1k = kcal>0 ? 1000/kcal : 0;
+  const fibreD = macros.fiber*per1k;
+  const sugarD = macros.sugar*per1k;
+  const na=macros.sodium||0, k=macros.potassium||0;
+  // Potassium only started being captured recently, so a day of older meals has sodium and no
+  // potassium. Scoring the ratio then would read as catastrophic when it is simply unknown —
+  // fall back to sodium against a ceiling prorated by how much of the calorie budget is in.
+  const haveK = k>0;
+  const ratio = haveK ? (na/MM_NA)/(k/MM_K) : null;
+  const eaten = TARGETS.kcal>0 ? Math.max(0.15,Math.min(1,kcal/TARGETS.kcal)) : 1;
+  return {
+    kcal, per1k, fibreD, sugarD, na, k, haveK, ratio,
+    fibre: kcal>0 ? Math.max(0,Math.min(1, fibreD/MICRO_REF.fiberPer1k)) : 0,
+    sugar: kcal>0 ? _ceilScore(sugarD, MICRO_REF.sugarPer1k) : 1,
+    // Ratio at or under 1 is the target; 2.5 and worse scores zero.
+    salt: haveK ? Math.max(0,Math.min(1, 1-Math.max(0,ratio-1)/1.5))
+                : _ceilScore(na, MICRO_REF.sodium*eaten)
+  };
+}
+
+// One line, naming the single biggest lever rather than listing everything at once.
+function _healthAdvice(P){
+  const worst=[['salt',P.salt],['fibre',P.fibre],['sugar',P.sugar]].sort((a,b)=>a[1]-b[1])[0];
+  if(worst[1]>=0.8) return 'Well balanced — nothing worth rebalancing today.';
+  if(worst[0]==='salt'){
+    if(!P.haveK) return 'Sodium is high for what you have eaten. Log meals with the AI to capture potassium — the ratio matters more than salt alone.';
+    return 'Sodium is running '+P.ratio.toFixed(1)+':1 against potassium (aim 1:1). Adding potassium is easier than cutting salt — a banana is ~420mg, a baked potato ~900mg, a bowl of spinach ~800mg.';
+  }
+  if(worst[0]==='fibre'){
+    const short=Math.max(0,Math.round((MICRO_REF.fiberPer1k-P.fibreD)*(P.kcal/1000)));
+    return 'Fibre is '+P.fibreD.toFixed(0)+'g per 1000 kcal against 14 — about '+short+'g short. Oats, beans, lentils or berries close it fastest.';
+  }
+  return 'Added sugar is '+P.sugarD.toFixed(0)+'g per 1000 kcal against 25. Swapping a sweetened drink usually covers the gap on its own.';
+}
+
 function renderHealthScore(){
   const el=document.getElementById('health-card');
   if(!el) return;
   // Only meaningful once a meal has actually carried micronutrients — otherwise a 10/10 would
   // just mean "nothing logged", which is the opposite of the truth.
-  if(viewDay || !macros.microMeals){
-    el.innerHTML='<div class="hs-card hs-empty">Health score needs a meal logged with the AI — it reads fibre, sugar and sodium.</div>';
+  if(viewDay || !macros.microMeals || !macros.kcal){
+    el.innerHTML='<div class="hs-card hs-empty">Health score needs a meal logged with the AI — it reads fibre, sugar, sodium and potassium.</div>';
     return;
   }
-  const rows=[
-    {k:'fiber',  lbl:'Fibre',  val:macros.fiber,  unit:'g',  ref:MICRO_REF.fiber,  higher:true},
-    {k:'sugar',  lbl:'Sugar',  val:macros.sugar,  unit:'g',  ref:MICRO_REF.sugar,  higher:false},
-    {k:'sodium', lbl:'Sodium', val:macros.sodium, unit:'mg', ref:MICRO_REF.sodium, higher:false}
-  ];
-  // Each row scores 0-1: fibre by how much of the target is met, sugar/sodium by how far under
-  // the ceiling you are. Averaged and put on Cal AI's 1-10 scale.
-  // Fibre scores by how much of the target is met. Sugar and sodium are ceilings, and being
-  // comfortably under one is simply good — so anything at or below half the ceiling scores
-  // full marks and the penalty only ramps over the top half. Scoring them linearly from zero
-  // marked a genuinely low-sugar day amber.
-  const parts=rows.map(r=>r.higher
-    ? Math.max(0,Math.min(1, r.val/r.ref))
-    : Math.max(0,Math.min(1, 1-Math.max(0,(r.val/r.ref)-0.5)/0.5)));
-  const score=Math.max(1,Math.round((parts.reduce((a,b)=>a+b,0)/parts.length)*10));
+  const P=_healthParts();
+  const score=Math.max(1,Math.round(((P.fibre+P.sugar+P.salt)/3)*10));
   const word=score>=8?'Great':score>=6?'Good':score>=4?'Fair':'Poor';
-  el.innerHTML=`<div class="hs-card">
-    <div class="hs-top">
-      <div><div class="hs-lbl">Health score</div><div class="hs-word">${word}</div></div>
-      <div class="hs-ring">
-        <svg viewBox="0 0 56 56" aria-hidden="true">
-          <circle class="mc-track" cx="28" cy="28" r="24"></circle>
-          <circle class="mc-fill" cx="28" cy="28" r="24" stroke-dasharray="${(2*Math.PI*24*score/10).toFixed(1)} ${(2*Math.PI*24).toFixed(1)}"></circle>
-        </svg>
-        <span class="hs-num">${score}<small>/10</small></span>
-      </div>
-    </div>
-    <div class="hs-rows">${rows.map((r,i)=>`<div class="hs-row">
-      <span class="hs-name">${r.lbl}</span>
-      <span class="hs-val">${Math.round(r.val).toLocaleString()}${r.unit}</span>
-      <span class="hs-dot ${parts[i]>=.66?'ok':parts[i]>=.33?'mid':'bad'}"></span>
-    </div>`).join('')}</div>
-  </div>`;
+  const rows=[
+    {lbl:'Fibre',     val:Math.round(macros.fiber)+'g',                       sc:P.fibre, sub:P.fibreD.toFixed(0)+' /1000kcal'},
+    {lbl:'Added sugar',val:Math.round(macros.sugar)+'g',                      sc:P.sugar, sub:P.sugarD.toFixed(0)+' /1000kcal'},
+    {lbl:'Sodium',    val:Math.round(P.na).toLocaleString()+'mg',             sc:P.salt,  sub:P.haveK?'ratio '+P.ratio.toFixed(1)+':1':'target under 2,000'},
+    {lbl:'Potassium', val:P.haveK?Math.round(P.k).toLocaleString()+'mg':'—',  sc:P.haveK?Math.max(0,Math.min(1,P.k/MICRO_REF.potassium)):null, sub:P.haveK?'target 3,510':'not captured yet'}
+  ];
+  el.innerHTML='<div class="hs-card">'+
+    '<div class="hs-top">'+
+      '<div><div class="hs-lbl">Health score</div><div class="hs-word">'+word+'</div></div>'+
+      '<div class="hs-ring">'+
+        '<svg viewBox="0 0 56 56" aria-hidden="true">'+
+          '<circle class="mc-track" cx="28" cy="28" r="24"></circle>'+
+          '<circle class="mc-fill" cx="28" cy="28" r="24" stroke-dasharray="'+(2*Math.PI*24*score/10).toFixed(1)+' '+(2*Math.PI*24).toFixed(1)+'"></circle>'+
+        '</svg>'+
+        '<span class="hs-num">'+score+'<small>/10</small></span>'+
+      '</div>'+
+    '</div>'+
+    '<div class="hs-rows">'+rows.map(r=>'<div class="hs-row">'+
+      '<span class="hs-name">'+r.lbl+'<small class="hs-sub">'+r.sub+'</small></span>'+
+      '<span class="hs-val">'+r.val+'</span>'+
+      '<span class="hs-dot '+(r.sc==null?'na':r.sc>=.66?'ok':r.sc>=.33?'mid':'bad')+'"></span>'+
+    '</div>').join('')+'</div>'+
+    '<div class="hs-advice"><i class="ti ti-bulb" aria-hidden="true"></i><span>'+_healthAdvice(P)+'</span></div>'+
+  '</div>';
 }
+
 
 function renderStepsCard(){
   const el=document.getElementById('steps-card');
@@ -3392,7 +3441,8 @@ function _aiScaled(){
     micros:_aiResult.micros ? {
       fiber:_aiResult.micros.fiber!=null?+(_aiResult.micros.fiber*s).toFixed(1):null,
       sugar:_aiResult.micros.sugar!=null?+(_aiResult.micros.sugar*s).toFixed(1):null,
-      sodium:_aiResult.micros.sodium!=null?Math.round(_aiResult.micros.sodium*s):null
+      sodium:_aiResult.micros.sodium!=null?Math.round(_aiResult.micros.sodium*s):null,
+      potassium:_aiResult.micros.potassium!=null?Math.round(_aiResult.micros.potassium*s):null
     } : null
   };
 }
@@ -3445,7 +3495,7 @@ function logAiResult(){
   if(!_aiResult) return;
   const v=_aiScaled();
   const meal={id:Date.now(), name:v.name, prot:v.prot, kcal:v.kcal, carb:v.carb};
-  if(v.micros && (v.micros.fiber!=null||v.micros.sugar!=null||v.micros.sodium!=null)) meal.micros=v.micros;
+  if(v.micros && (v.micros.fiber!=null||v.micros.sugar!=null||v.micros.sodium!=null||v.micros.potassium!=null)) meal.micros=v.micros;
   // The manual form puts what it logs into the library too. Without this, the AI path — the
   // one you'd use most — produced meals you could never log a second time. Deduped by name so
   // scanning the same food twice doesn't stack duplicates.
@@ -3526,7 +3576,7 @@ Food description: ${name}
 If this names a specific branded or packaged product (a company/brand name, a retail product line, a packaged snack) — use Google Search to find its actual nutrition label or product page and report those exact figures instead of estimating a generic version of the dish. Only fall back to estimating from typical prep when no specific product is named or no reliable source turns up.
 
 Respond with ONLY a single JSON object, no markdown, no backticks, no text before or after it:
-{"food":"<clean short dish name>","protein_g":<number>,"calories_kcal":<number>,"carbs_g":<number>,"fiber_g":<number>,"sugar_g":<number>,"sodium_mg":<number>,"confidence":"high|medium|low","note":"<one short sentence: key assumption, or the source if a specific product was found>"}
+{"food":"<clean short dish name>","protein_g":<number>,"calories_kcal":<number>,"carbs_g":<number>,"fiber_g":<number>,"sugar_g":<number>,"sodium_mg":<number>,"potassium_mg":<number>,"confidence":"high|medium|low","note":"<one short sentence: key assumption, or the source if a specific product was found>"}
 
 Rules:
 - Singapore hawker context if ambiguous (chicken rice = Hainanese, mee goreng = local style)
@@ -3606,9 +3656,10 @@ Rules:
     // Micronutrients have no form field — they ride along on the logged entry and feed the
     // Health Score. A model that omits them simply leaves the score without that day's data.
     _mealMicros={
-      fiber:  Number(parsed.fiber_g)   >=0 ? Number(parsed.fiber_g)   : null,
-      sugar:  Number(parsed.sugar_g)   >=0 ? Number(parsed.sugar_g)   : null,
-      sodium: Number(parsed.sodium_mg) >=0 ? Number(parsed.sodium_mg) : null
+      fiber:     Number(parsed.fiber_g)      >=0 ? Number(parsed.fiber_g)      : null,
+      sugar:     Number(parsed.sugar_g)      >=0 ? Number(parsed.sugar_g)      : null,
+      sodium:    Number(parsed.sodium_mg)    >=0 ? Number(parsed.sodium_mg)    : null,
+      potassium: Number(parsed.potassium_mg) >=0 ? Number(parsed.potassium_mg) : null
     };
     // Auto-fill name field if empty and AI returned a clean food name
     if(ne&&!ne.value&&parsed.food) ne.value=parsed.food;
@@ -3679,7 +3730,7 @@ function saveMealToLibrary(){
     return;
   }
   const meal={id:Date.now(),name,prot,kcal,carb};
-  if(_mealMicros && (_mealMicros.fiber!=null||_mealMicros.sugar!=null||_mealMicros.sodium!=null)){
+  if(_mealMicros && (_mealMicros.fiber!=null||_mealMicros.sugar!=null||_mealMicros.sodium!=null||_mealMicros.potassium!=null)){
     meal.micros={..._mealMicros};
     _mealMicros=null;
   }
@@ -3819,7 +3870,7 @@ function syncMacrosFromTimeline(){
     const mult=ticks[_k]?1:(halfTicks[_k]?0.5:0);
     if(mult&&item.hydro) hydro+=Math.round(item.hydro*mult);
   });
-  let carb=0, fiber=0, sugar=0, sodium=0, microMeals=0;
+  let carb=0, fiber=0, sugar=0, sodium=0, potassium=0, microMeals=0;
   mealLog.forEach(m=>{
     if(m.prot) prot+=m.prot;
     if(m.kcal) kcal+=m.kcal;
@@ -3829,9 +3880,10 @@ function syncMacrosFromTimeline(){
       if(m.micros.fiber!=null)  fiber  += m.micros.fiber;
       if(m.micros.sugar!=null)  sugar  += m.micros.sugar;
       if(m.micros.sodium!=null) sodium += m.micros.sodium;
+      if(m.micros.potassium!=null) potassium += m.micros.potassium;
     }
   });
-  macros.fiber=fiber; macros.sugar=sugar; macros.sodium=sodium; macros.microMeals=microMeals;
+  macros.fiber=fiber; macros.sugar=sugar; macros.sodium=sodium; macros.potassium=potassium; macros.microMeals=microMeals;
   // Preserve manual hydration additions on top of timeline hydro
   const manualHydro=history.hydro?history.hydro.reduce((a,b)=>a+b,0):0;
   macros.prot=prot;
@@ -5647,6 +5699,8 @@ function _liftRows(l){
     // Seed from whatever the lift already carried: a template's set count, or a prefilled
     // summary from last time.
     const n=Math.max(1, parseInt(l.sets)||parseInt(l._defaultSets)||1);
+    // Blank unless this lift genuinely carries numbers of its own (a restored draft). Nothing
+    // from last session reaches here any more — see _prefillLift.
     l.rows=Array.from({length:n},()=>({kg:l.weight||'', reps:l.reps||'', done:false}));
   }
   return l.rows;
@@ -5707,10 +5761,12 @@ function removeSetRow(i,ri){
 function _prefillLift(lift){
   const prev=lastLiftFor(lift.name);
   if(!prev) return lift;
-  if(!lift.weight&&prev.match.weight) lift.weight=prev.match.weight;
-  if(!lift.sets&&prev.match.sets)     lift.sets=prev.match.sets;
-  if(!lift.reps&&prev.match.reps)     lift.reps=prev.match.reps;
-  delete lift.rows;           // rebuild from the freshly prefilled summary
+  // Only the SET COUNT carries over, so the right number of rows appears. Last session's
+  // weight and reps stay in the Previous column and out of the inputs: a pre-filled box you
+  // forget to change records a lift you never did, and it silently feeds progression, PBs and
+  // the weekly set totals.
+  if(!lift.sets&&prev.match.sets) lift.sets=prev.match.sets;
+  delete lift.rows;
   _liftRows(lift);
   return lift;
 }
@@ -6160,6 +6216,19 @@ function saveSession(){
 }
 
 // Progress hero — most recent session as a FocusFlight-style record card (top set · volume · weekly count)
+// "Mon-Push" is the stored value, not something to show anyone. LIVE_SESSIONS covers the four
+// in rotation; anything legacy takes the first half of its own <option> text, so there is no
+// second table to keep in step.
+function _sessLabel(v){
+  if(!v) return 'Session';
+  const live=(typeof LIVE_SESSIONS!=='undefined') ? LIVE_SESSIONS.find(s=>s.v===v) : null;
+  if(live) return live.label;
+  const sel=document.getElementById('sess-type-select');
+  const opt=sel && [...sel.options].find(o=>o.value===v);
+  if(opt) return opt.textContent.split(' \u2014 ')[0].trim();
+  return v;
+}
+
 function renderTrainHero(){
   const host=document.getElementById('train-hero');
   if(!host) return;
@@ -6210,7 +6279,7 @@ function renderTrainHero(){
   if(prevSame){const tp=Math.max(0,...(prevSame.lifts||[]).map(l=>parseFloat(l.weight)||0));if(tp>0&&topSet>tp){pillL='PB';pillC='ac';}}
   host.innerHTML=`<div class="train-rec-card mo-rise-card">
     <div class="trc-top"><span class="trc-eyebrow">${eyebrow}</span><span class="trc-pill ${pillC}">${pillL}</span></div>
-    <div class="trc-type">${s.type||'Session'}</div>
+    <div class="trc-type">${_sessLabel(s.type)}</div>
     ${trendLine}
     <div class="trc-strip">
       <div class="trc-col"><div class="trc-val">${topSet||'—'}${topSet?'<span class="trc-u">kg</span>':''}</div><span class="trc-lbl">Top set</span></div>
@@ -6265,7 +6334,7 @@ function renderSessionHistory(){
     }).join('');
     const notes=s.notes?`<div style="font-size:11px;color:var(--t3);margin-top:4px;font-style:italic">${s.notes}</div>`:'';
     return `<div class="train-hist-row mo-rise">
-      <div class="thr-top"><span class="thr-type">${s.type||'Session'}<span class="thr-date">${label2}</span></span>${trend}</div>
+      <div class="thr-top"><span class="thr-type">${_sessLabel(s.type)}<span class="thr-date">${label2}</span></span>${trend}</div>
       ${lifts}${notes}
       <div class="thr-actions">
         <button class="thr-act" onclick="editSession(${i})" aria-label="Edit ${s.type||'session'} from ${label2}"><i class="ti ti-pencil" style="font-size:12px" aria-hidden="true"></i>Edit</button>
