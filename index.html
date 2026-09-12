@@ -795,8 +795,6 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .hs-rows{margin-top:.625rem;display:flex;flex-direction:column;gap:5px}
 .hs-sub{display:block;font-size:10px;font-weight:500;color:var(--t3);margin-top:1px}
 .hs-dot.na{background:var(--s4,rgba(255,255,255,.18))}
-.hs-advice{display:flex;align-items:flex-start;gap:7px;margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--b1);font-size:11.5px;line-height:1.5;color:var(--t2)}
-.hs-advice i{font-size:13px;color:var(--t3);flex-shrink:0;margin-top:1px}
 .hs-row{font-size:12px}
 .hs-row+.hs-row{margin-top:.75rem}
 .hs-rtop{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;margin-bottom:5px}
@@ -3056,7 +3054,12 @@ let _mealMicros=null;   // micronutrients from the last AI parse, pending attach
 // Sodium and potassium are scored together as the molar ratio WHO puts at about 1:1 — it is the
 // lever with the evidence behind it, and raising potassium is far easier than cutting salt.
 const MICRO_REF={fiberPer1k:14, sugarPer1k:25, sodium:2000, potassium:3510};
-const MM_NA=23, MM_K=39.1;          // g/mol, for the molar ratio
+// Potassium per unit sodium, BY MASS — the card prints milligrams, so the ratio beside them has
+// to be in milligrams too or it cannot be checked against them. WHO's own numbers give
+// 3510/2000 = 1.76, i.e. roughly 1:2. (The 1:1 figure quoted for this ratio elsewhere is molar;
+// sodium and potassium have different molar masses, so the two are not interchangeable.)
+const NAK_FULL=3510/2000;   // 1.76 — full marks at or above this
+const NAK_ZERO=0.68;        // scores nothing at or below this
 let waterStep=250;
 try{ waterStep=parseInt(localStorage.getItem('waterStep'),10)||250; }catch(e){}
 function cycleWaterStep(){
@@ -3078,32 +3081,19 @@ function _healthParts(){
   // potassium. Scoring the ratio then would read as catastrophic when it is simply unknown —
   // fall back to sodium against a ceiling prorated by how much of the calorie budget is in.
   const haveK = k>0;
-  const ratio = haveK ? (na/MM_NA)/(k/MM_K) : null;
+  // Potassium per unit sodium: bigger is better, and it reads as "1 : ratio".
+  const ratio = haveK && na>0 ? k/na : null;
   const eaten = TARGETS.kcal>0 ? Math.max(0.15,Math.min(1,kcal/TARGETS.kcal)) : 1;
   return {
     kcal, per1k, fibreD, sugarD, na, k, haveK, ratio,
     fibre: kcal>0 ? Math.max(0,Math.min(1, fibreD/MICRO_REF.fiberPer1k)) : 0,
     sugar: kcal>0 ? _ceilScore(sugarD, MICRO_REF.sugarPer1k) : 1,
     // Ratio at or under 1 is the target; 2.5 and worse scores zero.
-    salt: haveK ? Math.max(0,Math.min(1, 1-Math.max(0,ratio-1)/1.5))
+    salt: haveK ? (na>0 ? Math.max(0,Math.min(1,(ratio-NAK_ZERO)/(NAK_FULL-NAK_ZERO))) : 1)
                 : _ceilScore(na, MICRO_REF.sodium*eaten)
   };
 }
 
-// One line, naming the single biggest lever rather than listing everything at once.
-function _healthAdvice(P){
-  const worst=[['salt',P.salt],['fibre',P.fibre],['sugar',P.sugar]].sort((a,b)=>a[1]-b[1])[0];
-  if(worst[1]>=0.8) return 'Well balanced — nothing worth rebalancing today.';
-  if(worst[0]==='salt'){
-    if(!P.haveK) return 'Sodium is high for what you have eaten. Log meals with the AI to capture potassium — the ratio matters more than salt alone.';
-    return 'Sodium is running '+P.ratio.toFixed(1)+':1 against potassium (aim 1:1). Adding potassium is easier than cutting salt — a banana is ~420mg, a baked potato ~900mg, a bowl of spinach ~800mg.';
-  }
-  if(worst[0]==='fibre'){
-    const short=Math.max(0,Math.round((MICRO_REF.fiberPer1k-P.fibreD)*(P.kcal/1000)));
-    return 'Fibre is '+P.fibreD.toFixed(0)+'g per 1000 kcal against 14 — about '+short+'g short. Oats, beans, lentils or berries close it fastest.';
-  }
-  return 'Added sugar is '+P.sugarD.toFixed(0)+'g per 1000 kcal against 25. Swapping a sweetened drink usually covers the gap on its own.';
-}
 
 function renderHealthScore(){
   const el=document.getElementById('health-card');
@@ -3120,7 +3110,7 @@ function renderHealthScore(){
   const rows=[
     {lbl:'Fibre',     val:Math.round(macros.fiber)+'g',                       sc:P.fibre, sub:P.fibreD.toFixed(0)+' /1000kcal'},
     {lbl:'Added sugar',val:Math.round(macros.sugar)+'g',                      sc:P.sugar, sub:P.sugarD.toFixed(0)+' /1000kcal'},
-    {lbl:'Sodium',    val:Math.round(P.na).toLocaleString()+'mg',             sc:P.salt,  sub:P.haveK?'ratio '+P.ratio.toFixed(1)+':1':'target under 2,000'},
+    {lbl:'Sodium',    val:Math.round(P.na).toLocaleString()+'mg',             sc:P.salt,  sub:P.haveK?'1:'+P.ratio.toFixed(1)+' with potassium · aim 1:2':'target under 2,000'},
     {lbl:'Potassium', val:P.haveK?Math.round(P.k).toLocaleString()+'mg':'—',  sc:P.haveK?Math.max(0,Math.min(1,P.k/MICRO_REF.potassium)):null, sub:P.haveK?'target 3,510':'not captured yet'}
   ];
   el.innerHTML='<div class="hs-card">'+
@@ -3145,7 +3135,6 @@ function renderHealthScore(){
         '<div class="hs-bar"><span class="'+cls+'" style="width:'+pct+'%"></span></div>'+
       '</div>';
     }).join('')+'</div>'+
-    '<div class="hs-advice"><i class="ti ti-bulb" aria-hidden="true"></i><span>'+_healthAdvice(P)+'</span></div>'+
   '</div>';
 }
 
