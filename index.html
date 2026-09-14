@@ -793,34 +793,30 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .hs-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums}
 .hs-num small{font-size:9px;font-weight:600;color:var(--t3)}
 .hs-rows{margin-top:.625rem;display:flex;flex-direction:column;gap:5px}
-.hs-sub{display:block;font-size:10px;font-weight:500;color:var(--t3);margin-top:1px}
 .hs-dot.na{background:var(--s4,rgba(255,255,255,.18))}
 .hs-toggle{width:100%;border:none;background:none;padding:0;font-family:inherit;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:.75rem}
 .hs-tl{flex:1;min-width:0}
 .hs-chev{font-size:16px;color:var(--t3);transition:transform .2s;flex-shrink:0}
 .hs-toggle.open .hs-chev{transform:rotate(180deg)}
-.hs-rows{margin-top:1rem}
 .mn-head{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;margin-top:1.125rem;padding-top:.875rem;border-top:1px solid var(--b1);font-size:12px;font-weight:700;color:var(--t1)}
 .mn-head small{font-size:10px;font-weight:500;color:var(--t3)}
 .mn-list{margin-top:.625rem}
 .mn-row{display:grid;grid-template-columns:78px 1fr 52px 34px;align-items:center;gap:.5rem;padding:4px 0}
 .mn-l{font-size:11.5px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mn-bar{height:5px;border-radius:3px;background:var(--s3);overflow:hidden}
-.mn-bar span{display:block;height:100%;border-radius:3px;background:var(--focus-ac)}
+.mn-bar span{display:block;height:100%;border-radius:3px;background:var(--focus-ac);transition:width .4s cubic-bezier(.4,0,.2,1)}
+.mn-bar span.ok{background:var(--green)}
+.mn-bar span.mid{background:var(--amber)}
+.mn-bar span.bad{background:var(--red)}
+.mn-bar span.tracked{background:var(--focus-ac)}
+.mn-bar span.na{background:transparent}
+.mn-first{margin-top:1rem}
 .mn-v{font-size:11px;font-weight:700;color:var(--t1);text-align:right;font-variant-numeric:tabular-nums}
 .mn-p{font-size:10px;color:var(--t3);text-align:right;font-variant-numeric:tabular-nums}
 .mn-note{font-size:10.5px;color:var(--t3);line-height:1.45;margin-top:.75rem}
-.hs-row{font-size:12px}
-.hs-row+.hs-row{margin-top:.75rem}
-.hs-rtop{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;margin-bottom:5px}
-.hs-name{color:var(--t2)}
-.hs-val{font-weight:700;color:var(--t1);font-variant-numeric:tabular-nums;flex-shrink:0}
-.hs-bar{height:6px;border-radius:3px;background:var(--s3);overflow:hidden}
-.hs-bar span{display:block;height:100%;border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1)}
-.hs-bar span.ok{background:var(--green)}
-.hs-bar span.mid{background:var(--amber)}
-.hs-bar span.bad{background:var(--red)}
-.hs-bar span.na{background:transparent}
+.hs-row{display:flex;align-items:center;gap:.5rem;font-size:12px}
+.hs-name{flex:1;color:var(--t2)}
+.hs-val{font-weight:700;color:var(--t1);font-variant-numeric:tabular-nums}
 /* The settings + camera buttons are position:absolute at top-right with z-index 150, so a
    right-aligned streak pill rendered underneath them and was invisible. Reserve their width. */
 .fuel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;padding:.5rem 0 0;margin-bottom:13px}
@@ -3159,32 +3155,33 @@ function renderHealthScore(){
   const P=_healthParts();
   const score=Math.max(1,Math.round(((P.fibre+P.sugar+P.salt)/3)*10));
   const word=score>=8?'Great':score>=6?'Good':score>=4?'Fair':'Poor';
-  const rows=[
-    {lbl:'Fibre',      val:Math.round(macros.fiber)+'g',            sc:P.fibre, sub:P.fibreD.toFixed(0)+' /1000kcal'},
-    {lbl:'Added sugar',val:Math.round(macros.sugar)+'g',            sc:P.sugar, sub:P.sugarD.toFixed(0)+' /1000kcal'},
-    {lbl:'Sodium',     val:Math.round(P.na).toLocaleString()+'mg',  sc:P.salt,  sub:P.haveK?'1:'+P.ratio.toFixed(1)+' with potassium \u00b7 aim 1:2':'target under 2,000'},
-    {lbl:'Potassium',  val:P.haveK?Math.round(P.k).toLocaleString()+'mg':'\u2014', sc:P.haveK?Math.max(0,Math.min(1,P.k/MICRO_REF.potassium)):null, sub:P.haveK?'target 3,510':'not captured yet'}
-  ];
-  const bar=r=>{
-    const cls=r.sc==null?'na':r.sc>=.66?'ok':r.sc>=.33?'mid':'bad';
-    const pct=r.sc==null?0:Math.round(Math.max(0,Math.min(1,r.sc))*100);
-    return '<div class="hs-row">'+
-      '<div class="hs-rtop"><span class="hs-name">'+r.lbl+'<small class="hs-sub">'+r.sub+'</small></span>'+
-      '<span class="hs-val">'+r.val+'</span></div>'+
-      '<div class="hs-bar"><span class="'+cls+'" style="width:'+pct+'%"></span></div>'+
-    '</div>';
+
+  // label, bar fill 0-1, colour band, printed value, right-hand figure
+  const row=(lbl,fill,band,val,fig)=>{
+    const pct=fill==null?0:Math.round(Math.max(0,Math.min(1,fill))*100);
+    return '<div class="mn-row"><span class="mn-l">'+lbl+'</span>'+
+      '<div class="mn-bar"><span class="'+band+'" style="width:'+pct+'%"></span></div>'+
+      '<span class="mn-v">'+val+'</span>'+
+      '<span class="mn-p">'+fig+'</span></div>';
   };
-  // Tracked, not scored — see MICRO_TABLE. Anything the model did not return shows as a dash
-  // rather than a zero, because "not estimated" and "none in the food" are different facts.
+  const band=sc=>sc==null?'na':sc>=.66?'ok':sc>=.33?'mid':'bad';
+
+  const scored=
+    row('Fibre',       P.fibre, band(P.fibre), Math.round(macros.fiber)+'g', P.fibreD.toFixed(0)+'/1k')+
+    row('Added sugar', P.sugar, band(P.sugar), Math.round(macros.sugar)+'g', P.sugarD.toFixed(0)+'/1k')+
+    row('Sodium',      P.salt,  band(P.salt),  Math.round(P.na).toLocaleString()+'mg', P.haveK?'1:'+P.ratio.toFixed(1):'\u2014')+
+    row('Potassium',   P.haveK?Math.max(0,Math.min(1,P.k/MICRO_REF.potassium)):null, P.haveK?band(Math.min(1,P.k/MICRO_REF.potassium)):'na',
+        P.haveK?Math.round(P.k).toLocaleString()+'mg':'\u2014',
+        P.haveK?Math.round((P.k/MICRO_REF.potassium)*100)+'%':'');
+
+  // Tracked, not scored. A nutrient the model did not return shows a dash, not a zero — "not
+  // estimated" and "none in the food" are different facts.
   const micro=MICRO_TRACKED.map(([k,,lbl,unit,target])=>{
     const v=macros[k];
     const have=typeof v==='number'&&v>0;
-    const pct=have?Math.round(Math.min(100,(v/target)*100)):0;
-    const shown=have?(v>=100?Math.round(v):(Math.round(v*10)/10)):'\u2014';
-    return '<div class="mn-row"><span class="mn-l">'+lbl+'</span>'+
-      '<div class="mn-bar"><span style="width:'+pct+'%"></span></div>'+
-      '<span class="mn-v">'+shown+(have?unit:'')+'</span>'+
-      '<span class="mn-p">'+(have?pct+'%':'')+'</span></div>';
+    const frac=have?Math.min(1,v/target):null;
+    const shown=have?((v>=100?Math.round(v):Math.round(v*10)/10)+unit):'\u2014';
+    return row(lbl, frac, have?'tracked':'na', shown, have?Math.round((v/target)*100)+'%':'');
   }).join('');
 
   el.innerHTML='<div class="hs-card">'+
@@ -3200,7 +3197,7 @@ function renderHealthScore(){
       '<i class="ti ti-chevron-down hs-chev" aria-hidden="true"></i>'+
     '</button>'+
     (healthOpen
-      ? '<div class="hs-rows">'+rows.map(bar).join('')+'</div>'+
+      ? '<div class="mn-list mn-first">'+scored+'</div>'+
         '<div class="mn-head">Micronutrients<small>% of daily target</small></div>'+
         '<div class="mn-list">'+micro+'</div>'+
         '<div class="mn-note">Estimated from your description, not a food database \u2014 treat these as direction, not measurement.</div>'
@@ -3879,6 +3876,47 @@ function renderMealLibrary(){
     </div>`).join('')+'<div style="height:.25rem"></div>';
 }
 
+// The day the in-memory totals belong to. Seeded after load() rather than at parse time, because
+// biologicalToday() reads `shift`, which load() sets.
+let _activeDay=null;
+
+// Returns true if it actually rolled. Yesterday's totals are already persisted — _stampToday runs
+// on every save — so clearing here loses nothing.
+function _rolloverIfDayChanged(){
+  const now=biologicalToday();
+  if(_activeDay===null){ _activeDay=now; return false; }
+  if(now===_activeDay) return false;
+  _activeDay=now;
+  _clearDayState();
+  save();
+  _redrawDay();
+  showToast('New day \u2014 totals reset','action');
+  return true;
+}
+
+// Everything scoped to a single day. dayStreak is deliberately NOT touched: resetDay() zeroes it,
+// which would wipe a streak every midnight.
+function _clearDayState(){
+  mealLog=[];
+  macros.prot=0; macros.kcal=0; macros.carb=0; macros.hydro=0;
+  macros.microMeals=0;
+  try{ MICRO_KEYS.forEach(k=>{ macros[k]=0; }); }catch(e){}
+  if(typeof history==='object'&&history){ history.prot=[]; history.hydro=[]; history.kcal=[]; history.carb=[]; }
+  syncMacrosFromTimeline();
+}
+
+function _redrawDay(){
+  ['prot','hydro','kcal','carb'].forEach(t=>{ try{ updateMacroUI(t); }catch(e){} });
+  ['renderCalHero','renderMacroRow','renderMealLog','renderHealthScore','renderWaterCard','renderDayStrip','renderDayBanner']
+    .forEach(fn=>{ try{ window[fn] && window[fn](); }catch(e){} });
+}
+
+// Coming back to the app is the moment that matters — a phone spends the night with it hidden.
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) _rolloverIfDayChanged(); });
+window.addEventListener('focus',()=>{ _rolloverIfDayChanged(); });
+// And a slow poll, for a session that is simply left open across midnight.
+setInterval(_rolloverIfDayChanged, 60000);
+
 // Shown only when the app's logging day and the wall calendar disagree, which on this app means
 // exactly one thing: a night shift is still selected and it is before noon.
 function renderDayBanner(){
@@ -3899,19 +3937,10 @@ function renderDayBanner(){
 // alone deliberately: resetDay() zeroes it, which is why resetDay() is not used for this.
 function startNewDay(){
   setShift('off_post_ns2', false);
-  mealLog=[];
-  macros.prot=0; macros.kcal=0; macros.carb=0; macros.hydro=0;
-  if(typeof history==='object'&&history){ history.prot=[]; history.hydro=[]; history.kcal=[]; history.carb=[]; }
-  syncMacrosFromTimeline();
+  _clearDayState();
+  _activeDay=biologicalToday();   // claim it, or the watcher fires a second toast
   save();
-  ['prot','hydro','kcal','carb'].forEach(t=>{ try{ updateMacroUI(t); }catch(e){} });
-  try{ renderCalHero(); }catch(e){}
-  try{ renderMacroRow(); }catch(e){}
-  try{ renderMealLog(); }catch(e){}
-  try{ renderHealthScore(); }catch(e){}
-  try{ renderWaterCard(); }catch(e){}
-  try{ renderDayStrip(); }catch(e){}
-  renderDayBanner();
+  _redrawDay();
   showToast('Now logging today','action');
 }
 
@@ -8725,6 +8754,8 @@ setTimeout(()=>{renderWeightChart();},100);
 syncTrackerHydro();
 renderDateCtxButtons();
 setTimeout(applyBridgeState, 200);
+// After load() has set `shift`, so biologicalToday() is answering for the right shift.
+setTimeout(()=>{ _activeDay=biologicalToday(); }, 0);
 // Auto-roll the rotation forward for any days passed (cycle-day bookkeeping only — used by
 // Train's session suggestions. Shift itself is fully manual, see load()/setShift().)
 autoRollCycle();
