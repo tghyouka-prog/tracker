@@ -2351,7 +2351,7 @@ function go(id){
     setTimeout(()=>{renderProgress();_playTabEntrance('page-insights',null);},50);
   }
   // Render training check-in flag when Training tab is opened
-  if(id==='nutrition'){renderDayBanner();renderCalHero();renderMacroRow();renderMealLog();setTimeout(()=>_playTabEntrance('page-nutrition',null),50);}
+  if(id==='nutrition'){healthOpen=false;renderDayBanner();renderCalHero();renderMacroRow();renderMealLog();renderHealthScore();setTimeout(()=>_playTabEntrance('page-nutrition',null),50);}
   if(id==='training'){renderTrainingCheckinFlag();renderSessionHistory();openSessionLogger();setTimeout(()=>_playTabEntrance('page-training',null),50);}
   // Activate the correct nav button
   ids.forEach(navId=>{
@@ -3124,11 +3124,11 @@ function _healthParts(){
 // Collapsed by default. The score is the glanceable part; the breakdown is something you go
 // looking for, and leaving it open made this the tallest card in the deck — which stretches the
 // other two, since scroll-snap pages all take the height of the tallest.
+// Not persisted: opening it is a momentary look, and leaving Home closes it again. A sticky
+// open state left the tallest card in the deck expanded forever, which stretches the other two.
 let healthOpen=false;
-try{ healthOpen=localStorage.getItem('healthOpen')==='1'; }catch(e){}
 function toggleHealthCard(){
   healthOpen=!healthOpen;
-  try{ localStorage.setItem('healthOpen', healthOpen?'1':'0'); }catch(e){}
   renderHealthScore();
 }
 
