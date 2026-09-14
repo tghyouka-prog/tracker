@@ -7615,7 +7615,7 @@ function importData(){
     // Re-render
     renderMealLog();renderWeekStrip();
     renderSessionHistory();renderProgress();
-    renderWeightChart();renderFitbit();
+    renderWeightChart();
     renderRemovedItems();render();updateBar();
     showToast('Everything restored ✓','action');
     setTimeout(()=>toggleImportArea(),1500);
@@ -8548,7 +8548,6 @@ renderYesterday();
 renderRules();
 initGeminiKeyField();
 renderMealLog();
-renderFitbit();
 renderWeekStrip();
 renderSessionHistory();
 renderRemovedItems();
