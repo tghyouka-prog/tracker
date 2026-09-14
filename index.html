@@ -5889,13 +5889,25 @@ const DRAFT_KEY='op_session_draft';
 // rather than destroyed, so the draft is kept until it's saved or deliberately thrown away.
 let _draftTs=null; // when the pending draft was last written, for the banner's age line
 
+// Did the user actually enter anything for this lift? A per-set kg or reps value is the only
+// evidence that counts. NOT l.sets — that is prefilled from last session to lay out the rows —
+// and not the mere presence of a name, which every template exercise has. l.weight/l.reps are
+// checked too because they are what _syncLiftSummary writes, and because a draft saved by an
+// older build stored only that shape.
+function _liftHasEntry(l){
+  if(!l||!l.name) return false;
+  const has=v=>String(v==null?'':v).trim()!=='';
+  if(Array.isArray(l.rows) && l.rows.some(r=>r&&(has(r.kg)||has(r.reps)))) return true;
+  return has(l.weight)||has(l.reps);
+}
+
 function _saveDraft(){
   try{
     const sel=document.getElementById('sess-type-select');
     const type=sel?sel.value:'';
     const notes=document.getElementById('sess-notes')?.value||'';
     // nothing worth keeping — drop any stale draft rather than storing an empty shell
-    const hasContent=currentLifts.some(l=>l.name&&(l.weight||l.reps||l.sets||l.rpe));
+    const hasContent=currentLifts.some(_liftHasEntry);
     // A preselected session type is not work in progress — the select is populated from the
     // cycle day on every render, so keying off it stored an empty shell every time.
     if(!hasContent){ localStorage.removeItem(DRAFT_KEY); _draftTs=null; return; }
@@ -5914,8 +5926,10 @@ function _restoreDraft(){
     if(!raw) return false;
     const d=JSON.parse(raw);
     if(!d||!Array.isArray(d.lifts)) return false;
-    const hasContent=d.lifts.some(l=>l&&l.name&&(l.weight||l.reps||l.sets||l.rpe));
-    if(!hasContent) return false;   // nothing actually logged — don't restore or announce
+    const hasContent=d.lifts.some(_liftHasEntry);
+    // Nothing was actually entered. Drop it rather than leaving it to be re-evaluated on every
+    // launch — drafts written by the older, looser test are exactly this shape.
+    if(!hasContent){ localStorage.removeItem(DRAFT_KEY); _draftTs=null; return false; }
     _draftTs=d.ts||null;
     currentLifts=d.lifts;
     const sel=document.getElementById('sess-type-select');
@@ -5927,7 +5941,7 @@ function _restoreDraft(){
     const card=document.getElementById('sess-card-logger');
     if(card) card.style.display='block';
     // Say what came back and when, so it is obvious why the app reopened the logger.
-    const _n=d.lifts.filter(l=>l&&l.name&&(l.weight||l.reps||l.sets||l.rpe)).length;
+    const _n=d.lifts.filter(_liftHasEntry).length;
     const _when=_draftTs?new Date(_draftTs).toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short'}):'';
     setTimeout(()=>showToast('Unfinished workout restored — '+_n+' lift'+(_n===1?'':'s')+(_when?' from '+_when:'')+'. Save it or clear the rows.','action'),600);
     return true;
@@ -5940,7 +5954,7 @@ function _restoreDraft(){
 function renderUnsavedFlag(){
   const el=document.getElementById('unsaved-flag');
   if(!el) return;
-  const filled=currentLifts.filter(l=>l.name&&(l.weight||l.reps)).length;
+  const filled=currentLifts.filter(_liftHasEntry).length;
   const sel=document.getElementById('sess-type-select');
   if(!filled||!sel||!sel.value){ el.innerHTML=''; return; }
   // Age matters now that nothing expires — it's the difference between "finish this" and
