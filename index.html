@@ -490,14 +490,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .fb-row{display:flex;gap:.5rem;margin-top:.75rem;padding-top:.625rem;border-top:1px solid var(--b1)}
 .fb-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:.35rem;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-md);padding:.45rem .5rem;font-size:11.5px;font-weight:600;color:var(--t2);cursor:pointer;font-family:inherit}
 .fb-btn:active{opacity:.7}
-.fb-connect{margin-top:.75rem}
-.fb-connect-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:.4rem;background:var(--s2);border:1px solid var(--b1);color:var(--t2);border-radius:var(--r-md);padding:.55rem;font-size:12px;font-weight:650;cursor:pointer;font-family:inherit}
-.fb-connect-btn:active{opacity:.7}
-.fb-conn-row{display:flex;align-items:center;gap:.4rem;font-size:11.5px;color:var(--t2);flex-wrap:wrap}
-.fb-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex:none}
 .fb-conn-txt{flex:1;min-width:130px}
-.fb-mini{background:var(--s2);border:1px solid var(--b1);color:var(--t2);border-radius:6px;padding:.25rem .5rem;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
-.fb-mini.ghost{background:transparent;color:var(--t3)}
 
 /* ═══ UX IMPROVEMENTS ═══ */
 
@@ -1667,7 +1660,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .focus-card,.macro-card,.fuel-sec,.fuel-wt-card,.cs-card{
   border:none!important;
 }
-.reset-btn,.fb-btn,.fb-connect-btn,.fb-mini,.add-custom-btn,.mb,.wt-btn,.eod-btn,
+.reset-btn,.fb-btn,.add-custom-btn,.mb,.wt-btn,.eod-btn,
 .fuel-log-btn,.train-cta,.rt-btn,.rem-btn{
   border:none!important;border-radius:999px!important;
 }
@@ -1754,12 +1747,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     </div>
 
     <div class="settings-section">
-      <div class="settings-section-title"><i class="ti ti-refresh" aria-hidden="true"></i>Sync &amp; import</div>
-      <div class="fb-connect" id="fb-connect"></div>
-      <div class="fuel-tgt-strip" id="steps-mini" style="display:none">
-        <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="steps-mini-today">0</div><span class="fuel-tgt-lbl">Steps today</span></div>
-        <div class="fuel-tgt-col"><div class="fuel-tgt-val" id="steps-mini-avg">0</div><span class="fuel-tgt-lbl">7-day avg</span></div>
-      </div>
+      <div class="settings-section-title"><i class="ti ti-file-import" aria-hidden="true"></i>Import</div>
       <div class="fb-row">
         <button class="fb-btn" onclick="document.getElementById('fb-wt-in').click()"><i class="ti ti-scale"></i>Weight CSV</button>
         <button class="fb-btn" onclick="document.getElementById('fb-sl-in').click()"><i class="ti ti-moon"></i>Sleep JSON</button>
@@ -2193,12 +2181,10 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
   <div class="card-deck mo-rise" id="card-deck" onscroll="_syncDeckDots()">
     <div class="deck-page"><div class="macro-row" id="macro-row"></div></div>
     <div class="deck-page" id="health-card"></div>
-    <div class="deck-page" id="steps-card"></div>
   </div>
   <div class="deck-dots" id="deck-dots">
     <button class="on" onclick="goDeckPage(0)" aria-label="Macros"></button>
     <button onclick="goDeckPage(1)" aria-label="Health score"></button>
-    <button onclick="goDeckPage(2)" aria-label="Steps"></button>
   </div>
 
 
@@ -3206,38 +3192,6 @@ function renderHealthScore(){
 }
 
 
-function renderStepsCard(){
-  const el=document.getElementById('steps-card');
-  if(!el) return;
-  const key=viewDay||biologicalToday();
-  const row=(stepsHistory||[]).find(e=>e.date===key);
-  const v=row?row.v:null;
-  const goal=10000;
-  if(v==null){
-    el.innerHTML='<div class="hs-card hs-empty">Steps arrive once Google Health sync is connected.</div>';
-    return;
-  }
-  // 7-day average gives the single-day figure something to sit against, and fills the card.
-  const recent=recentDays(7).map(k=>(stepsHistory||[]).find(e=>e.date===k)).filter(Boolean);
-  const avg=recent.length?Math.round(recent.reduce((s,e)=>s+e.v,0)/recent.length):null;
-  const a=_ringArc(v,goal,24);
-  el.innerHTML=`<div class="hs-card">
-    <div class="hs-top">
-      <div><div class="hs-lbl">Steps today</div><div class="hs-word">${v.toLocaleString()}<small> / ${goal.toLocaleString()}</small></div></div>
-      <div class="hs-ring">
-        <svg viewBox="0 0 56 56" aria-hidden="true">
-          <circle class="mc-track" cx="28" cy="28" r="24"></circle>
-          <circle class="mc-fill" cx="28" cy="28" r="24" stroke-dasharray="${a.dash} ${a.circ}"${a.hidden?' style="display:none"':''}></circle>
-        </svg>
-        <i class="ti ti-shoe" aria-hidden="true"></i>
-      </div>
-    </div>
-    <div class="hs-rows">
-      <div class="hs-row"><span class="hs-name">7-day average</span><span class="hs-val">${avg!=null?avg.toLocaleString():'\u2014'}</span></div>
-      <div class="hs-row"><span class="hs-name">Days synced</span><span class="hs-val">${recent.length} of 7</span></div>
-    </div>
-  </div>`;
-}
 
 // Tapping a dot is the reliable way through the deck — swiping competes with the page.
 // Page positions in the deck's own scroll coordinates. offsetLeft is relative to the padded
@@ -4189,7 +4143,6 @@ function renderMacroRow(){
   renderWaterCard();
   renderPlanRows();
   renderHealthScore();
-  renderStepsCard();
   const el=document.getElementById('macro-row');
   if(!el) return;
   const R=20, C=2*Math.PI*R;
@@ -6475,7 +6428,6 @@ function save(){
       bodyWeight,
       checkins,dismissedInsights,appliedInsights,lastWeeklyShown,
       journeyLog,weightHistory,retroTicks,customItems,skippedToday,halfTicks,labelEdits,hiddenBuiltIn,insightsLastRead,_lastInsightCount,
-      rhrHistory,hrvHistory,stepsHistory,
     }));
     if(!_saveOk){ _saveOk=true; _renderSaveWarning(); }
   }catch(e){
@@ -6529,9 +6481,6 @@ function load(){
     if(d.lastWeeklyShown) lastWeeklyShown=d.lastWeeklyShown;
     if(d.journeyLog) journeyLog=d.journeyLog;
     if(d.weightHistory) weightHistory=d.weightHistory;
-    if(d.rhrHistory) rhrHistory=d.rhrHistory;
-    if(d.hrvHistory) hrvHistory=d.hrvHistory;
-    if(d.stepsHistory) stepsHistory=d.stepsHistory;
     if(d.retroTicks) Object.assign(retroTicks,d.retroTicks);
     if(d.insightsLastRead) insightsLastRead=d.insightsLastRead;
     if(d._lastInsightCount) _lastInsightCount=d._lastInsightCount;
@@ -6697,32 +6646,6 @@ function generateInsights(){
   const stats=analyzeRecent();
   const insights=[];
 
-  // ── HRV / RESTING-HR RECOVERY SIGNAL (from Fitbit sync) ──
-  if(hrvHistory.length>=5){
-    const hv=hrvHistory.map(e=>e.v), latest=hv[hv.length-1];
-    const prior=hv.slice(-8,-1), base=prior.reduce((a,b)=>a+b,0)/prior.length;
-    if(base&&latest<base*0.85){
-      insights.push({
-        id:'hrv-drop',type:'recovery',icon:'ti-activity-heartbeat',
-        title:'HRV below baseline',
-        body:`Overnight HRV is <strong>${Math.round(latest)}ms</strong> vs a ${Math.round(base)}ms baseline — a ${Math.round((1-latest/base)*100)}% drop. Suppressed HRV means your nervous system is under-recovered. Prioritise sleep and pull back training intensity today.`,
-        data:`Latest ${Math.round(latest)}ms · baseline ${Math.round(base)}ms`,
-        action:'recovery',actionLabel:'Skip next training session',actionFn:'applyRecoveryDay',
-      });
-    }
-  }
-  if(rhrHistory.length>=5){
-    const rv=rhrHistory.map(e=>e.v), latest=rv[rv.length-1];
-    const prior=rv.slice(-8,-1), base=prior.reduce((a,b)=>a+b,0)/prior.length;
-    if(base&&latest>=base+5){
-      insights.push({
-        id:'rhr-elevated',type:'warning',icon:'ti-heartbeat',
-        title:'Resting heart rate elevated',
-        body:`Resting HR is <strong>${latest}bpm</strong>, ${Math.round(latest-base)}bpm above your ${Math.round(base)}bpm baseline. A sustained jump often precedes illness or signals accumulated fatigue — treat today as a recovery-priority day.`,
-        data:`Latest ${latest}bpm · baseline ${Math.round(base)}bpm`,
-      });
-    }
-  }
 
   // ── RECOVERY FLAG (highest priority) ──
   if(stats.lowEnergyStreak>=3||stats.poorSleepStreak>=3){
@@ -7605,7 +7528,7 @@ function exportData(){
     checkins,dismissedInsights,appliedInsights,lastWeeklyShown,
     journeyLog,retroTicks,
     customItems,skippedToday,halfTicks,labelEdits,hiddenBuiltIn,
-    weightHistory,rhrHistory,hrvHistory,stepsHistory,insightsLastRead,_lastInsightCount,
+    weightHistory,insightsLastRead,_lastInsightCount,
   };
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json'});
@@ -7653,9 +7576,6 @@ function importData(){
     if(d.weekHistory) Object.assign(weekHistory,d.weekHistory);
     if(d.journeyLog) journeyLog=d.journeyLog;
     if(d.weightHistory) weightHistory=d.weightHistory;
-    if(d.rhrHistory) rhrHistory=d.rhrHistory;
-    if(d.hrvHistory) hrvHistory=d.hrvHistory;
-    if(d.stepsHistory) stepsHistory=d.stepsHistory;
     if(d.checkins) Object.assign(checkins,d.checkins);
     if(d.retroTicks) Object.assign(retroTicks,d.retroTicks);
     if(d.insightsLastRead) insightsLastRead=d.insightsLastRead;
@@ -8212,131 +8132,6 @@ function _fbSleep(files){
   });
 }
 
-// ── GOOGLE HEALTH LIVE SYNC (via Cloudflare Worker OAuth broker) ──
-// Legacy Fitbit Web API shuts down Sept 2026; data now comes from the Google Health API, which
-// needs a server-held OAuth secret. The Worker (gh-worker/worker.js) holds the secret + proxies
-// reads; the browser only ever holds a refresh token. Deploy the Worker, then paste its URL when
-// you tap Connect. One-time Google Cloud setup is in gh-worker/README.md.
-let rhrHistory=[];   // resting heart rate  [{date, v(bpm)}]
-let hrvHistory=[];   // overnight HRV rmssd [{date, v(ms)}]
-let stepsHistory=[]; // daily steps         [{date, v}]
-
-function _ghWorker(){ return (localStorage.getItem('ghWorker')||'').replace(/\/+$/,''); }
-
-function _fbSleepRating(mins){ return mins<240?1:mins<300?2:mins<390?3:mins<450?4:5; }
-function _mergeSeries(arr,date,v,cap){
-  const i=arr.findIndex(e=>e.date===date);
-  if(i>=0) arr[i].v=v; else arr.push({date,v});
-  arr.sort((a,b)=>a.date.localeCompare(b.date));
-  if(arr.length>cap) arr.splice(0,arr.length-cap);
-}
-// v4 parse helpers — exact value field names aren't fully documented, so pull by key-hint and
-// fall back to the first number, always skipping date/time fields.
-function _ghDate(dp){ const d=(dp.civilStartTime&&dp.civilStartTime.date)||(dp.startTime&&dp.startTime.date)||dp.date; if(!d||d.year==null) return null; return d.year+'-'+String(d.month).padStart(2,'0')+'-'+String(d.day).padStart(2,'0'); }
-const _GH_SKIP=new Set(['civilstarttime','civilendtime','starttime','endtime','date','time','year','month','day','hours','minutes','seconds','nanos','origindatatype','dataorigin']);
-function _ghNum(obj,hints){ let hit=null,any=null; (function walk(o){ if(o==null||typeof o!=='object') return; for(const k of Object.keys(o)){ const kl=k.toLowerCase(); if(_GH_SKIP.has(kl)) continue; const v=o[k]; if(typeof v==='number'||(typeof v==='string'&&v.trim()!==''&&!isNaN(v))){ const num=parseFloat(v); if(any==null) any=num; if(hit==null&&hints.some(h=>kl.includes(h))) hit=num; } else if(typeof v==='object') walk(v); } })(obj); return hit!=null?hit:any; }
-function _ghPoints(r){ return (r&&(r.rollupDataPoints||r.dataPoints))||[]; }
-
-function fitbitConnect(){
-  let w=_ghWorker();
-  if(!w){
-    w=(prompt('Paste your Cloudflare Worker URL (e.g. https://gh-sync.<you>.workers.dev):')||'').trim().replace(/\/+$/,'');
-    if(!w) return;
-    localStorage.setItem('ghWorker',w);
-  }
-  location.href=w+'/start';
-}
-// Called at init: the Worker redirects back to #gh_refresh=... (or #gh_error=...)
-function _fitbitRedirectCatch(){
-  const h=location.hash||'';
-  const m=h.match(/[#&]gh_refresh=([^&]+)/);
-  const err=h.match(/[#&]gh_error=([^&]+)/);
-  if(!m&&!err) return Promise.resolve(false);
-  try{ history.replaceState({},'',location.pathname); }catch(e){}
-  if(err){ showToast('Google auth failed: '+decodeURIComponent(err[1]),'action'); return Promise.resolve(true); }
-  localStorage.setItem('ghRefresh',decodeURIComponent(m[1]));
-  showToast('Google Health connected','action');
-  return fitbitSync().then(()=>true);
-}
-let _fbSyncing=false;
-async function fitbitSync(silent){
-  if(_fbSyncing) return;
-  const refresh=localStorage.getItem('ghRefresh'), w=_ghWorker();
-  if(!refresh||!w){ if(!silent) showToast('Connect Google Health first','action'); return; }
-  _fbSyncing=true;
-  let data;
-  try{
-    const r=await fetch(w+'/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({refresh})});
-    data=await r.json();
-  }catch(e){ _fbSyncing=false; if(!silent) showToast('Sync failed — check Worker URL','action'); return; }
-  if(!data||data.error){ _fbSyncing=false; if(!silent) showToast('Sync error: '+((data&&data.error)||'no data'),'action'); if(data&&/invalid_grant|refresh/.test(data.error)){ localStorage.removeItem('ghRefresh'); renderFitbit(); } return; }
-  let n=0;
-  // weight (kg)
-  _ghPoints(data.weight).forEach(dp=>{ const date=_ghDate(dp); const kg=_ghNum(dp.weight||dp,['kilogram','kg','mass','weight']); if(!date||kg==null) return;
-    const i=weightHistory.findIndex(x=>x.date===date); if(i>=0) weightHistory[i].kg=+kg.toFixed(1); else weightHistory.push({date,kg:+kg.toFixed(1)}); n++; });
-  weightHistory.sort((a,b)=>a.date.localeCompare(b.date)); weightHistory=weightHistory.slice(-90);
-  if(_ghPoints(data.weight).length&&weightHistory.length) applyWeight(weightHistory[weightHistory.length-1].kg,false);
-  // sleep (minutes asleep → 1–5)
-  _ghPoints(data.sleep).forEach(dp=>{ const date=_ghDate(dp); let mins=_ghNum(dp.sleep||dp,['minutesasleep','asleep','minutes','duration']); if(!date||mins==null) return;
-    if(mins>1440) mins=mins/60; // seconds → minutes guard
-    const rating=_fbSleepRating(mins);
-    if(!checkins[date]) checkins[date]={}; checkins[date].sleep=rating;
-    const i=sleepHistory.findIndex(h=>h.date===date); if(i>=0) sleepHistory[i].rating=rating; else sleepHistory.push({date,rating}); n++; });
-  sleepHistory.sort((a,b)=>a.date.localeCompare(b.date)); sleepHistory=sleepHistory.slice(-14);
-  // resting HR (bpm)
-  _ghPoints(data.rhr).forEach(dp=>{ const date=_ghDate(dp); const bpm=_ghNum(dp['daily-resting-heart-rate']||dp,['bpm','beats','resting','heart','rate']); if(!date||bpm==null) return; _mergeSeries(rhrHistory,date,Math.round(bpm),60); n++; });
-  // HRV (rmssd ms)
-  _ghPoints(data.hrv).forEach(dp=>{ const date=_ghDate(dp); const ms=_ghNum(dp['heart-rate-variability']||dp,['rmssd','millis','hrv','ms']); if(!date||ms==null) return; _mergeSeries(hrvHistory,date,+ms.toFixed(1),60); n++; });
-  // steps
-  _ghPoints(data.steps).forEach(dp=>{ const date=_ghDate(dp); const s=_ghNum(dp.steps||dp,['count','steps']); if(!date||s==null) return; _mergeSeries(stepsHistory,date,Math.round(s),60); });
-  localStorage.setItem('fitbitMeta',JSON.stringify({last:Date.now()}));
-  _fbSyncing=false;
-  save();
-  if(typeof renderWeightChart==='function') renderWeightChart();
-  if(typeof renderSleepHistory==='function') renderSleepHistory();
-  if(typeof renderProgress==='function') renderProgress();
-  renderFitbit();
-  if(!silent) showToast('Synced'+(n?' · '+n+' updates':' · up to date'),'action');
-}
-function fitbitDisconnect(){ localStorage.removeItem('ghRefresh'); localStorage.removeItem('fitbitMeta'); showToast('Google Health disconnected','action'); renderFitbit(); }
-function _fbAgo(ts){ const s=(Date.now()-ts)/1000; if(s<90) return 'just now'; if(s<3600) return Math.round(s/60)+'m ago'; if(s<86400) return Math.round(s/3600)+'h ago'; return Math.round(s/86400)+'d ago'; }
-function renderFitbit(){
-  const el=document.getElementById('fb-connect'); if(!el) return;
-  if(localStorage.getItem('ghRefresh')){
-    const meta=JSON.parse(localStorage.getItem('fitbitMeta')||'{}');
-    const last=meta.last?_fbAgo(meta.last):'not yet';
-    const steps=stepsHistory.length?stepsHistory[stepsHistory.length-1].v.toLocaleString()+' steps':'';
-    el.innerHTML=`<div class="fb-conn-row"><span class="fb-dot"></span><span class="fb-conn-txt">Google Health · synced ${last}${steps?' · '+steps:''}</span>`
-      +`<button class="fb-mini" onclick="fitbitSync()">Sync now</button><button class="fb-mini ghost" onclick="fitbitDisconnect()">Disconnect</button></div>`;
-  } else {
-    el.innerHTML=`<button class="fb-connect-btn" onclick="fitbitConnect()"><i class="ti ti-heart-rate-monitor"></i>Connect Google Health — auto-sync weight · sleep · HRV</button>`;
-  }
-  renderStepsMini();
-}
-function renderStepsMini(){
-  const el=document.getElementById('steps-mini');
-  if(!el||!stepsHistory.length){ if(el) el.style.display='none'; return; }
-  const latest=stepsHistory[stepsHistory.length-1];
-  const last7=stepsHistory.slice(-7);
-  const avg=Math.round(last7.reduce((a,e)=>a+e.v,0)/last7.length);
-  const t=document.getElementById('steps-mini-today'), a=document.getElementById('steps-mini-avg');
-  if(t) t.textContent=latest.v.toLocaleString();
-  if(a) a.textContent=avg.toLocaleString();
-  el.style.display='flex';
-}
-// Runnable self-check (call _fbSelfCheck() in console): rating boundaries, merge cap, and v4 parse.
-function _fbSelfCheck(){
-  console.assert(_fbSleepRating(239)===1&&_fbSleepRating(240)===2&&_fbSleepRating(389)===3&&_fbSleepRating(449)===4&&_fbSleepRating(450)===5,'sleep rating boundaries');
-  const a=[]; _mergeSeries(a,'2026-01-02',5,3); _mergeSeries(a,'2026-01-01',4,3); _mergeSeries(a,'2026-01-02',9,3);
-  console.assert(a.length===2&&a[0].date==='2026-01-01'&&a[1].v===9,'merge dedupe+sort');
-  _mergeSeries(a,'2026-01-03',1,2); console.assert(a.length===2&&a[0].date==='2026-01-02','merge cap');
-  const dp={civilStartTime:{date:{year:2026,month:2,day:26}},steps:{countSum:'3822'}};
-  console.assert(_ghDate(dp)==='2026-02-26','gh date parse');
-  console.assert(_ghNum(dp.steps,['count','steps'])===3822,'gh num hint');
-  console.assert(_ghNum({massKilograms:74.5},['kilogram','kg','mass'])===74.5,'gh num weight');
-  console.assert(_ghNum({civilStartTime:{date:{year:2026,month:2,day:1}},restingHeartRateBpm:58},['bpm','resting','heart'])===58,'gh num skips date');
-  return 'ok';
-}
 
 
 
@@ -8766,13 +8561,6 @@ render();
 updateBar();
 // Show weekly summary if it's been 7+ days
 setTimeout(()=>maybeShowWeeklySummary(),1500);
-// Google Health: catch Worker redirect (#gh_refresh=...), else auto-sync if connected & stale (>6h)
-_fitbitRedirectCatch().then(handled=>{
-  if(handled) return;
-  const meta=JSON.parse(localStorage.getItem('fitbitMeta')||'{}');
-  if(localStorage.getItem('ghRefresh')&&(!meta.last||Date.now()-meta.last>6*3600*1000)) fitbitSync(true);
-});
-
 // Always land on Overview regardless of stored state
 go('nutrition');
 updateAppBadge();
