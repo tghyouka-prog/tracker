@@ -859,6 +859,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .mm small{font-size:9.5px;font-weight:600;opacity:.7}
 .mm-prot{color:var(--macro-prot);background:color-mix(in srgb,var(--macro-prot) 13%,transparent)}
 .mm-kcal{color:var(--t2);background:var(--s3)}
+.mm-water{color:var(--macro-water)}
 .mm-carb{color:var(--macro-carb);background:color-mix(in srgb,var(--macro-carb) 14%,transparent)}
 .fuel-sec{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem 1.125rem;margin-bottom:.5rem}
 .fuel-sec-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.5rem}
@@ -3425,6 +3426,7 @@ function initGeminiKeyField(){
 
 // ── Analysed-result card, Cal AI's confirm step ────────────────────────────────────────────
 let _aiResult=null, _aiServings=1;
+let _mealWater=0;   // ml of drinkable fluid in the analysed meal, at one serving
 const _SERVING_STEPS=[0.25,0.5,0.75,1,1.25,1.5,2,2.5,3];
 
 // Typed servings — Cal AI lets you edit the number directly, not only step it.
@@ -3452,6 +3454,7 @@ function _aiScaled(){
     prot:Math.round(_aiResult.prot*s),
     kcal:Math.round(_aiResult.kcal*s),
     carb:Math.round(_aiResult.carb*s),
+    water:Math.round((_aiResult.water||0)*s),
     micros:_aiResult.micros ? (()=>{
       const out={};
       MICRO_TABLE.forEach(([k,,,,,dp])=>{
@@ -3511,6 +3514,7 @@ function logAiResult(){
   if(!_aiResult) return;
   const v=_aiScaled();
   const meal={id:Date.now(), name:v.name, prot:v.prot, kcal:v.kcal, carb:v.carb};
+  if(v.water>0) meal.water=v.water;
   if(v.micros && MICRO_KEYS.some(k=>v.micros[k]!=null)) meal.micros=v.micros;
   // The manual form puts what it logs into the library too. Without this, the AI path — the
   // one you'd use most — produced meals you could never log a second time. Deduped by name so
@@ -3519,7 +3523,7 @@ function logAiResult(){
     mealLibrary.push({id:meal.id, name:v.name, prot:v.prot, kcal:v.kcal, carb:v.carb});
   }
   logMeal(meal);
-  _aiResult=null; _aiServings=1; _mealMicros=null;
+  _aiResult=null; _aiServings=1; _mealMicros=null; _mealWater=0;
   renderAiResult();
   try{ closeMealLogger(); }catch(e){}
   save();
@@ -3592,9 +3596,11 @@ Food description: ${name}
 If this names a specific branded or packaged product (a company/brand name, a retail product line, a packaged snack) — use Google Search to find its actual nutrition label or product page and report those exact figures instead of estimating a generic version of the dish. Only fall back to estimating from typical prep when no specific product is named or no reliable source turns up.
 
 Respond with ONLY a single JSON object, no markdown, no backticks, no text before or after it:
-{"food":"<clean short dish name>","protein_g":<number>,"calories_kcal":<number>,"carbs_g":<number>,"fiber_g":<number>,"sugar_g":<number>,"sodium_mg":<number>,"potassium_mg":<number>,"calcium_mg":<number>,"iron_mg":<number>,"magnesium_mg":<number>,"zinc_mg":<number>,"vitamin_c_mg":<number>,"vitamin_d_ug":<number>,"vitamin_b12_ug":<number>,"folate_ug":<number>,"confidence":"high|medium|low","note":"<one short sentence: key assumption, or the source if a specific product was found>"}
+{"food":"<clean short dish name>","protein_g":<number>,"calories_kcal":<number>,"carbs_g":<number>,"fiber_g":<number>,"sugar_g":<number>,"sodium_mg":<number>,"potassium_mg":<number>,"water_ml":<number>,"calcium_mg":<number>,"iron_mg":<number>,"magnesium_mg":<number>,"zinc_mg":<number>,"vitamin_c_mg":<number>,"vitamin_d_ug":<number>,"vitamin_b12_ug":<number>,"folate_ug":<number>,"confidence":"high|medium|low","note":"<one short sentence: key assumption, or the source if a specific product was found>"}
 
 Rules:
+- water_ml is the DRINKABLE fluid only: the volume of a drink, or the broth/liquid of a
+  soup-style dish. Use 0 for solid food — do not estimate the water held inside solids.
 - Singapore hawker context if ambiguous (chicken rice = Hainanese, mee goreng = local style)
 - Match the described portion and cooking method
 - Confidence high = matched an official nutrition label or well-known dish standard prep, low = vague or unusual`;
@@ -3671,6 +3677,8 @@ Rules:
     if(ce&&parsed.carbs_g!=null) ce.value=parsed.carbs_g;
     // Micronutrients have no form field — they ride along on the logged entry and feed the
     // Health Score. A model that omits them simply leaves the score without that day's data.
+    const _w=Number(parsed.water_ml);
+    _mealWater = _w>0 ? Math.round(_w) : 0;
     _mealMicros={};
     MICRO_TABLE.forEach(([k,field])=>{
       const v=Number(parsed[field]);
@@ -3684,6 +3692,7 @@ Rules:
     _aiResult={
       name: parsed.food || (ne&&ne.value) || 'Meal',
       prot: Number(parsed.protein_g)||0,
+      water: _mealWater,
       kcal: Number(parsed.calories_kcal)||0,
       carb: Number(parsed.carbs_g)||0,
       micros: _mealMicros,
@@ -3928,7 +3937,8 @@ function renderMealLog(){
         <div class="ml-kcal"><i class="ti ti-flame" aria-hidden="true"></i>${(m.kcal||0).toLocaleString()} calories</div>
         <div class="meal-macros">${[
           m.prot?`<span class="mm mm-prot">${m.prot}g<small>protein</small></span>`:'',
-          m.carb?`<span class="mm mm-carb">${m.carb}g<small>carbs</small></span>`:''
+          m.carb?`<span class="mm mm-carb">${m.carb}g<small>carbs</small></span>`:'',
+          m.water?`<span class="mm mm-water">${m.water}<small>ml</small></span>`:''
         ].filter(Boolean).join('')}</div>
       </div>
       <button class="ml-del" onclick="removeLogEntry(${m.ts})" aria-label="Remove ${String(m.name||'').replace(/"/g,'')} from today's log"><i class="ti ti-x" aria-hidden="true"></i></button>
@@ -3953,12 +3963,13 @@ function syncMacrosFromTimeline(){
     const mult=ticks[_k]?1:(halfTicks[_k]?0.5:0);
     if(mult&&item.hydro) hydro+=Math.round(item.hydro*mult);
   });
-  let carb=0, microMeals=0;
+  let carb=0, microMeals=0, mealWater=0;
   const mic={}; MICRO_KEYS.forEach(k=>mic[k]=0);
   mealLog.forEach(m=>{
     if(m.prot) prot+=m.prot;
     if(m.kcal) kcal+=m.kcal;
     if(m.carb) carb+=m.carb;
+    if(m.water) mealWater+=m.water;
     if(m.micros){
       microMeals++;
       MICRO_KEYS.forEach(k=>{ if(m.micros[k]!=null) mic[k]+=m.micros[k]; });
@@ -3971,7 +3982,8 @@ function syncMacrosFromTimeline(){
   macros.prot=prot;
   macros.kcal=kcal;
   macros.carb=carb;
-  macros.hydro=hydro+manualHydro;
+  // Drinks you logged as meals count too — otherwise the same glass has to be entered twice.
+  macros.hydro=Math.max(0,hydro+manualHydro+mealWater);
   updateMacroUI('prot');
   updateMacroUI('kcal');
   updateMacroUI('carb');
