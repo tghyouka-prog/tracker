@@ -2159,6 +2159,10 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
   </div>
 </div>
 
+<!-- Confetti target. launchConfetti() bails immediately without this, which is how the
+     celebration on a successful log quietly stopped happening. -->
+<canvas id="confetti-canvas" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9999;display:none"></canvas>
+
 <div id="toast-container"></div>
 
 <!-- Weekly summary modal -->
@@ -3337,6 +3341,7 @@ async function openCameraView(){
 }
 
 function closeCameraView(){
+  _bcItem=null;
   const overlay=document.getElementById('camera-view-overlay');
   if(overlay) overlay.style.display = 'none';
   if(_cameraStream){ _cameraStream.getTracks().forEach(t=>t.stop()); _cameraStream = null; }
@@ -3348,7 +3353,115 @@ function flipCameraFacing(){
   openCameraView();
 }
 
-function captureCameraFrame(){
+// Decode whatever is in front of the lens. Null for "no barcode here" — including on browsers
+// without the API, which is the honest answer for them too.
+async function _readBarcode(video){
+  if(!('BarcodeDetector' in window)) return null;
+  try{
+    const det=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128']});
+    const found=await det.detect(video);
+    return (found && found.length) ? found[0].rawValue : null;
+  }catch(e){ return null; }
+}
+
+// Open Food Facts, per 100g/ml. Returns null on anything unusable so the caller falls back
+// rather than logging a half-empty product.
+async function _lookupBarcode(code){
+  try{
+    const url='https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(code)+
+      '.json?fields=product_name,brands,quantity,nutriments';
+    const ctl=new AbortController();
+    const timer=setTimeout(()=>ctl.abort(),6000);   // a scan that hangs is worse than one that fails
+    const r=await fetch(url,{signal:ctl.signal});
+    clearTimeout(timer);
+    if(!r.ok) return null;
+    const d=await r.json();
+    const pr=d&&d.product;
+    const n=pr&&pr.nutriments;
+    if(!pr||!n) return null;
+    const num=v=>{ const x=Number(v); return isFinite(x)&&x>=0 ? x : 0; };
+    const kcal=num(n['energy-kcal_100g']);
+    if(!(kcal>0)) return null;                      // no energy figure, nothing worth logging
+    const name=[pr.brands?String(pr.brands).split(',')[0].trim():'', pr.product_name||''].filter(Boolean).join(' ').trim();
+    return {
+      name: name||('Item '+code),
+      per100: true,
+      kcal, prot:num(n.proteins_100g), carb:num(n.carbohydrates_100g),
+      fiber:num(n.fiber_100g), sugar:num(n.sugars_100g),
+      sodium: n.sodium_100g!=null ? num(n.sodium_100g)*1000 : num(n.salt_100g)*400,
+      potassium:num(n.potassium_100g)
+    };
+  }catch(e){ return null; }
+}
+
+// Shutter: barcode first, photo second.
+async function captureCameraFrame(){
+  const video=document.getElementById('camera-live-video');
+  if(video && video.videoWidth){
+    const code=await _readBarcode(video);
+    if(code){
+      const hint=document.getElementById('camera-view-hint');
+      if(hint) hint.textContent='Barcode '+code+' — looking it up…';
+      const item=await _lookupBarcode(code);
+      if(item){ closeCameraView(); _openBarcodeResult(item, code); return; }
+      if(hint) hint.textContent='Not in the food database — taking a photo instead';
+    }
+  }
+  _capturePhotoFrame();
+}
+
+// A scanned product is per 100g, so the amount has to be asked for rather than assumed.
+let _bcItem=null;
+function _openBarcodeResult(item, code){
+  _bcItem=item;
+  openMealLogger();
+  setTimeout(()=>{
+    const box=document.getElementById('food-search');
+    if(box) box.value='';
+    const el=document.getElementById('ai-result-card');
+    if(!el) return;
+    el.hidden=false;
+    el.innerHTML='<div class="arc-card">'+
+      '<div class="arc-top"><span class="arc-name">'+String(item.name).replace(/</g,'&lt;')+'</span>'+
+      '<span class="arc-conf ok"><i class="ti ti-barcode" aria-hidden="true"></i>scanned</span></div>'+
+      '<div class="arc-serv"><span class="arc-serv-l">Grams eaten</span>'+
+        '<div class="arc-serv-r"><input class="arc-sinput" id="bc-grams" type="number" inputmode="numeric" '+
+        'min="1" max="2000" value="100" oninput="_renderBarcodeTotals()" aria-label="Grams eaten"></div></div>'+
+      '<div class="arc-cal-card"><i class="ti ti-flame" aria-hidden="true"></i>'+
+        '<div><div class="arc-cc-l">Calories</div><div class="arc-cc-v" id="bc-kcal">'+Math.round(item.kcal)+'</div></div></div>'+
+      '<div class="arc-mgrid">'+
+        '<div class="arc-mcard m-prot"><i class="ti ti-meat" aria-hidden="true"></i><div class="arc-mc-l">Protein</div><div class="arc-mc-v" id="bc-prot">'+Math.round(item.prot)+'g</div></div>'+
+        '<div class="arc-mcard m-carb"><i class="ti ti-bread" aria-hidden="true"></i><div class="arc-mc-l">Carbs</div><div class="arc-mc-v" id="bc-carb">'+Math.round(item.carb)+'g</div></div>'+
+      '</div>'+
+      '<div class="mn-note">Per 100g from Open Food Facts \u00b7 barcode '+code+'</div>'+
+      '<button class="arc-log" onclick="logBarcodeItem()">Done</button>'+
+    '</div>';
+  },300);
+}
+
+function _bcGrams(){ const v=parseFloat((document.getElementById('bc-grams')||{}).value); return v>0?v:100; }
+function _renderBarcodeTotals(){
+  if(!_bcItem) return;
+  const f=_bcGrams()/100;
+  const set=(id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+  set('bc-kcal', Math.round(_bcItem.kcal*f).toLocaleString());
+  set('bc-prot', Math.round(_bcItem.prot*f)+'g');
+  set('bc-carb', Math.round(_bcItem.carb*f)+'g');
+}
+function logBarcodeItem(){
+  if(!_bcItem) return;
+  const f=_bcGrams()/100;
+  logMeal({id:Date.now(), name:_bcItem.name, prot:Math.round(_bcItem.prot*f),
+    kcal:Math.round(_bcItem.kcal*f), carb:Math.round(_bcItem.carb*f),
+    micros:{fiber:+(_bcItem.fiber*f).toFixed(1), sugar:+(_bcItem.sugar*f).toFixed(1),
+            sodium:Math.round(_bcItem.sodium*f), potassium:Math.round(_bcItem.potassium*f)}});
+  _bcItem=null;
+  const el=document.getElementById('ai-result-card'); if(el){ el.hidden=true; el.innerHTML=''; }
+  save();
+  try{ closeMealLogger(); }catch(e){}
+}
+
+function _capturePhotoFrame(){
   const video=document.getElementById('camera-live-video');
   const canvas=document.getElementById('camera-capture-canvas');
   if(!video||!canvas||!video.videoWidth) return;
@@ -4723,34 +4836,6 @@ function getTimeline(s){
 let _customDraft={type:'action',tier:'default'};
 let _editingCustomIdx=-1;
 
-function openCustomItemModal(editIdx=-1){
-  _editingCustomIdx=editIdx;
-  const overlay=document.getElementById('custom-modal-overlay');
-  const title=document.getElementById('custom-modal-title');
-  const delBtn=document.getElementById('custom-del-btn');
-  if(editIdx>=0){
-    const item=(customItems[shift]||[])[editIdx];
-    if(!item) return;
-    title.textContent='Edit custom item';
-    document.getElementById('custom-name').value=item.label||'';
-    document.getElementById('custom-sub').value=item.sub||'';
-    document.getElementById('custom-time').value=item.t||'';
-    _customDraft={type:item.type||'action',tier:item.tier||'default'};
-    if(delBtn) delBtn.style.display='block';
-  } else {
-    title.textContent='Add custom item';
-    document.getElementById('custom-name').value='';
-    document.getElementById('custom-sub').value='';
-    document.getElementById('custom-time').value='';
-    _customDraft={type:'action',tier:'default'};
-    if(delBtn) delBtn.style.display='none';
-  }
-  document.querySelectorAll('#custom-type-seg .custom-seg-btn').forEach(b=>
-    b.classList.toggle('active',b.dataset.type===_customDraft.type));
-  document.querySelectorAll('#custom-tier-seg .custom-seg-btn').forEach(b=>
-    b.classList.toggle('active',b.dataset.tier===_customDraft.tier));
-  overlay.classList.add('show');
-}
 
 function closeCustomModal(e){
   if(e&&e.target!==document.getElementById('custom-modal-overlay')) return;
@@ -4815,13 +4900,6 @@ function skipFocusItem(){
   renderFocusHero();
 }
 
-function setTrackerView(v){
-  trackerView=v;
-  document.getElementById('vt-focus')?.classList.toggle('active',v==='focus');
-  document.getElementById('vt-full')?.classList.toggle('active',v==='full');
-  applyTrackerView();
-  if(navigator.vibrate) navigator.vibrate(4);
-}
 
 function applyTrackerView(){
   const focusHero=document.getElementById('focus-hero');
@@ -5734,24 +5812,6 @@ function updateSessType(){
   // whole last session sitting above them.
 }
 
-function showLastSessionRef(sessType){
-  const refEl=document.getElementById('last-sess-ref');
-  const content=document.getElementById('lsr-content');
-  if(!refEl||!content) return;
-  if(!sessType){refEl.style.display='none';return;}
-  const last=sessionLog.find(s=>s.type===sessType);
-  if(!last){refEl.style.display='none';return;}
-  const d=new Date(last.date);
-  const label=d.toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short'});
-  const isCardio=sessType==='Cardio';
-  content.innerHTML=`<div style="font-size:11px;color:var(--t3);margin-bottom:3px">${label}</div>`+
-    last.lifts.slice(0,5).map(l=>`
-      <div class="lsr-item">
-        <span class="lsr-name">${l.name}</span>
-        <span class="lsr-val">${l.weight?l.weight+(isCardio?'km':'kg'):''}${l.sets?' × '+l.sets:''}${l.reps?' × '+l.reps+(isCardio?' min':'r'):''}</span>
-      </div>`).join('');
-  refEl.style.display='block';
-}
 
 function removeLiftRow(i){
   currentLifts.splice(i,1);
@@ -5887,12 +5947,6 @@ function renderWorkoutStats(){
 
 // Marking an exercise complete — Hevy checks off each set; one row here is one exercise, so
 // the tick lives at that level.
-function toggleLiftDone(i){
-  if(!currentLifts[i]) return;
-  currentLifts[i]._done=!currentLifts[i]._done;
-  renderLiftRows();
-  if(currentLifts[i]._done){ try{ _autoRest(); if(navigator.vibrate) navigator.vibrate(10); }catch(e){} }
-}
 
 function renderLiftRows(){
   const el=document.getElementById('lift-rows');
@@ -6046,29 +6100,10 @@ function _prefillLift(lift){
 }
 
 // Weight stepper — ±2.5kg for lifts, ±0.1km for cardio. One tap instead of the keyboard.
-function stepLiftWeight(i,delta){
-  const l=currentLifts[i];
-  if(!l) return;
-  const cur=parseFloat(l.weight)||0;
-  const next=Math.max(0,Math.round((cur+delta)*100)/100);
-  l.weight=String(next);
-  renderLiftRows();
-  if(navigator.vibrate) navigator.vibrate(3);
-}
 
 // Sets/reps/RIR steppers — same one-tap pattern as weight, generalized since all three are
 // small-integer fields with a min/max clamp. Reps also auto-starts the rest timer, matching
 // what typing a rep count and tabbing away already does.
-function stepLiftField(i,field,delta,min,max){
-  const l=currentLifts[i];
-  if(!l) return;
-  const cur=parseInt(l[field],10)||0;
-  const next=Math.min(max,Math.max(min,cur+delta));
-  l[field]=String(next);
-  renderLiftRows();
-  if(field==='reps'&&next>0) _autoRest();
-  if(navigator.vibrate) navigator.vibrate(3);
-}
 
 // ── IN-PROGRESS SESSION DRAFT ──
 // currentLifts lived only in memory, so backgrounding the tab mid-workout (a message, a call,
@@ -7665,48 +7700,6 @@ function dateCtxDate(){
 
 function isRetroMode(){return dateCtx!=='today';}
 
-function setDateCtx(ctx){
-  dateCtx=ctx;
-  const date=dateCtxDate();
-
-  // Format date for display
-  const d=new Date(date);
-  const dateStr=d.toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short'});
-
-  // Update date buttons with formatted date
-  const labels={today:'Today',yesterday:'Yesterday',['2days']:'2 days ago'};
-  ['today','yesterday','2days'].forEach(k=>{
-    const el=document.getElementById('ctx-'+k);
-    if(el) el.classList.toggle('active',k===ctx);
-  });
-
-  // Show/hide retro banner
-  const banner=document.getElementById('retro-banner');
-  if(banner){
-    banner.classList.toggle('visible',isRetroMode());
-    const txt=document.getElementById('retro-banner-text');
-    if(txt) txt.textContent=isRetroMode()?`Logging for ${dateStr} — change shift below`:'';
-  }
-
-  // Swap ticks in/out for the selected date + current shift
-  if(isRetroMode()){
-    // Save current today's ticks before entering retro
-    if(!window._mainTicks) window._mainTicks={...ticks};
-    // Load retro ticks for this date + shift
-    if(!retroTicks[date]) retroTicks[date]={};
-    if(!retroTicks[date][shift]) retroTicks[date][shift]={};
-    ticks=retroTicks[date][shift];
-  } else {
-    // Restore today's ticks
-    if(window._mainTicks){
-      ticks=window._mainTicks;
-      window._mainTicks=null;
-    }
-  }
-  render();
-  updateBar();
-  save();
-}
 
 // Patch tlTick to write into the correct store
 const _origTlTick=window.tlTick;
@@ -8482,36 +8475,9 @@ function applyBridgeState(){
   postNs2Bridge=false;
 }
 
-function dismissBridge(){
-  const banner=document.getElementById('ns2-bridge-banner');
-  if(banner) banner.style.display='none';
-  postNs2Bridge=false;
-  // User says they're not actually post-shift — go to normal off-day
-  setShift('off', false);
-}
 
 // ── COMPLETION CELEBRATION ──
 let _celebrationFired=false;
-function fireCelebration(){
-  if(_celebrationFired) return;
-  _celebrationFired=true;
-  // Haptic burst
-  if(navigator.vibrate) navigator.vibrate([12,40,12,40,24]);
-  // Show toast
-  const toast=document.getElementById('celebrate-toast');
-  const sub=document.getElementById('celebrate-sub');
-  if(sub){
-    const streak=dayStreak;
-    sub.textContent=streak>0?`${streak}-day streak — keep it alive`:'Every essential, handled. Nothing left but rest.';
-  }
-  if(toast){
-    toast.className='celebrate-toast show';
-    setTimeout(()=>{toast.className='celebrate-toast hide';},2600);
-    setTimeout(()=>{toast.className='celebrate-toast';},3050);
-  }
-  // Confetti
-  launchConfetti();
-}
 
 // Particle count is a parameter now: a light burst for an ordinary log, the full one for
 // something genuinely worth marking.
@@ -8572,23 +8538,8 @@ function launchConfetti(count){
 }
 
 // Reset the celebration latch when score drops below 100
-function checkCelebrationReset(pct){
-  if(pct<100) _celebrationFired=false;
-}
 
 // ── MARK ALL REMAINING DONE ──
-function markDayComplete(){
-  const items=getTimeline(shift);if(!items) return;
-  // Only mark foundation and default items — optionals remain user choice
-  items.forEach((item,i)=>{
-    const tier=item.tier||'default';
-    if(tier!=='optional') ticks[tlKey(shift,i)]=true;
-  });
-  syncMacrosFromTimeline();render();updateBar();save();
-  showToast('All the essentials — done','action');
-  const btn=document.getElementById('eod-btn');
-  if(btn){btn.disabled=true;btn.innerHTML='<i class="ti ti-check" style="font-size:14px"></i> Core done';}
-}
 // ── SYNC INLINE HYDRATION ──
 function syncTrackerHydro(){
   const cur=macros.hydro||0,tgt=TARGETS.hydro||2000;
@@ -8703,9 +8654,6 @@ setInterval(updateContextHint,60000);
 })();
 
 // ── 4. BOTTOM SHEET — Reset confirmation ──
-function openResetSheet(){
-  document.getElementById('reset-sheet-overlay')?.classList.add('open');
-}
 function closeResetSheet(e){
   if(e&&e.target!==document.getElementById('reset-sheet-overlay')) return;
   document.getElementById('reset-sheet-overlay')?.classList.remove('open');
