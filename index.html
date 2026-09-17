@@ -740,6 +740,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .ch-val{font-size:40px;font-weight:800;letter-spacing:-.035em;line-height:1;color:var(--t1);font-variant-numeric:tabular-nums}
 .ch-carry{display:flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;color:var(--macro-carb);margin-top:5px}
 .ch-carry i{font-size:12px}
+.ch-carry.down{color:var(--macro-prot)}
 .ch-lbl{font-size:13px;font-weight:500;color:var(--t3);margin-top:.375rem}
 .ch-ring{position:relative;width:78px;height:78px;flex-shrink:0}
 .ch-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
@@ -3991,20 +3992,24 @@ function renderMealLibrary(){
 
 // The day the in-memory totals belong to. Seeded after load() rather than at parse time, because
 // biologicalToday() reads `shift`, which load() sets.
-// Calories owed from yesterday's shortfall, added to today's target only.
-let calCarry=0;
-const CARRY_CAP=500;      // most that can be pushed into a single day
-const CARRY_MIN=50;       // below this it is rounding, not a shortfall
+// A single day can never sit more than this far from the plan, however lopsided the week got —
+// a big deviation on Saturday would otherwise hand Sunday something absurd.
+const DAY_DELTA_MIN=-400, DAY_DELTA_MAX=500;
 
-// Today's calorie target including anything owed. TARGETS.kcal stays the plan — Settings, the
-// Coach and the weekly review all still measure against that, not against an adjusted number.
-function kcalTargetToday(){ return Math.round((TARGETS.kcal||0) + (calCarry||0)); }
-
-// Called with the day that is ENDING. Replaces any existing carry rather than adding to it.
-function _setCarryFrom(prevKcal, prevLogged){
-  if(!prevLogged || !(TARGETS.kcal>0)){ calCarry=0; return; }
-  const short=TARGETS.kcal-(prevKcal||0);
-  calCarry = short>=CARRY_MIN ? Math.min(CARRY_CAP, Math.round(short)) : 0;
+// Today's target is whatever is left in the week, spread over the days that remain. TARGETS.kcal
+// stays the PLAN — Settings, the Coach and the weekly card all still measure against that.
+function kcalTargetToday(){
+  const base=TARGETS.kcal||0;
+  if(!(base>0)) return 0;
+  const days=_weekDays(biologicalToday());   // Monday .. today
+  const elapsed=days.slice(0,-1);            // Monday .. yesterday
+  // An unlogged day counts as ON PLAN, not as zero. Treating missing data as a 2,900 deficit
+  // would balloon the rest of the week over a day you may well have eaten normally.
+  let eaten=0;
+  elapsed.forEach(k=>{ const kc=(weekHistory[k]||{}).kcal||0; eaten += kc>0?kc:base; });
+  const daysLeft=7-elapsed.length;           // includes today
+  const per=((7*base)-eaten)/Math.max(1,daysLeft);
+  return Math.round(Math.max(base+DAY_DELTA_MIN, Math.min(base+DAY_DELTA_MAX, per)));
 }
 
 let _activeDay=null;
@@ -4016,8 +4021,6 @@ function _rolloverIfDayChanged(){
   if(_activeDay===null){ _activeDay=now; return false; }
   if(now===_activeDay) return false;
   _activeDay=now;
-  // Before the totals are cleared — that is the day the shortfall belongs to.
-  _setCarryFrom(macros.kcal, mealLog.length>0);
   _clearDayState();
   save();
   _redrawDay();
@@ -4308,7 +4311,12 @@ function renderCalHero(){
     <div class="ch-left">
       <div class="ch-val">${isOver?('+'+over.toLocaleString()):Math.max(0,-over).toLocaleString()}</div>
       <div class="ch-lbl">${isOver?'calories over':'calories left'}</div>
-      ${(!viewDay&&calCarry>0)?`<div class="ch-carry"><i class="ti ti-arrow-back-up" aria-hidden="true"></i>+${calCarry.toLocaleString()} owed from yesterday</div>`:''}
+      ${(()=>{
+        if(viewDay) return '';
+        const d=tgt-Math.round(TARGETS.kcal||0);
+        if(Math.abs(d)<25) return '';
+        return `<div class="ch-carry ${d<0?'down':''}"><i class="ti ti-${d>0?'arrow-up-right':'arrow-down-right'}" aria-hidden="true"></i>${d>0?'+':'\u2212'}${Math.abs(d).toLocaleString()} vs plan \u00b7 balancing the week</div>`;
+      })()}
     </div>
     <div class="ch-ring">
       <svg viewBox="0 0 64 64" aria-hidden="true">
@@ -6622,7 +6630,7 @@ function save(){
       date:biologicalToday(),shift,ticks,macros,history,
       mealLibrary,mealLog,weekHistory,sessionLog,customExercises,customMuscles,
       cycleDay,cycleNum,cycleAnchorDate,completedDays,
-      streak:dayStreak, calCarry,
+      streak:dayStreak,
       sleepRating,sleepHistory,yesterdayData,
       bodyWeight,
       checkins,dismissedInsights,appliedInsights,lastWeeklyShown,
@@ -6684,7 +6692,6 @@ function load(){
     if(d.insightsLastRead) insightsLastRead=d.insightsLastRead;
     if(d._lastInsightCount) _lastInsightCount=d._lastInsightCount;
     dayStreak=d.streak||0;
-    if(typeof d.calCarry==='number') calCarry=d.calCarry;
     _breakStreakIfStale();
     // PERMANENT state — restored whatever day it is. These sat inside the same-day branch
     // below, so opening the app on a new day left them empty and the next save() wrote the
@@ -6704,8 +6711,6 @@ function load(){
       Object.assign(ticks,d.ticks||{});
       sleepRating=d.sleepRating||0;
     } else {
-      // Same situation as a live rollover: the stored day has ended.
-      _setCarryFrom(d.macros&&d.macros.kcal, !!(d.mealLog&&d.mealLog.length));
       // Auto-carry forward yesterday's macros as snapshot
       if(d.macros&&!yesterdayData){
         const p=d.macros.prot||0,h=d.macros.hydro||0,k=d.macros.kcal||0;
