@@ -1051,6 +1051,17 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .tl-empty-sub{font-size:12px;color:var(--t3);line-height:1.5;max-width:280px;margin:0 auto}
 .tl-empty-cta{margin-top:1rem;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:7px 16px;border-radius:20px;border:none;background:var(--teal);color:var(--focus-ac-ink);cursor:pointer;transition:transform .07s cubic-bezier(.34,1.56,.64,1)}
 .tl-empty-cta:active{transform:scale(.95)}
+.fd-list{margin-top:.5rem;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-md);overflow:hidden}
+.fd-list[hidden]{display:none}
+.fd-row{display:grid;grid-template-columns:1fr 62px 42px;align-items:center;gap:.5rem;width:100%;padding:.625rem .75rem;border:none;border-bottom:1px solid var(--b1);background:none;color:var(--t1);font-family:inherit;text-align:left;cursor:pointer}
+.fd-row:last-child{border-bottom:none}
+.fd-row:active{background:var(--s2)}
+.fd-l{display:flex;flex-direction:column;min-width:0}
+.fd-name{font-size:13.5px;font-weight:700;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fd-sub{font-size:10.5px;color:var(--t3);margin-top:1px}
+.fd-k{font-size:14px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.fd-k small,.fd-p small{font-size:9px;font-weight:600;color:var(--t3);margin-left:1px}
+.fd-p{font-size:13px;font-weight:700;color:var(--macro-prot);text-align:right;font-variant-numeric:tabular-nums}
 .meal-log-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.875rem;color:var(--t3);font-size:12px;text-align:center;gap:4px}
 
 /* 8 — Insights nav badge */
@@ -1991,7 +2002,18 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
       <div style="position:absolute;bottom:7px;left:7px;background:rgba(0,0,0,.65);border-radius:6px;padding:3px 7px;font-size:11px;color:var(--teal);font-weight:600">Photo attached ✓</div>
     </div>
 
-    <!-- BIG description box — primary input -->
+    <!-- Instant lookup first. Most meals repeat, and a table read beats a model call every
+         time; the AI below is for anything not in it. -->
+    <div style="margin-bottom:.875rem">
+      <input id="food-search" type="text" autocomplete="off" placeholder="Search food — chicken rice, whey, teh peng…"
+        oninput="renderFoodSearch()"
+        style="width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:12px;padding:13px 14px;font-size:15px;font-weight:500;color:var(--t1);outline:none;font-family:inherit;box-sizing:border-box"
+        onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--b2)'">
+      <div id="food-results" class="fd-list" hidden></div>
+      <div style="font-size:11px;color:var(--t3);margin-top:4px;line-height:1.5">Typical values for a standard portion — one tap logs it. Not in the list? Describe it below.</div>
+    </div>
+
+    <!-- BIG description box — fallback for anything not in the table -->
     <div style="margin-bottom:.75rem">
       <textarea id="meal-desc-main" rows="3"
         placeholder="Describe what you ate — name, cooking method, portion size…&#10;e.g. Hainanese chicken rice, large portion, no skin"
@@ -3136,7 +3158,7 @@ function renderHealthScore(){
   const el=document.getElementById('health-card');
   if(!el) return;
   if(viewDay || !macros.microMeals || !macros.kcal){
-    el.innerHTML='<div class="hs-card hs-empty">Health score needs a meal logged with the AI \u2014 it reads fibre, sugar, sodium, potassium and eight micronutrients.</div>';
+    el.innerHTML='<div class="hs-card hs-empty">Health score needs a meal logged with the AI — it reads fibre, sugar, sodium, potassium and eight micronutrients.</div>';
     return;
   }
   const P=_healthParts();
@@ -3156,9 +3178,9 @@ function renderHealthScore(){
   const scored=
     row('Fibre',       P.fibre, band(P.fibre), Math.round(macros.fiber)+'g', P.fibreD.toFixed(0)+'/1k')+
     row('Added sugar', P.sugar, band(P.sugar), Math.round(macros.sugar)+'g', P.sugarD.toFixed(0)+'/1k')+
-    row('Sodium',      P.salt,  band(P.salt),  Math.round(P.na).toLocaleString()+'mg', P.haveK?'1:'+P.ratio.toFixed(1):'\u2014')+
+    row('Sodium',      P.salt,  band(P.salt),  Math.round(P.na).toLocaleString()+'mg', P.haveK?'1:'+P.ratio.toFixed(1):'—')+
     row('Potassium',   P.haveK?Math.max(0,Math.min(1,P.k/MICRO_REF.potassium)):null, P.haveK?band(Math.min(1,P.k/MICRO_REF.potassium)):'na',
-        P.haveK?Math.round(P.k).toLocaleString()+'mg':'\u2014',
+        P.haveK?Math.round(P.k).toLocaleString()+'mg':'—',
         P.haveK?Math.round((P.k/MICRO_REF.potassium)*100)+'%':'');
 
   // Tracked, not scored. A nutrient the model did not return shows a dash, not a zero — "not
@@ -3167,7 +3189,7 @@ function renderHealthScore(){
     const v=macros[k];
     const have=typeof v==='number'&&v>0;
     const frac=have?Math.min(1,v/target):null;
-    const shown=have?((v>=100?Math.round(v):Math.round(v*10)/10)+unit):'\u2014';
+    const shown=have?((v>=100?Math.round(v):Math.round(v*10)/10)+unit):'—';
     return row(lbl, frac, have?'tracked':'na', shown, have?Math.round((v/target)*100)+'%':'');
   }).join('');
 
@@ -3187,7 +3209,7 @@ function renderHealthScore(){
       ? '<div class="mn-list mn-first">'+scored+'</div>'+
         '<div class="mn-head">Micronutrients<small>% of daily target</small></div>'+
         '<div class="mn-list">'+micro+'</div>'+
-        '<div class="mn-note">Estimated from your description, not a food database \u2014 treat these as direction, not measurement.</div>'
+        '<div class="mn-note">Estimated from your description, not a food database — treat these as direction, not measurement.</div>'
       : '')+
   '</div>';
 }
@@ -3425,6 +3447,116 @@ function initGeminiKeyField(){
 }
 
 // ── Analysed-result card, Cal AI's confirm step ────────────────────────────────────────────
+// name, portion, kcal, protein, carbs, fibre, sugar, sodium(mg), potassium(mg), water(ml)
+// Typical values for the stated portion. Hand-entered, not a verified database — see the note
+// under the search box.
+const FOOD_DB=[
+  ['Chicken rice','1 plate',600,30,75,2,3,1200,450,0],
+  ['Chicken rice, steamed no skin','1 plate',520,33,72,2,2,1000,430,0],
+  ['Char kway teow','1 plate',740,18,76,3,8,1900,320,0],
+  ['Laksa','1 bowl',680,22,62,4,11,2100,400,150],
+  ['Nasi lemak with chicken wing','1 plate',640,22,70,3,5,1100,400,0],
+  ['Mee goreng','1 plate',660,20,82,4,9,1600,350,0],
+  ['Bak chor mee, dry','1 bowl',510,25,62,3,4,1500,380,0],
+  ['Fishball noodle soup','1 bowl',330,20,50,3,3,1400,350,250],
+  ['Yong tau foo, soup','6 pcs + noodles',420,28,45,5,4,1600,500,250],
+  ['Economic rice, 2 veg 1 meat','1 plate',550,25,70,5,5,1300,500,0],
+  ['Roti prata, 2 plain + curry','2 pcs',560,12,68,3,4,900,200,0],
+  ['Wanton mee, dry','1 bowl',480,24,60,3,5,1500,330,0],
+  ['Duck rice','1 plate',620,28,72,2,4,1400,420,0],
+  ['Hokkien mee','1 plate',620,24,68,4,6,1700,380,0],
+  ['Satay, 10 sticks + sauce','10 sticks',520,38,24,3,14,1200,500,0],
+  ['Ban mian','1 bowl',480,22,60,4,4,1600,400,250],
+  ['Curry chicken with rice','1 plate',700,32,78,4,6,1500,550,0],
+  ['Sliced fish soup with rice','1 bowl',450,32,52,3,4,1400,600,250],
+  ['Chicken chop with rice','1 plate',650,40,60,3,5,1200,600,0],
+  ['Kaya toast set, 2 eggs','1 set',450,14,45,2,18,700,250,0],
+  ['Chicken breast','100g cooked',165,31,0,0,0,74,256,0],
+  ['Chicken thigh','100g cooked',209,26,0,0,0,90,230,0],
+  ['Lean beef','100g cooked',217,26,0,0,0,66,318,0],
+  ['Salmon','100g cooked',208,20,0,0,0,59,363,0],
+  ['Prawns','100g',99,24,0,0,0,111,259,0],
+  ['Tuna, canned in water','100g',116,26,0,0,0,350,237,0],
+  ['Tofu, firm','100g',144,17,3,2,1,14,121,0],
+  ['Egg, whole','1 large',72,6,0,0,0,71,69,0],
+  ['Egg white','1',17,4,0,0,0,55,54,0],
+  ['White rice','1 cup cooked',205,4,45,1,0,2,55,0],
+  ['Brown rice','1 cup cooked',218,5,46,4,1,10,154,0],
+  ['Wholemeal bread','1 slice',80,4,14,2,2,150,70,0],
+  ['Oats, dry','40g',150,5,27,4,1,2,140,0],
+  ['Pasta','1 cup cooked',220,8,43,3,1,1,60,0],
+  ['Sweet potato','150g',130,2,30,5,6,55,400,0],
+  ['Potato, boiled','150g',130,3,30,3,1,10,800,0],
+  ['Broccoli','100g',35,2,7,3,1,41,316,0],
+  ['Spinach, cooked','100g',23,3,4,2,0,70,558,0],
+  ['Mixed vegetables','1 serving',60,3,10,4,4,200,300,0],
+  ['Banana','1 medium',105,1,27,3,14,1,422,0],
+  ['Apple','1 medium',95,1,25,4,19,2,195,0],
+  ['Whey protein','1 scoop 30g',120,24,3,1,2,60,160,0],
+  ['Protein shake, whey + water','1 shaker',120,24,3,1,2,60,160,400],
+  ['Greek yoghurt','170g',100,17,6,0,6,60,240,0],
+  ['Milk','250ml',122,8,12,0,12,105,366,220],
+  ['Soy milk, unsweetened','250ml',80,7,4,1,1,90,300,230],
+  ['Peanut butter','2 tbsp',190,7,7,2,3,150,200,0],
+  ['Almonds','30g',174,6,6,4,1,0,208,0],
+  ['Protein bar','1 bar',200,20,20,3,5,200,150,0],
+  ['Water','500ml',0,0,0,0,0,0,0,500],
+  ['Kopi-o kosong','1 cup',5,0,1,0,0,5,90,200],
+  ['Kopi','1 cup',110,2,18,0,17,40,130,180],
+  ['Teh peng','1 cup',180,4,32,0,26,60,150,250],
+  ['Milo, hot','1 cup',170,6,28,1,22,120,300,200],
+  ['Bubble tea, regular sugar','500ml',380,2,70,0,48,60,90,400],
+  ['Isotonic drink','500ml',130,0,32,0,30,200,30,480],
+  ['Coconut water','300ml',55,1,13,0,11,75,750,290],
+  ['Orange juice','250ml',112,2,26,1,21,2,496,220]
+];
+
+// Substring match on the name, cheap enough to run on every keystroke over a table this size.
+function _foodSearch(q){
+  const s=String(q||'').trim().toLowerCase();
+  if(s.length<2) return [];
+  const hit=FOOD_DB.filter(f=>f[0].toLowerCase().includes(s));
+  // Whatever starts with the query is what you meant; the rest follow.
+  hit.sort((a,b)=>{
+    const ai=a[0].toLowerCase().startsWith(s)?0:1, bi=b[0].toLowerCase().startsWith(s)?0:1;
+    return ai-bi || a[0].localeCompare(b[0]);
+  });
+  return hit.slice(0,8);
+}
+
+function renderFoodSearch(){
+  const box=document.getElementById('food-search');
+  const list=document.getElementById('food-results');
+  if(!box||!list) return;
+  const hits=_foodSearch(box.value);
+  if(!hits.length){ list.innerHTML=''; list.hidden=true; return; }
+  list.hidden=false;
+  list.innerHTML=hits.map(f=>{
+    const i=FOOD_DB.indexOf(f);
+    return '<button class="fd-row" onclick="logFoodDb('+i+')">'+
+      '<span class="fd-l"><span class="fd-name">'+f[0].replace(/</g,'&lt;')+'</span>'+
+      '<span class="fd-sub">'+f[1]+(f[9]?' \u00b7 '+f[9]+'ml':'')+'</span></span>'+
+      '<span class="fd-k">'+f[2]+'<small>kcal</small></span>'+
+      '<span class="fd-p">'+f[3]+'<small>g</small></span></button>';
+  }).join('');
+}
+
+// One tap logs one portion. Tap again for a second helping — a serving stepper would be another
+// control in the way of the thing this exists to make fast.
+function logFoodDb(i){
+  const f=FOOD_DB[i];
+  if(!f) return;
+  const meal={id:Date.now(), name:f[0], prot:f[3], kcal:f[2], carb:f[4],
+    micros:{fiber:f[5], sugar:f[6], sodium:f[7], potassium:f[8]}};
+  if(f[9]>0) meal.water=f[9];
+  logMeal(meal);
+  const box=document.getElementById('food-search');
+  if(box) box.value='';
+  renderFoodSearch();
+  save();
+  try{ closeMealLogger(); }catch(e){}
+}
+
 let _aiResult=null, _aiServings=1;
 let _mealWater=0;   // ml of drinkable fluid in the analysed meal, at one serving
 const _SERVING_STEPS=[0.25,0.5,0.75,1,1.25,1.5,2,2.5,3];
@@ -3853,7 +3985,7 @@ function _rolloverIfDayChanged(){
   _clearDayState();
   save();
   _redrawDay();
-  showToast('New day \u2014 totals reset','action');
+  showToast('New day — totals reset','action');
   return true;
 }
 
@@ -3891,7 +4023,7 @@ function renderDayBanner(){
   const label=d.toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
   el.hidden=false;
   el.innerHTML='<div class="db-l"><span class="db-t">Still logging '+label+'</span>'+
-    '<span class="db-s">Night-shift day \u2014 rolls over at noon</span></div>'+
+    '<span class="db-s">Night-shift day — rolls over at noon</span></div>'+
     '<button class="db-btn" onclick="startNewDay()">Start today</button>';
 }
 
@@ -5197,7 +5329,7 @@ const SESSION_DEFAULTS={
     // at the stretched-elbow start, which grows the DISTAL arm. Incline extends the shoulder,
     // lengthening the long head, which grows the PROXIMAL arm. Running both covers regions
     // either alone would miss; preacher takes the larger share by preference.
-    'Mon-Push':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Cable Reverse Fly',sets:'3',rep:'12-20'},{name:'Preacher Curl',sets:'3',rep:'10-15'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'},{name:'Pallof Press',sets:'2',rep:'10-15'}],
+    'Mon-Push':[{name:'Seated DB Shoulder Press',sets:'3',rep:'6-10'},{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Cable Reverse Fly',sets:'3',rep:'12-20'},{name:'Preacher Curl',sets:'3',rep:'10-15'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'},{name:'Pallof Press',sets:'2',rep:'10-15'}],
     'Tue-Legs':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Face Pull',sets:'3',rep:'12-20'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Leg Press',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Standing Calf Raise',sets:'2',rep:'10-15'}],
     // DNOO cycle day 4 — second off day, fully recovered, so the longest session. This is the
     // taper session. Incline press at 30° (peak clavicular pec EMG; 45° leaks into front delts,
@@ -6332,7 +6464,7 @@ function _sessLabel(v){
   if(live) return live.label;
   const sel=document.getElementById('sess-type-select');
   const opt=sel && [...sel.options].find(o=>o.value===v);
-  if(opt) return opt.textContent.split(' \u2014 ')[0].trim();
+  if(opt) return opt.textContent.split(' — ')[0].trim();
   return v;
 }
 
