@@ -457,6 +457,21 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .prog-stat{background:var(--s2);border-radius:var(--r-md);padding:.625rem .375rem;text-align:center}
 .prog-stat-val{font-size:19px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums;line-height:1.1}
 .prog-stat-lbl{font-size:9.5px;color:var(--t3);letter-spacing:.01em;margin-top:3px}
+.wb-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.875rem}
+.wb-top{display:flex;align-items:baseline;gap:6px}
+.wb-big{font-size:24px;font-weight:800;color:var(--t1);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.wb-of{font-size:12px;color:var(--t3)}
+.wb-bar{height:6px;border-radius:3px;background:var(--s3);overflow:hidden;margin:.625rem 0 .5rem}
+.wb-bar span{display:block;height:100%;border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.wb-bar span.ok{background:var(--green)}
+.wb-bar span.behind{background:var(--macro-carb)}
+.wb-bar span.ahead{background:var(--macro-prot)}
+.wb-foot{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;font-size:11px}
+.wb-state{font-weight:700}
+.wb-state.ok{color:var(--green)}
+.wb-state.behind{color:var(--macro-carb)}
+.wb-state.ahead{color:var(--macro-prot)}
+.wb-days{color:var(--t3)}
 .lp-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-lg);padding:.25rem .875rem}
 /* Fixed-width number columns, so kg reads down one line and the change down another instead of
    both ragging off a shared right edge. */
@@ -723,6 +738,8 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .cal-hero-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-xl,20px);padding:1.125rem 1.25rem;margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
 .ch-left{min-width:0}
 .ch-val{font-size:40px;font-weight:800;letter-spacing:-.035em;line-height:1;color:var(--t1);font-variant-numeric:tabular-nums}
+.ch-carry{display:flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;color:var(--macro-carb);margin-top:5px}
+.ch-carry i{font-size:12px}
 .ch-lbl{font-size:13px;font-weight:500;color:var(--t3);margin-top:.375rem}
 .ch-ring{position:relative;width:78px;height:78px;flex-shrink:0}
 .ch-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
@@ -3974,6 +3991,22 @@ function renderMealLibrary(){
 
 // The day the in-memory totals belong to. Seeded after load() rather than at parse time, because
 // biologicalToday() reads `shift`, which load() sets.
+// Calories owed from yesterday's shortfall, added to today's target only.
+let calCarry=0;
+const CARRY_CAP=500;      // most that can be pushed into a single day
+const CARRY_MIN=50;       // below this it is rounding, not a shortfall
+
+// Today's calorie target including anything owed. TARGETS.kcal stays the plan — Settings, the
+// Coach and the weekly review all still measure against that, not against an adjusted number.
+function kcalTargetToday(){ return Math.round((TARGETS.kcal||0) + (calCarry||0)); }
+
+// Called with the day that is ENDING. Replaces any existing carry rather than adding to it.
+function _setCarryFrom(prevKcal, prevLogged){
+  if(!prevLogged || !(TARGETS.kcal>0)){ calCarry=0; return; }
+  const short=TARGETS.kcal-(prevKcal||0);
+  calCarry = short>=CARRY_MIN ? Math.min(CARRY_CAP, Math.round(short)) : 0;
+}
+
 let _activeDay=null;
 
 // Returns true if it actually rolled. Yesterday's totals are already persisted — _stampToday runs
@@ -3983,6 +4016,8 @@ function _rolloverIfDayChanged(){
   if(_activeDay===null){ _activeDay=now; return false; }
   if(now===_activeDay) return false;
   _activeDay=now;
+  // Before the totals are cleared — that is the day the shortfall belongs to.
+  _setCarryFrom(macros.kcal, mealLog.length>0);
   _clearDayState();
   save();
   _redrawDay();
@@ -4264,13 +4299,16 @@ function renderCalHero(){
   const el=document.getElementById('cal-hero');
   if(!el) return;
   const M=_dayMacros();
-  const cur=Math.round(M.kcal||0), tgt=Math.round(TARGETS.kcal||0);
+  // Viewing a past day shows that day against the plan; only today carries a debt.
+  const tgt=viewDay?Math.round(TARGETS.kcal||0):kcalTargetToday();
+  const cur=Math.round(M.kcal||0);
   const over=cur-tgt, isOver=over>0;
   const a=_ringArc(cur,tgt,26);
   el.innerHTML=`<div class="cal-hero-card${isOver?' is-over':''}">
     <div class="ch-left">
       <div class="ch-val">${isOver?('+'+over.toLocaleString()):Math.max(0,-over).toLocaleString()}</div>
       <div class="ch-lbl">${isOver?'calories over':'calories left'}</div>
+      ${(!viewDay&&calCarry>0)?`<div class="ch-carry"><i class="ti ti-arrow-back-up" aria-hidden="true"></i>+${calCarry.toLocaleString()} owed from yesterday</div>`:''}
     </div>
     <div class="ch-ring">
       <svg viewBox="0 0 64 64" aria-hidden="true">
@@ -6584,7 +6622,7 @@ function save(){
       date:biologicalToday(),shift,ticks,macros,history,
       mealLibrary,mealLog,weekHistory,sessionLog,customExercises,customMuscles,
       cycleDay,cycleNum,cycleAnchorDate,completedDays,
-      streak:dayStreak,
+      streak:dayStreak, calCarry,
       sleepRating,sleepHistory,yesterdayData,
       bodyWeight,
       checkins,dismissedInsights,appliedInsights,lastWeeklyShown,
@@ -6646,6 +6684,7 @@ function load(){
     if(d.insightsLastRead) insightsLastRead=d.insightsLastRead;
     if(d._lastInsightCount) _lastInsightCount=d._lastInsightCount;
     dayStreak=d.streak||0;
+    if(typeof d.calCarry==='number') calCarry=d.calCarry;
     _breakStreakIfStale();
     // PERMANENT state — restored whatever day it is. These sat inside the same-day branch
     // below, so opening the app on a new day left them empty and the next save() wrote the
@@ -6665,6 +6704,8 @@ function load(){
       Object.assign(ticks,d.ticks||{});
       sleepRating=d.sleepRating||0;
     } else {
+      // Same situation as a live rollover: the stored day has ended.
+      _setCarryFrom(d.macros&&d.macros.kcal, !!(d.mealLog&&d.mealLog.length));
       // Auto-carry forward yesterday's macros as snapshot
       if(d.macros&&!yesterdayData){
         const p=d.macros.prot||0,h=d.macros.hydro||0,k=d.macros.kcal||0;
@@ -7857,6 +7898,58 @@ function _calKey(baseKey,offsetDays){
   return d.toISOString().slice(0,10);
 }
 
+// Monday-anchored week containing the given day key.
+function _weekDays(todayKey){
+  const d=new Date(todayKey+'T12:00:00Z');
+  const back=(d.getUTCDay()+6)%7;                 // 0 = Monday
+  const mon=new Date(d); mon.setUTCDate(d.getUTCDate()-back);
+  const out=[];
+  for(let i=0;i<=back;i++){                       // Monday .. today, not the whole week
+    const x=new Date(mon); x.setUTCDate(mon.getUTCDate()+i);
+    out.push(x.toISOString().slice(0,10));
+  }
+  return out;
+}
+
+// Eaten vs planned across the logged days of this week so far.
+function _weekBudget(){
+  const todayKey=biologicalToday();
+  const days=_weekDays(todayKey);
+  let eaten=0, loggedDays=0;
+  days.forEach(k=>{
+    const kc = k===todayKey ? (macros.kcal||0) : ((weekHistory[k]||{}).kcal||0);
+    if(kc>0){ eaten+=kc; loggedDays++; }
+  });
+  const planned=loggedDays*(TARGETS.kcal||0);
+  return {days:days.length, loggedDays, eaten:Math.round(eaten), planned:Math.round(planned),
+          diff:Math.round(eaten-planned)};
+}
+
+function renderWeekBudget(){
+  const el=document.getElementById('week-budget');
+  if(!el) return;
+  const b=_weekBudget();
+  if(!b.loggedDays){
+    el.innerHTML='<div class="sec-label">This week</div>'+
+      '<div class="prog-empty">Log a day\u2019s food and the week\u2019s running balance shows up here.</div>';
+    return;
+  }
+  const behind=b.diff<0;
+  const mag=Math.abs(b.diff);
+  const word = mag<100 ? 'on plan' : (behind?'behind':'ahead');
+  const cls  = mag<100 ? 'ok' : (behind?'behind':'ahead');
+  const pct=b.planned>0?Math.max(0,Math.min(100,(b.eaten/b.planned)*100)):0;
+  el.innerHTML='<div class="sec-label" style="margin-top:1.25rem">This week</div>'+
+    '<div class="wb-card">'+
+      '<div class="wb-top"><span class="wb-big">'+b.eaten.toLocaleString()+'</span>'+
+        '<span class="wb-of">of '+b.planned.toLocaleString()+' kcal</span></div>'+
+      '<div class="wb-bar"><span class="'+cls+'" style="width:'+pct.toFixed(0)+'%"></span></div>'+
+      '<div class="wb-foot"><span class="wb-state '+cls+'">'+
+        (mag<100?'On plan':(mag.toLocaleString()+' '+word))+'</span>'+
+        '<span class="wb-days">'+b.loggedDays+' of '+b.days+' day'+(b.days===1?'':'s')+' logged</span></div>'+
+    '</div>';
+}
+
 function renderProgStats(){
   const el=document.getElementById('prog-stats');
   if(!el) return;
@@ -8185,6 +8278,7 @@ function saveWeighIn(){
 function renderProgress(){
   renderCalProgress();
   renderProgStats();
+  renderWeekBudget();
   renderProgLifts();
   renderProgMilestones();
   // "Since <first logged day>" + disable Export until there's something worth exporting
@@ -8754,6 +8848,7 @@ try{
 
   <!-- Headline numbers — populated by renderProgress() -->
   <div class="prog-stats mo-rise" id="prog-stats"></div>
+  <div class="mo-rise" id="week-budget"></div>
 
   <!-- Calendar heatmap -->
 
