@@ -6512,17 +6512,22 @@ function load(){
     if(d._lastInsightCount) _lastInsightCount=d._lastInsightCount;
     dayStreak=d.streak||0;
     _breakStreakIfStale();
-    if(d.date===biologicalToday()){
-      Object.assign(macros,d.macros||{});
-      if(d.history) Object.assign(history,d.history);
+    // PERMANENT state — restored whatever day it is. These sat inside the same-day branch
+    // below, so opening the app on a new day left them empty and the next save() wrote the
+    // empties over the real data: every logged session, custom exercise, saved meal and day
+    // row, gone on the first launch of each day.
     if(d.mealLibrary) mealLibrary=d.mealLibrary;
-    if(d.mealLog&&d.date===biologicalToday()) mealLog=d.mealLog;
     if(d.weekHistory) weekHistory=d.weekHistory;
     if(d.sessionLog) sessionLog=d.sessionLog;
     if(Array.isArray(d.customExercises)) customExercises=d.customExercises;
     if(d.customMuscles && typeof d.customMuscles==='object') customMuscles=d.customMuscles;
+
+    // DAY-SCOPED state — only meaningful if the stored day is the one we are on.
+    if(d.date===biologicalToday()){
+      Object.assign(macros,d.macros||{});
+      if(d.history) Object.assign(history,d.history);
+      if(d.mealLog) mealLog=d.mealLog;
       Object.assign(ticks,d.ticks||{});
-      if(d.shift) shift=d.shift;
       sleepRating=d.sleepRating||0;
     } else {
       // Auto-carry forward yesterday's macros as snapshot
