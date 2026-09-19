@@ -66,12 +66,12 @@ html.theme-light{
      renders them as small text, where Cal AI's lighter tints would fail contrast. */
   --bg:#f2f2f5; --s1:#ffffff; --s2:#f6f6f8; --s3:#ececf0; --s4:#dededf;
   --b1:rgba(0,0,0,.05); --b2:rgba(0,0,0,.09); --b3:rgba(0,0,0,.18);
-  --t1:#0b0b0c; --t2:#6e6e76; --t3:#8a8a90;
+  --t1:#0b0b0c; --t2:#5f5f67; --t3:#6b6b72;
   --teal:#0b0b0c; --teal-dim:rgba(0,0,0,.06);
   --focus-ac:#0b0b0c; --focus-ac-ink:#ffffff;
   --amber:#c47a22; --amber-dim:rgba(196,122,34,.10);
   --blue:#3d74c0;  --blue-dim:rgba(61,116,192,.10);
-  --macro-prot:#cf4a58; --macro-carb:#c47a22; --macro-water:#3d74c0;
+  --macro-prot:#c03a48; --macro-carb:#9a5f12; --macro-water:#356bb4;
   --red:#c8413c;   --red-dim:rgba(200,65,60,.10);
   --purple:#8a6a9c; --purple-dim:rgba(138,106,156,.10);
   --green:#3f8f63;  --green-bg:rgba(63,143,99,.10);
@@ -84,6 +84,11 @@ html.theme-light body::before{background:
   radial-gradient(ellipse 70% 50% at 15% 0%, color-mix(in srgb,var(--blue) 6%,transparent), transparent 60%),
   radial-gradient(ellipse 60% 45% at 90% 12%, color-mix(in srgb,var(--green) 5%,transparent), transparent 55%),
   radial-gradient(ellipse 80% 60% at 50% 100%, color-mix(in srgb,var(--amber) 4%,transparent), transparent 60%)}
+.ml-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;background:var(--s2);border-radius:20px;padding:3px;margin-bottom:1rem}
+.ml-tab{padding:8px 4px;border:none;border-radius:17px;background:transparent;color:var(--t2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.ml-tab.on{background:var(--focus-ac);color:var(--focus-ac-ink)}
+#ml-tab-search[hidden],#ml-tab-describe[hidden],#ml-tab-manual[hidden]{display:none}
+.meal-modal{background:rgba(20,20,20,.92);border-top:1px solid rgba(255,255,255,.1)}
 html.theme-light .custom-modal,html.theme-light .meal-modal{background:rgba(255,255,255,.85);border-color:rgba(0,0,0,.12);box-shadow:0 -8px 40px rgba(0,0,0,.18)}
 html.theme-light .focus-card{box-shadow:0 10px 26px -12px rgba(0,0,0,.16),0 2px 6px -4px rgba(0,0,0,.10)}
 html.theme-light .tl-item{border-bottom-color:rgba(0,0,0,.07)}
@@ -757,7 +762,10 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .ml-time{font-size:10.5px;color:var(--t3);flex-shrink:0}
 .ml-kcal{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--t1);margin-top:2px}
 .ml-kcal i{font-size:13px;color:var(--t3)}
-.ml-del{width:30px;height:30px;border-radius:var(--r-sm);border:none;background:transparent;color:var(--b3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:13px;-webkit-tap-highlight-color:transparent}
+.ml-save{width:30px;height:30px;border-radius:var(--r-sm);border:none;background:transparent;color:var(--t3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:15px}
+.ml-save.on{color:var(--focus-ac)}
+.ml-save:active{background:var(--s3)}
+.ml-del{width:30px;height:30px;border-radius:var(--r-sm);border:none;background:transparent;color:var(--t3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:13px;-webkit-tap-highlight-color:transparent}
 .ml-del:active{background:var(--s3);color:var(--red)}
 
 /* ── Macro row (Cal AI-inspired): 3 equal ring cards, each a distinct colour ── */
@@ -2020,19 +2028,19 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 
 <!-- Meal logger modal -->
   <div id="meal-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)" onclick="closeMealLogger()"></div>
-  <div id="meal-modal" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:201;background:rgba(20,20,20,.92);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border-top:1px solid rgba(255,255,255,.1);border-radius:20px 20px 0 0;padding:1.25rem 1.25rem 2rem;max-width:860px;margin:0 auto;max-height:90vh;overflow-y:auto">
+  <div id="meal-modal" class="meal-modal" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:201;backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border-radius:20px 20px 0 0;padding:1.25rem 1.25rem 2rem;max-width:860px;margin:0 auto;max-height:90vh;overflow-y:auto">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
       <div style="font-size:15px;font-weight:700;color:var(--t1)">Log a meal</div>
       <button onclick="closeMealLogger()" aria-label="Close meal logger" style="background:var(--s3);border:none;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t2)"><i class="ti ti-x" style="font-size:13px" aria-hidden="true"></i></button>
     </div>
 
-    <!-- Photo preview (shown after camera capture) -->
-    <div id="meal-photo-preview" style="display:none;margin-bottom:.875rem;position:relative">
-      <img id="meal-photo-img" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px;display:block">
-      <button onclick="clearMealPhoto()" aria-label="Remove photo" style="position:absolute;top:7px;right:7px;background:rgba(0,0,0,.65);border:none;border-radius:50%;width:44px;height:44px;color:#fff;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center"><i class="ti ti-x" aria-hidden="true"></i></button>
-      <div style="position:absolute;bottom:7px;left:7px;background:rgba(0,0,0,.65);border-radius:6px;padding:3px 7px;font-size:11px;color:var(--teal);font-weight:600">Photo attached ✓</div>
+    <div class="ml-tabs" role="tablist">
+      <button class="ml-tab on" id="mlt-search"   onclick="setMealTab('search')"   role="tab" aria-selected="true">Search</button>
+      <button class="ml-tab"    id="mlt-describe" onclick="setMealTab('describe')" role="tab" aria-selected="false">Describe</button>
+      <button class="ml-tab"    id="mlt-manual"   onclick="setMealTab('manual')"   role="tab" aria-selected="false">Manual</button>
     </div>
 
+    <div id="ml-tab-search">
     <!-- Instant lookup first. Most meals repeat, and a table read beats a model call every
          time; the AI below is for anything not in it. -->
     <div style="margin-bottom:.875rem">
@@ -2042,9 +2050,21 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
         onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--b2)'">
       <div id="food-basket" class="bk" hidden></div>
       <div id="food-results" class="fd-list" hidden></div>
-      <div style="font-size:11px;color:var(--t3);margin-top:4px;line-height:1.5">Tap each part of the meal, then Log — a built burrito adds up the same way the shop's own calculator does. Typical values for a standard portion. Not in the list? Describe it below.</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:4px;line-height:1.5">Tap each part of the meal, then Log — a built burrito adds up the same way the shop's own calculator does. Typical values for a standard portion. Not in the list? Use Describe.</div>
+    </div>
+    <div id="meal-library-section" style="margin-top:.875rem">
+      <div style="font-size:11px;font-weight:600;letter-spacing:.01em;color:var(--t3);margin-bottom:.5rem">Your saved foods</div>
+      <div id="meal-library-list"></div>
+    </div>
     </div>
 
+    <div id="ml-tab-describe" hidden>
+    <!-- Photo preview (shown after camera capture) -->
+    <div id="meal-photo-preview" style="display:none;margin-bottom:.875rem;position:relative">
+      <img id="meal-photo-img" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px;display:block">
+      <button onclick="clearMealPhoto()" aria-label="Remove photo" style="position:absolute;top:7px;right:7px;background:rgba(0,0,0,.65);border:none;border-radius:50%;width:44px;height:44px;color:#fff;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center"><i class="ti ti-x" aria-hidden="true"></i></button>
+      <div style="position:absolute;bottom:7px;left:7px;background:rgba(0,0,0,.65);border-radius:6px;padding:3px 7px;font-size:11px;color:var(--teal);font-weight:600">Photo attached ✓</div>
+    </div>
     <!-- BIG description box — fallback for anything not in the table -->
     <div style="margin-bottom:.75rem">
       <textarea id="meal-desc-main" rows="3"
@@ -2058,7 +2078,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     <button onclick="aiAnalyseMeal()" id="ai-analyse-btn"
       style="width:100%;padding:14px;background:var(--teal);border:none;border-radius:12px;font-size:15px;font-weight:800;color:var(--focus-ac-ink);cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;-webkit-tap-highlight-color:transparent;margin-bottom:.75rem;transition:transform .12s cubic-bezier(.34,1.4,.5,1)">
       <i class="ti ti-sparkles" style="font-size:16px"></i>
-      <span id="ai-btn-label">Analyse with Gemini</span>
+      <span id="ai-btn-label">Estimate</span>
     </button>
     <div id="ai-result-card" hidden></div>
     <div id="ai-progress" hidden>
@@ -2066,13 +2086,9 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
       <div class="aip-cap" id="ai-progress-cap"></div>
     </div>
     <div id="ai-result-strip" style="display:none;margin-bottom:.75rem;padding:10px 12px;background:color-mix(in srgb,var(--teal) 5%,transparent);border:1px solid color-mix(in srgb,var(--teal) 15%,transparent);border-radius:10px;font-size:12px;color:var(--t2);line-height:1.6"></div>
-
-    <!-- Manual fallback -->
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem">
-      <div style="flex:1;height:1px;background:var(--b1)"></div>
-      <div style="font-size:11px;font-weight:600;letter-spacing:.01em;color:var(--t3)">or enter manually</div>
-      <div style="flex:1;height:1px;background:var(--b1)"></div>
     </div>
+
+    <div id="ml-tab-manual" hidden>
     <div style="background:var(--s2);border-radius:10px;padding:.875rem 1rem">
       <div class="meal-form-grid">
         <div>
@@ -2103,13 +2119,8 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
           <i class="ti ti-device-floppy" style="font-size:13px"></i> Save
         </button>
       </div>
-      <div style="font-size:11px;color:var(--t3);margin-top:.5rem" id="meal-form-hint">Fill in name and at least one macro, then tap Save.</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:.5rem" id="meal-form-hint">Fill in name and at least one macro, then tap Save. Bookmark it from the log to keep it.</div>
     </div>
-
-    <!-- Saved meals library -->
-    <div id="meal-library-section" style="margin-top:.875rem">
-      <div style="font-size:11px;font-weight:600;letter-spacing:.01em;color:var(--t3);margin-bottom:.5rem">Saved meals</div>
-      <div id="meal-library-list"></div>
     </div>
   </div>
 
@@ -3311,11 +3322,21 @@ function renderWaterCard(){
 let mealLibrary=[];    // [{id, name, prot, kcal}] — persisted across days
 let mealLog=[];        // [{id, name, prot, kcal, ts}] — today only
 
+// One entry path on screen at a time; Search is the default because it is the fast one.
+function setMealTab(name){
+  ['search','describe','manual'].forEach(t=>{
+    const pane=document.getElementById('ml-tab-'+t);
+    const tab=document.getElementById('mlt-'+t);
+    if(pane) pane.hidden = t!==name;
+    if(tab){ tab.classList.toggle('on', t===name); tab.setAttribute('aria-selected', String(t===name)); }
+  });
+}
+
 function openMealLogger(){
   document.getElementById('meal-modal-overlay').style.display='block';
   document.getElementById('meal-modal').style.display='block';
   renderMealLibrary();
-  setTimeout(()=>document.getElementById('meal-name-input').focus(),100);
+  setTimeout(()=>{ try{ setMealTab('search'); document.getElementById('food-search')?.focus(); }catch(e){} },100);
 }
 
 
@@ -3331,6 +3352,7 @@ let _cameraFacingMode = 'environment';
 
 function openCameraLogger(){
   openMealLogger();
+  setTimeout(()=>{ try{ setMealTab('describe'); }catch(e){} },120);
   // Short delay so modal is visible first, then open the viewfinder
   setTimeout(openCameraView, 350);
 }
@@ -3428,6 +3450,7 @@ let _bcItem=null;
 function _openBarcodeResult(item, code){
   _bcItem=item;
   openMealLogger();
+  setTimeout(()=>{ try{ setMealTab('describe'); }catch(e){} },120);
   setTimeout(()=>{
     const box=document.getElementById('food-search');
     if(box) box.value='';
@@ -3680,7 +3703,12 @@ const FOOD_DB=[
 function _foodSearch(q){
   const s=String(q||'').trim().toLowerCase();
   if(s.length<2) return [];
-  const hit=FOOD_DB.filter(f=>f[0].toLowerCase().includes(s));
+  // Your saved foods rank first — they are the ones you actually eat, unlike the seeded table.
+  const mine=(mealLibrary||[]).filter(m=>String(m.name||'').toLowerCase().includes(s))
+    .map(m=>[m.name,'saved',m.kcal||0,m.prot||0,m.carb||0,
+             (m.micros&&m.micros.fiber)||0,(m.micros&&m.micros.sugar)||0,
+             (m.micros&&m.micros.sodium)||0,(m.micros&&m.micros.potassium)||0,m.water||0]);
+  const hit=mine.concat(FOOD_DB.filter(f=>f[0].toLowerCase().includes(s)));
   // Whatever starts with the query is what you meant; the rest follow.
   hit.sort((a,b)=>{
     const ai=a[0].toLowerCase().startsWith(s)?0:1, bi=b[0].toLowerCase().startsWith(s)?0:1;
@@ -3691,18 +3719,21 @@ function _foodSearch(q){
   return hit.slice(0,14);
 }
 
+// Search results can now come from two places, so they are staged here and addressed by
+// position rather than by index into FOOD_DB.
+let _searchHits=[];
 function renderFoodSearch(){
   const box=document.getElementById('food-search');
   const list=document.getElementById('food-results');
   if(!box||!list) return;
   const hits=_foodSearch(box.value);
+  _searchHits=hits;
   if(!hits.length){ list.innerHTML=''; list.hidden=true; return; }
   list.hidden=false;
-  list.innerHTML=hits.map(f=>{
-    const i=FOOD_DB.indexOf(f);
+  list.innerHTML=hits.map((f,i)=>{
     return '<button class="fd-row" onclick="addToBasket('+i+')">'+
       '<span class="fd-l"><span class="fd-name">'+f[0].replace(/</g,'&lt;')+'</span>'+
-      '<span class="fd-sub">'+f[1]+(f[9]?' \u00b7 '+f[9]+'ml':'')+'</span></span>'+
+      '<span class="fd-sub">'+(f[1]==='saved'?'your food':f[1])+(f[9]?' \u00b7 '+f[9]+'ml':'')+'</span></span>'+
       '<span class="fd-k">'+f[2]+'<small>kcal</small></span>'+
       '<span class="fd-p">'+f[3]+'<small>g</small></span></button>';
   }).join('');
@@ -3712,13 +3743,13 @@ function renderFoodSearch(){
 // extra tap; a built meal — six Stuff'd components — is one entry instead of six, with the total
 // worked out the same way their calculator does it.
 let _basket=[];
-function addToBasket(i){ if(!FOOD_DB[i]) return; _basket.push(i); renderBasket(); }
+function addToBasket(i){ const f=_searchHits[i]; if(!f) return; _basket.push(f); renderBasket(); }
 function removeFromBasket(n){ _basket.splice(n,1); renderBasket(); }
 function clearBasket(){ _basket=[]; renderBasket(); }
 
 function _basketTotals(){
   const t={kcal:0,prot:0,carb:0,fiber:0,sugar:0,sodium:0,potassium:0,water:0};
-  _basket.forEach(i=>{ const f=FOOD_DB[i]; if(!f) return;
+  _basket.forEach(f=>{ if(!f) return;
     t.kcal+=f[2]; t.prot+=f[3]; t.carb+=f[4]; t.fiber+=f[5]; t.sugar+=f[6];
     t.sodium+=f[7]; t.potassium+=f[8]; t.water+=f[9]; });
   return t;
@@ -3730,8 +3761,7 @@ function renderBasket(){
   if(!_basket.length){ el.hidden=true; el.innerHTML=''; return; }
   el.hidden=false;
   const t=_basketTotals();
-  el.innerHTML='<div class="bk-items">'+_basket.map((i,n)=>{
-    const f=FOOD_DB[i];
+  el.innerHTML='<div class="bk-items">'+_basket.map((f,n)=>{
     return '<button class="bk-chip" onclick="removeFromBasket('+n+')" aria-label="Remove '+String(f[0]).replace(/"/g,'')+'">'+
       String(f[0]).replace(/</g,'&lt;')+'<i class="ti ti-x" aria-hidden="true"></i></button>';
   }).join('')+'</div>'+
@@ -3745,7 +3775,7 @@ function renderBasket(){
 function logBasket(){
   if(!_basket.length) return;
   const t=_basketTotals();
-  const names=_basket.map(i=>FOOD_DB[i][0]);
+  const names=_basket.map(f=>f[0]);
   const name = names.length===1 ? names[0] : names[0]+' + '+(names.length-1)+' more';
   const meal={id:Date.now(), name, prot:Math.round(t.prot), kcal:Math.round(t.kcal), carb:Math.round(t.carb),
     micros:{fiber:+t.fiber.toFixed(1), sugar:+t.sugar.toFixed(1), sodium:Math.round(t.sodium), potassium:Math.round(t.potassium)}};
@@ -3759,7 +3789,7 @@ function logBasket(){
 }
 
 function logFoodDb(i){
-  const f=FOOD_DB[i];
+  const f=_searchHits[i];
   if(!f) return;
   const meal={id:Date.now(), name:f[0], prot:f[3], kcal:f[2], carb:f[4],
     micros:{fiber:f[5], sugar:f[6], sodium:f[7], potassium:f[8]}};
@@ -3863,12 +3893,6 @@ function logAiResult(){
   const meal={id:Date.now(), name:v.name, prot:v.prot, kcal:v.kcal, carb:v.carb};
   if(v.water>0) meal.water=v.water;
   if(v.micros && MICRO_KEYS.some(k=>v.micros[k]!=null)) meal.micros=v.micros;
-  // The manual form puts what it logs into the library too. Without this, the AI path — the
-  // one you'd use most — produced meals you could never log a second time. Deduped by name so
-  // scanning the same food twice doesn't stack duplicates.
-  if(!mealLibrary.some(m=>(m.name||'').toLowerCase()===String(v.name).toLowerCase())){
-    mealLibrary.push({id:meal.id, name:v.name, prot:v.prot, kcal:v.kcal, carb:v.carb});
-  }
   logMeal(meal);
   _aiResult=null; _aiServings=1; _mealMicros=null; _mealWater=0;
   renderAiResult();
@@ -4105,8 +4129,6 @@ function saveMealToLibrary(){
     meal.micros={..._mealMicros};
     _mealMicros=null;
   }
-  // Thumbnail rides on the logged entry only, never the reusable library item.
-  mealLibrary.push(meal);
   // Auto-log it immediately
   logMeal(meal);
   // Clear form
@@ -4127,6 +4149,23 @@ function saveMealToLibrary(){
 // Protein is the headline target, so crossing it earns the full burst — once a day, not on
 // every subsequent meal.
 let _protHitDay=null;
+// Saved from a logged entry rather than automatically, so the library ends up being the food
+// you actually repeat instead of everything you ever ate once.
+function saveLoggedMealToLibrary(ts){
+  const m=(mealLog||[]).find(x=>x.ts===ts);
+  if(!m) return;
+  if(_inLibrary(m.name)){ showToast('Already saved','action'); return; }
+  mealLibrary.push({id:Date.now(), name:m.name, prot:m.prot||0, kcal:m.kcal||0, carb:m.carb||0,
+    micros:m.micros?{...m.micros}:undefined, water:m.water||0});
+  save();
+  renderMealLog();
+  showToast('Saved to your foods','action');
+}
+function _inLibrary(name){
+  const n=String(name||'').trim().toLowerCase();
+  return !!n && (mealLibrary||[]).some(m=>String(m.name||'').trim().toLowerCase()===n);
+}
+
 function logMeal(meal){
   // Defensive: ensure meal has a stable timestamp id
   const entry={...meal, ts:Date.now()};
@@ -4308,6 +4347,7 @@ function renderMealLog(){
           m.water?`<span class="mm mm-water">${m.water}<small>ml</small></span>`:''
         ].filter(Boolean).join('')}</div>
       </div>
+      <button class="ml-save${_inLibrary(m.name)?' on':''}" onclick="saveLoggedMealToLibrary(${m.ts})" aria-label="${_inLibrary(m.name)?'Already in your foods':'Save '+String(m.name||'').replace(/"/g,'')+' to your foods'}"><i class="ti ti-bookmark${_inLibrary(m.name)?'-filled':''}" aria-hidden="true"></i></button>
       <button class="ml-del" onclick="removeLogEntry(${m.ts})" aria-label="Remove ${String(m.name||'').replace(/"/g,'')} from today's log"><i class="ti ti-x" aria-hidden="true"></i></button>
     </div>`;
   }).join('');
