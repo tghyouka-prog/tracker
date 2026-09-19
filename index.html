@@ -382,6 +382,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .arc-kcal i{font-size:16px;color:var(--t3)}
 .arc-kcal small{font-size:12px;font-weight:600;color:var(--t3);letter-spacing:0}
 .arc-macros{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.75rem}
+.arc-src{display:flex;align-items:flex-start;gap:6px;font-size:11px;line-height:1.5;margin-bottom:.75rem;padding:8px 10px;border-radius:var(--r-sm)}
+.arc-src i{font-size:13px;flex-shrink:0;margin-top:1px}
+.arc-src.ok{color:var(--t2);background:color-mix(in srgb,var(--green) 10%,transparent)}
+.arc-src.warn{color:var(--t2);background:color-mix(in srgb,var(--macro-carb) 12%,transparent)}
 .arc-serv{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.625rem 0;border-top:1px solid var(--b1);border-bottom:1px solid var(--b1);margin-bottom:.75rem}
 .arc-serv-l{font-size:13px;color:var(--t2)}
 .arc-serv-r{display:flex;align-items:center;gap:10px}
@@ -3866,6 +3870,12 @@ function renderAiResult(){
       <span class="arc-name">${String(v.name).replace(/</g,'&lt;')}</span>
       <span class="arc-conf ${confCls}">${_aiResult.grounded?'<i class="ti ti-world" aria-hidden="true"></i>':''}${conf||'—'}</span>
     </div>
+    <div class="arc-src ${_aiResult.grounded?'ok':'warn'}">
+      <i class="ti ti-${_aiResult.grounded?'world-search':'alert-triangle'}" aria-hidden="true"></i>
+      <span>${_aiResult.grounded
+        ? 'Looked up online'+(_aiResult.note?' \u00b7 '+String(_aiResult.note).replace(/</g,'&lt;'):'')
+        : 'Estimated, not looked up'+(_aiResult.note?' \u00b7 '+String(_aiResult.note).replace(/</g,'&lt;'):'')+'. Check the outlet\u2019s own figures if they publish them.'}</span>
+    </div>
     <div class="arc-serv">
       <span class="arc-serv-l">Number of servings</span>
       <div class="arc-serv-r">
@@ -3964,7 +3974,13 @@ async function aiAnalyseMeal(){
 
 Food description: ${name}
 
-If this names a specific branded or packaged product (a company/brand name, a retail product line, a packaged snack) — use Google Search to find its actual nutrition label or product page and report those exact figures instead of estimating a generic version of the dish. Only fall back to estimating from typical prep when no specific product is named or no reliable source turns up.
+SEARCH FIRST. If the description names anything findable — a restaurant, cafe, hawker stall, fast-food or kebab/burrito chain, a supermarket or packaged product, a brand, or a specific menu item — use Google Search and report the figures from the operator's OWN published nutrition page or the product's label. A chain's nutrition calculator or menu nutrition page is the best source; a reputable aggregator is second. Do not estimate a generic version of a dish that has published figures.
+
+Estimate from typical preparation ONLY when the food is genuinely unbranded and home-style (e.g. "two eggs on toast") or when a real search turns up nothing usable.
+
+If the item is built to order (burrito, kebab, bowl, sandwich) and the description does not say which fillings, assume the chain's standard/default build, say so in the note, and set confidence to low — do not silently pick the smallest version.
+
+In the note, say where the number came from: the source if you searched, or "estimated, not found" if you did not.
 
 Respond with ONLY a single JSON object, no markdown, no backticks, no text before or after it:
 {"food":"<clean short dish name>","protein_g":<number>,"calories_kcal":<number>,"carbs_g":<number>,"fiber_g":<number>,"sugar_g":<number>,"sodium_mg":<number>,"potassium_mg":<number>,"water_ml":<number>,"calcium_mg":<number>,"iron_mg":<number>,"magnesium_mg":<number>,"zinc_mg":<number>,"vitamin_c_mg":<number>,"vitamin_d_ug":<number>,"vitamin_b12_ug":<number>,"folate_ug":<number>,"confidence":"high|medium|low","note":"<one short sentence: key assumption, or the source if a specific product was found>"}
@@ -4068,6 +4084,7 @@ Rules:
       carb: Number(parsed.carbs_g)||0,
       micros: _mealMicros,
       confidence: parsed.confidence,
+      note: parsed.note||'',
       grounded: !!parsed.__grounded
     };
     _aiServings=1;
