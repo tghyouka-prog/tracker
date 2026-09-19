@@ -1070,6 +1070,18 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .tl-empty-sub{font-size:12px;color:var(--t3);line-height:1.5;max-width:280px;margin:0 auto}
 .tl-empty-cta{margin-top:1rem;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:7px 16px;border-radius:20px;border:none;background:var(--teal);color:var(--focus-ac-ink);cursor:pointer;transition:transform .07s cubic-bezier(.34,1.56,.64,1)}
 .tl-empty-cta:active{transform:scale(.95)}
+.bk{margin-top:.5rem;margin-bottom:.5rem;background:var(--s1);border:1px solid var(--focus-ac);border-radius:var(--r-md);padding:.625rem .75rem}
+.bk[hidden]{display:none}
+.bk-items{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.5rem}
+.bk-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--t1);background:var(--s2);border:1px solid var(--b1);border-radius:14px;padding:4px 8px;font-family:inherit;cursor:pointer;max-width:100%}
+.bk-chip i{font-size:11px;color:var(--t3);flex-shrink:0}
+.bk-foot{display:flex;align-items:center;justify-content:space-between;gap:.75rem}
+.bk-tot{display:flex;flex-direction:column;min-width:0}
+.bk-k{font-size:17px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums}
+.bk-k small{font-size:10px;font-weight:600;color:var(--t3);margin-left:2px}
+.bk-m{font-size:10.5px;color:var(--t3)}
+.bk-log{flex-shrink:0;padding:9px 18px;border-radius:18px;border:none;background:var(--focus-ac);color:var(--focus-ac-ink);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.bk-log:active{transform:scale(.96)}
 .fd-list{margin-top:.5rem;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-md);overflow:hidden}
 .fd-list[hidden]{display:none}
 .fd-row{display:grid;grid-template-columns:1fr 62px 42px;align-items:center;gap:.5rem;width:100%;padding:.625rem .75rem;border:none;border-bottom:1px solid var(--b1);background:none;color:var(--t1);font-family:inherit;text-align:left;cursor:pointer}
@@ -2028,8 +2040,9 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
         oninput="renderFoodSearch()"
         style="width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:12px;padding:13px 14px;font-size:15px;font-weight:500;color:var(--t1);outline:none;font-family:inherit;box-sizing:border-box"
         onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--b2)'">
+      <div id="food-basket" class="bk" hidden></div>
       <div id="food-results" class="fd-list" hidden></div>
-      <div style="font-size:11px;color:var(--t3);margin-top:4px;line-height:1.5">Typical values for a standard portion — one tap logs it. Not in the list? Describe it below.</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:4px;line-height:1.5">Tap each part of the meal, then Log — a built burrito adds up the same way the shop's own calculator does. Typical values for a standard portion. Not in the list? Describe it below.</div>
     </div>
 
     <!-- BIG description box — fallback for anything not in the table -->
@@ -3640,7 +3653,27 @@ const FOOD_DB=[
   ['Bubble tea, regular sugar','500ml',380,2,70,0,48,60,90,400],
   ['Isotonic drink','500ml',130,0,32,0,30,200,30,480],
   ['Coconut water','300ml',55,1,13,0,11,75,750,290],
-  ['Orange juice','250ml',112,2,26,1,21,2,496,220]
+  ['Orange juice','250ml',112,2,26,1,21,2,496,220],
+  // Stuff'd, from their own nutrition calculator. Log the parts you actually picked and the
+  // total is the same arithmetic their page does.
+  ["Stuff'd 10\" tortilla",'1 wrap',218,5,34,2,1,533,60,0],
+  ["Stuff'd 10\" wholemeal",'1 wrap',202,5.9,32.9,4,1,310,90,0],
+  ["Stuff'd 12\" tortilla",'1 wrap',250,6.6,41,2.4,1,509,72,0],
+  ["Stuff'd 12\" wholemeal",'1 wrap',250,6.5,39.6,4.8,1,347,108,0],
+  ["Stuff'd chicken",'1 portion',224,16.8,6.8,0,1,420,230,0],
+  ["Stuff'd beef",'1 portion',191,11.2,4.6,0,1,342,210,0],
+  ["Stuff'd salmon",'1 portion',82,12.8,0,0,0,549,190,0],
+  ["Stuff'd ultimate chicken/beef",'1 portion',289,21.6,14.5,0,2,555,260,0],
+  ["Stuff'd satay chicken",'1 portion',252,22.4,9.4,0,3,548,250,0],
+  ["Stuff'd cheese",'1 portion',67,4.4,0.6,0,0,148,20,0],
+  ["Stuff'd guacamole",'1 portion',89,1.2,5.4,4,1,199,250,0],
+  ["Stuff'd hummus",'1 portion',89,2.4,10,3,1,121,160,0],
+  ["Stuff'd mayonnaise",'1 portion',120,0.4,3.6,0,1,138,5,0],
+  ["Stuff'd wasabi mayo",'1 portion',76,0.3,2.1,0,1,233,5,0],
+  ["Stuff'd honey mustard",'1 portion',114,0,5.1,0,5,135,10,0],
+  ["Stuff'd sweet thai sauce",'1 portion',30,0,0.7,0,0.5,205,10,0],
+  ["Stuff'd habanero",'1 portion',15,0.4,3.3,0,2,317,40,0],
+  ["Stuff'd salad veg (lettuce, tomato, onion, cucumber)",'1 portion',20,0.8,4.4,1.5,2,9,110,0]
 ];
 
 // Substring match on the name, cheap enough to run on every keystroke over a table this size.
@@ -3653,7 +3686,9 @@ function _foodSearch(q){
     const ai=a[0].toLowerCase().startsWith(s)?0:1, bi=b[0].toLowerCase().startsWith(s)?0:1;
     return ai-bi || a[0].localeCompare(b[0]);
   });
-  return hit.slice(0,8);
+  // Higher than it needs to be for whole dishes, but a component search ("stuff'd") has to
+  // show the whole build list at once or you cannot assemble from it.
+  return hit.slice(0,14);
 }
 
 function renderFoodSearch(){
@@ -3665,7 +3700,7 @@ function renderFoodSearch(){
   list.hidden=false;
   list.innerHTML=hits.map(f=>{
     const i=FOOD_DB.indexOf(f);
-    return '<button class="fd-row" onclick="logFoodDb('+i+')">'+
+    return '<button class="fd-row" onclick="addToBasket('+i+')">'+
       '<span class="fd-l"><span class="fd-name">'+f[0].replace(/</g,'&lt;')+'</span>'+
       '<span class="fd-sub">'+f[1]+(f[9]?' \u00b7 '+f[9]+'ml':'')+'</span></span>'+
       '<span class="fd-k">'+f[2]+'<small>kcal</small></span>'+
@@ -3673,8 +3708,56 @@ function renderFoodSearch(){
   }).join('');
 }
 
-// One tap logs one portion. Tap again for a second helping — a serving stepper would be another
-// control in the way of the thing this exists to make fast.
+// Tapping a result adds it to a basket rather than logging straight away. A single item is one
+// extra tap; a built meal — six Stuff'd components — is one entry instead of six, with the total
+// worked out the same way their calculator does it.
+let _basket=[];
+function addToBasket(i){ if(!FOOD_DB[i]) return; _basket.push(i); renderBasket(); }
+function removeFromBasket(n){ _basket.splice(n,1); renderBasket(); }
+function clearBasket(){ _basket=[]; renderBasket(); }
+
+function _basketTotals(){
+  const t={kcal:0,prot:0,carb:0,fiber:0,sugar:0,sodium:0,potassium:0,water:0};
+  _basket.forEach(i=>{ const f=FOOD_DB[i]; if(!f) return;
+    t.kcal+=f[2]; t.prot+=f[3]; t.carb+=f[4]; t.fiber+=f[5]; t.sugar+=f[6];
+    t.sodium+=f[7]; t.potassium+=f[8]; t.water+=f[9]; });
+  return t;
+}
+
+function renderBasket(){
+  const el=document.getElementById('food-basket');
+  if(!el) return;
+  if(!_basket.length){ el.hidden=true; el.innerHTML=''; return; }
+  el.hidden=false;
+  const t=_basketTotals();
+  el.innerHTML='<div class="bk-items">'+_basket.map((i,n)=>{
+    const f=FOOD_DB[i];
+    return '<button class="bk-chip" onclick="removeFromBasket('+n+')" aria-label="Remove '+String(f[0]).replace(/"/g,'')+'">'+
+      String(f[0]).replace(/</g,'&lt;')+'<i class="ti ti-x" aria-hidden="true"></i></button>';
+  }).join('')+'</div>'+
+  '<div class="bk-foot">'+
+    '<div class="bk-tot"><span class="bk-k">'+Math.round(t.kcal).toLocaleString()+'<small>kcal</small></span>'+
+      '<span class="bk-m">'+Math.round(t.prot)+'g protein \u00b7 '+Math.round(t.carb)+'g carbs</span></div>'+
+    '<button class="bk-log" onclick="logBasket()">Log '+_basket.length+'</button>'+
+  '</div>';
+}
+
+function logBasket(){
+  if(!_basket.length) return;
+  const t=_basketTotals();
+  const names=_basket.map(i=>FOOD_DB[i][0]);
+  const name = names.length===1 ? names[0] : names[0]+' + '+(names.length-1)+' more';
+  const meal={id:Date.now(), name, prot:Math.round(t.prot), kcal:Math.round(t.kcal), carb:Math.round(t.carb),
+    micros:{fiber:+t.fiber.toFixed(1), sugar:+t.sugar.toFixed(1), sodium:Math.round(t.sodium), potassium:Math.round(t.potassium)}};
+  if(t.water>0) meal.water=Math.round(t.water);
+  logMeal(meal);
+  _basket=[];
+  const box=document.getElementById('food-search'); if(box) box.value='';
+  renderFoodSearch(); renderBasket();
+  save();
+  try{ closeMealLogger(); }catch(e){}
+}
+
 function logFoodDb(i){
   const f=FOOD_DB[i];
   if(!f) return;
