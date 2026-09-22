@@ -382,6 +382,14 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .arc-kcal i{font-size:16px;color:var(--t3)}
 .arc-kcal small{font-size:12px;font-weight:600;color:var(--t3);letter-spacing:0}
 .arc-macros{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.75rem}
+.arc-again{margin-left:auto;flex-shrink:0;background:none;border:none;padding:0 0 0 8px;font-family:inherit;font-size:11px;font-weight:700;color:var(--focus-ac);cursor:pointer;text-decoration:underline}
+.arc-portion{display:flex;align-items:flex-start;gap:6px;font-size:11px;line-height:1.5;color:var(--t2);margin-bottom:.5rem}
+.arc-portion i{flex-shrink:0;margin-top:1px;color:var(--t3)}
+.arc-chk{display:flex;align-items:flex-start;gap:6px;font-size:11px;line-height:1.5;margin-bottom:.75rem;padding:8px 10px;border-radius:var(--r-sm)}
+.arc-chk i{flex-shrink:0;margin-top:1px}
+.arc-chk.ok{color:var(--t2);background:color-mix(in srgb,var(--green) 10%,transparent)}
+.arc-chk.warn{color:var(--t2);background:color-mix(in srgb,var(--amber) 14%,transparent)}
+.arc-fat{font-size:10.5px;line-height:1.5;color:var(--t3);margin-top:.5rem;text-align:center}
 .arc-src{display:flex;align-items:flex-start;gap:6px;font-size:11px;line-height:1.5;margin-bottom:.75rem;padding:8px 10px;border-radius:var(--r-sm)}
 .arc-src i{font-size:13px;flex-shrink:0;margin-top:1px}
 .arc-src.ok{color:var(--t2);background:color-mix(in srgb,var(--green) 10%,transparent)}
@@ -1800,6 +1808,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
             class="custom-seg-btn" style="font-size:12px;padding:5px 10px">2.5 Pro <span style="font-size:11px;opacity:.6">Tier 1</span></button>
         </div>
       </div>
+      <button onclick="clearAiCache()" style="margin-top:8px;background:none;border:1px solid var(--b1);border-radius:var(--r-sm);padding:6px 10px;font-size:11px;color:var(--t2);cursor:pointer;font-family:inherit">Clear saved lookups</button>
       <div id="gemini-key-status" style="font-size:11px;color:var(--t3);margin-top:5px;display:flex;align-items:center;justify-content:space-between">
         <span id="gemini-key-status-text"></span>
         <button id="gemini-clear-btn" onclick="clearGeminiKey()" style="display:none;background:none;border:none;font-size:11px;color:var(--red);cursor:pointer;font-family:inherit;padding:0">Remove key</button>
@@ -3811,6 +3820,46 @@ function logFoodDb(i){
   try{ closeMealLogger(); }catch(e){}
 }
 
+// Keyed on model too, so switching model in Settings re-asks rather than serving the old
+// model's answer. No expiry: a published nutrition figure does not go stale on a timer.
+const _AI_CACHE_MAX=60;
+function _aiCacheKey(desc){
+  return _geminiModel+'|'+String(desc||'').trim().toLowerCase().replace(/\s+/g,' ');
+}
+function _aiCacheAll(){
+  try{ return JSON.parse(localStorage.getItem('aiFoodCache')||'{}'); }catch(e){ return {}; }
+}
+function _aiCacheGet(k){ const c=_aiCacheAll(); return (k&&c[k])||null; }
+function _aiCachePut(k,v){
+  if(!k||!v) return;
+  try{
+    const c=_aiCacheAll();
+    c[k]=Object.assign({},v,{_t:Date.now()});
+    const keys=Object.keys(c);
+    if(keys.length>_AI_CACHE_MAX){
+      keys.sort((a,b)=>(c[a]._t||0)-(c[b]._t||0))
+          .slice(0,keys.length-_AI_CACHE_MAX).forEach(x=>delete c[x]);
+    }
+    localStorage.setItem('aiFoodCache',JSON.stringify(c));
+  }catch(e){}
+}
+function clearAiCache(){
+  try{ localStorage.removeItem('aiFoodCache'); }catch(e){}
+  showToast('Lookup cache cleared','action');
+}
+
+// The model's calories against the model's own macros. Atwater factors: 4/4/9 kcal per gram.
+// A dish reported at half its real calories keeps its macros and fails this immediately —
+// which is the whole point, since nothing else in the app can tell.
+function _aiEnergyCheck(r){
+  if(!r) return null;
+  const P=+r.prot||0, C=+r.carb||0, F=+r.fat||0, K=+r.kcal||0;
+  if(!(K>0) || !(P||C||F)) return null;
+  const est=4*P+4*C+9*F;
+  if(!(est>0)) return null;
+  return {est:Math.round(est), off:Math.round(Math.abs(est-K)/K*100), P,C,F,K};
+}
+
 let _aiResult=null, _aiServings=1;
 let _mealWater=0;   // ml of drinkable fluid in the analysed meal, at one serving
 const _SERVING_STEPS=[0.25,0.5,0.75,1,1.25,1.5,2,2.5,3];
@@ -3840,6 +3889,7 @@ function _aiScaled(){
     prot:Math.round(_aiResult.prot*s),
     kcal:Math.round(_aiResult.kcal*s),
     carb:Math.round(_aiResult.carb*s),
+    fat:Math.round((_aiResult.fat||0)*s),
     water:Math.round((_aiResult.water||0)*s),
     micros:_aiResult.micros ? (()=>{
       const out={};
@@ -3877,10 +3927,17 @@ function renderAiResult(){
     </div>
     <div class="arc-src ${_aiResult.grounded?'ok':'warn'}">
       <i class="ti ti-${_aiResult.grounded?'world-search':'alert-triangle'}" aria-hidden="true"></i>
-      <span>${_aiResult.grounded
+      <span>${_aiResult.fromCache?'Reused from your last lookup \u2014 ':''}${_aiResult.grounded
         ? 'Looked up online'+(_aiResult.note?' \u00b7 '+String(_aiResult.note).replace(/</g,'&lt;'):'')
         : 'Estimated, not looked up'+(_aiResult.note?' \u00b7 '+String(_aiResult.note).replace(/</g,'&lt;'):'')+'. Check the outlet\u2019s own figures if they publish them.'}</span>
+      ${_aiResult.fromCache?'<button class="arc-again" onclick="aiAnalyseMeal(true)">Look up again</button>':''}
     </div>
+    ${_aiResult.serving?`<div class="arc-portion"><i class="ti ti-ruler-measure" style="font-size:12px" aria-hidden="true"></i><span>One serving = ${String(_aiResult.serving).replace(/</g,'&lt;')}</span></div>`:''}
+    ${(()=>{ const c=_aiEnergyCheck(_aiResult); if(!c) return '';
+      const ok=c.off<=20;
+      return `<div class="arc-chk ${ok?'ok':'warn'}"><i class="ti ti-${ok?'circle-check':'alert-triangle'}" style="font-size:12px" aria-hidden="true"></i><span>${ok
+        ? c.P+'g protein + '+c.C+'g carbs + '+c.F+'g fat is consistent with '+c.K.toLocaleString()+' kcal.'
+        : 'Its own macros come to '+c.est.toLocaleString()+' kcal, but it reported '+c.K.toLocaleString()+' \u2014 '+c.off+'% apart. One of the two is wrong.'}</span></div>`; })()}
     <div class="arc-serv">
       <span class="arc-serv-l">Number of servings</span>
       <div class="arc-serv-r">
@@ -3898,6 +3955,7 @@ function renderAiResult(){
       <div class="arc-mcard m-prot"><i class="ti ti-meat" aria-hidden="true"></i><div class="arc-mc-l">Protein</div><div class="arc-mc-v">${v.prot}g</div></div>
       <div class="arc-mcard m-carb"><i class="ti ti-bread" aria-hidden="true"></i><div class="arc-mc-l">Carbs</div><div class="arc-mc-v">${v.carb}g</div></div>
     </div>
+    ${v.fat>0?`<div class="arc-fat">Fat ${v.fat}g \u2014 shown because the calorie check needs it; not tracked.</div>`:''}
     <button class="arc-log" onclick="logAiResult()">Done</button>
   </div>`;
 }
@@ -3934,7 +3992,8 @@ function _aiBusy(on,first){
   _aiCapTimer=setInterval(()=>{ i=(i+1)%_AI_CAPS.length; _aiCaption(_AI_CAPS[i]); },2200);
 }
 
-async function aiAnalyseMeal(){
+// force=true re-asks even when this description is cached, and replaces the cached answer.
+async function aiAnalyseMeal(force){
   const nameEl  = document.getElementById('meal-name-input');
   const protEl  = document.getElementById('meal-prot-input');
   const kcalEl  = document.getElementById('meal-kcal-input');
@@ -3965,10 +4024,14 @@ async function aiAnalyseMeal(){
   // Loading state — an indeterminate bar rather than a percentage, because a single fetch has
   // no measurable progress and a fake percentage would be a lie. The caption does change on a
   // real transition (the retry at a higher token budget).
-  _aiBusy(true, photoDataPeek() ? 'Reading the photo' : 'Looking up nutrition');
-  if(btn()){ btn().disabled=true; btn().style.opacity='.55'; btn().style.background='color-mix(in srgb,var(--teal) 4%,transparent)'; }
+  // Looked up before? Then there is nothing to wait for. A photo is always a fresh call.
+  const cacheKey = photoDataPeek() ? null : _aiCacheKey(name);
+  const cached = (cacheKey && !force) ? _aiCacheGet(cacheKey) : null;
+
+  if(!cached) _aiBusy(true, photoDataPeek() ? 'Reading the photo' : 'Looking up nutrition');
+  if(!cached && btn()){ btn().disabled=true; btn().style.opacity='.55'; btn().style.background='color-mix(in srgb,var(--teal) 4%,transparent)'; }
   const _mShort=_geminiModel.replace('gemini-','').replace('-',' ').replace(' flash',' Flash').replace(' lite','-Lite').replace(' pro',' Pro');
-    if(lbl()) lbl().textContent='Analysing with '+_mShort+'…';
+    if(!cached && lbl()) lbl().textContent='Analysing with '+_mShort+'…';
   if(strip()) strip().style.display='none';
 
   // Check for photo data
@@ -3988,9 +4051,14 @@ If the item is built to order (burrito, kebab, bowl, sandwich) and the descripti
 In the note, say where the number came from: the source if you searched, or "estimated, not found" if you did not.
 
 Respond with ONLY a single JSON object, no markdown, no backticks, no text before or after it:
-{"food":"<clean short dish name>","protein_g":<number>,"calories_kcal":<number>,"carbs_g":<number>,"fiber_g":<number>,"sugar_g":<number>,"sodium_mg":<number>,"potassium_mg":<number>,"water_ml":<number>,"calcium_mg":<number>,"iron_mg":<number>,"magnesium_mg":<number>,"zinc_mg":<number>,"vitamin_c_mg":<number>,"vitamin_d_ug":<number>,"vitamin_b12_ug":<number>,"folate_ug":<number>,"confidence":"high|medium|low","note":"<one short sentence: key assumption, or the source if a specific product was found>"}
+{"food":"<clean short dish name>","serving_desc":"<what ONE serving is, with an approximate weight, e.g. 1 regular 12-inch burrito, about 380 g>","protein_g":<number>,"calories_kcal":<number>,"carbs_g":<number>,"fat_g":<number>,"fiber_g":<number>,"sugar_g":<number>,"sodium_mg":<number>,"potassium_mg":<number>,"water_ml":<number>,"calcium_mg":<number>,"iron_mg":<number>,"magnesium_mg":<number>,"zinc_mg":<number>,"vitamin_c_mg":<number>,"vitamin_d_ug":<number>,"vitamin_b12_ug":<number>,"folate_ug":<number>,"confidence":"high|medium|low","note":"<one short sentence: key assumption, or the source if a specific product was found>"}
 
 Rules:
+- serving_desc must state the exact portion the numbers describe, including an approximate
+  gram weight. Numbers that don't say what portion they are for cannot be checked.
+- calories_kcal MUST reconcile with your own macros: 4*protein_g + 4*carbs_g + 9*fat_g has to
+  land within about 10% of it. The app checks this and shows the user when it fails, so
+  recompute before answering rather than returning a figure that cannot be right.
 - water_ml is the DRINKABLE fluid only: the volume of a drink, or the broth/liquid of a
   soup-style dish. Use 0 for solid food — do not estimate the water held inside solids.
 - Singapore hawker context if ambiguous (chicken rice = Hainanese, mee goreng = local style)
@@ -4008,8 +4076,13 @@ Rules:
   // together with enforced JSON mode; only Gemini 3 lifted that restriction. JSON-only output is
   // now enforced by the prompt instead, and the extraction below already tolerates surrounding
   // text/markdown, so nothing downstream had to change.
-  async function callGemini(maxTokens){
+  // thinkingBudget caps what 2.5 Flash spends reasoning before it writes anything; the default
+  // is dynamic and is most of the wait. It still needs enough to decide to call google_search,
+  // so this caps rather than disables (0 would break tool use). The retry passes null, which
+  // restores the dynamic default — so a cap that is too tight costs one retry, not an answer.
+  async function callGemini(maxTokens, thinkCap){
     const generationConfig={temperature:0.1,maxOutputTokens:maxTokens};
+    if(thinkCap) generationConfig.thinkingConfig={thinkingBudget:thinkCap};
     const res = await fetch(
       'https://generativelanguage.googleapis.com/v1beta/models/' + _geminiModel + ':generateContent?key=' + _geminiKey,
       {
@@ -4044,18 +4117,19 @@ Rules:
   }
 
   try {
-    let parsed;
-    try {
-      parsed = await callGemini(2048); // grounded calls spend tokens digesting search results too
+    let parsed = cached;
+    if(!parsed) try {
+      parsed = await callGemini(2048, 1024); // grounded calls spend tokens digesting search results too
     } catch(e1){
       if(e1.message==='TRUNCATED' || e1.message.startsWith('NO_JSON')){
         if(lbl()) lbl().textContent='Retrying…';
         _aiCaption('Response was cut short — retrying');
-        parsed = await callGemini(4096); // let the retry's own error surface if this also fails
+        parsed = await callGemini(4096, null); // uncapped thinking; let this one's error surface
       } else {
         throw e1;
       }
     }
+    if(!cached) _aiCachePut(cacheKey, parsed);   // a forced re-ask lands here too, replacing it
 
     // Re-query fields after async (modal may have re-rendered)
     const pe=document.getElementById('meal-prot-input');
@@ -4087,6 +4161,9 @@ Rules:
       water: _mealWater,
       kcal: Number(parsed.calories_kcal)||0,
       carb: Number(parsed.carbs_g)||0,
+      fat: Number(parsed.fat_g)||0,
+      serving: parsed.serving_desc||'',
+      fromCache: !!cached,
       micros: _mealMicros,
       confidence: parsed.confidence,
       note: parsed.note||'',
@@ -4095,10 +4172,10 @@ Rules:
     _aiServings=1;
     renderAiResult();
 
-    const confColor=parsed.confidence==='high'?'var(--teal)':parsed.confidence==='medium'?'var(--amber)':'#6e6e6e';
-    const groundedTag=parsed.__grounded?'<i class="ti ti-world" style="font-size:11px;color:var(--teal)" title="Verified via web search"></i> ':'';
-    showStrip(`${groundedTag}<span style="color:${confColor};font-weight:700">${parsed.confidence} confidence</span> — ${parsed.note||''} &nbsp;·&nbsp; ${parsed.carbs_g}g carbs`, false);
-    showToast(parsed.protein_g+'g protein · '+parsed.calories_kcal+' kcal estimated'+(parsed.__grounded?' (web-verified)':''),'action');
+    // No success strip: the card above already carries the confidence, the source, the note
+    // and the carbs, and repeating them underneath was the clutter. The strip stays for errors.
+    if(strip()) strip().style.display='none';
+    showToast(parsed.protein_g+'g protein · '+parsed.calories_kcal+' kcal'+(cached?' (from your last lookup)':parsed.__grounded?' (web-verified)':' estimated'),'action');
 
   } catch(e) {
     let msg=e.message||'Something went wrong.';
@@ -4109,8 +4186,9 @@ Rules:
     if(msg.includes('Failed to fetch')||msg.includes('NetworkError')) msg='Network error — check your connection.';
     showStrip(msg,true);
   } finally {
+    _aiBusy(false);
     if(btn()){ btn().disabled=false; btn().style.opacity='1'; btn().style.background='color-mix(in srgb,var(--teal) 7%,transparent)'; }
-    if(lbl()) lbl().textContent='Analyse with Gemini';
+    if(lbl()) lbl().textContent='Estimate';
   }
 }
 
