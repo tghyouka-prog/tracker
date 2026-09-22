@@ -3803,7 +3803,7 @@ function logBasket(){
   const t=_basketTotals();
   const names=_basket.map(f=>f[0]);
   const name = names.length===1 ? names[0] : names[0]+' + '+(names.length-1)+' more';
-  const meal={id:Date.now(), name, prot:Math.round(t.prot), kcal:Math.round(t.kcal), carb:Math.round(t.carb),
+  const meal={id:Date.now(), name, src:'db', prot:Math.round(t.prot), kcal:Math.round(t.kcal), carb:Math.round(t.carb),
     micros:{fiber:+t.fiber.toFixed(1), sugar:+t.sugar.toFixed(1), sodium:Math.round(t.sodium), potassium:Math.round(t.potassium)}};
   if(t.water>0) meal.water=Math.round(t.water);
   logMeal(meal);
@@ -3971,7 +3971,11 @@ function renderAiResult(){
 function logAiResult(){
   if(!_aiResult) return;
   const v=_aiScaled();
-  const meal={id:Date.now(), name:v.name, prot:v.prot, kcal:v.kcal, carb:v.carb};
+  // Everything the card knew about how reliable this is, carried onto the entry — otherwise
+  // saving it later is a decision made blind.
+  const meal={id:Date.now(), name:v.name, prot:v.prot, kcal:v.kcal, carb:v.carb,
+    fat:v.fat||0, src:'ai', grounded:!!_aiResult.grounded,
+    conf:_aiResult.confidence||'', serving:_aiResult.serving||''};
   if(v.water>0) meal.water=v.water;
   if(v.micros && MICRO_KEYS.some(k=>v.micros[k]!=null)) meal.micros=v.micros;
   logMeal(meal);
@@ -4232,7 +4236,7 @@ function saveMealToLibrary(){
     hint.style.color='var(--red)';
     return;
   }
-  const meal={id:Date.now(),name,prot,kcal,carb};
+  const meal={id:Date.now(),name,prot,kcal,carb,src:'manual'};
   if(_mealMicros && MICRO_KEYS.some(k=>_mealMicros[k]!=null)){
     meal.micros={..._mealMicros};
     _mealMicros=null;
@@ -4263,7 +4267,23 @@ function saveLoggedMealToLibrary(ts){
   const m=(mealLog||[]).find(x=>x.ts===ts);
   if(!m) return;
   if(_inLibrary(m.name)){ showToast('Already saved','action'); return; }
+
+  // A saved food outranks the built-in table and gets logged in one tap from then on, so this
+  // is the last moment anything questions the numbers. Both prompts are overridable — you may
+  // well know better than the check does — but neither is silent.
+  const s=_mealSanity(m);
+  if(s&&s.bad){
+    if(!confirm('These numbers don\u2019t add up.\n\n'+s.msg+
+      '\n\nSaving it means logging this every time. Save anyway?')) return;
+  } else if(m.src==='ai' && !m.grounded){
+    if(!confirm('This was estimated, not looked up.\n\n'+
+      (m.serving?'Assumed: '+m.serving+'\n\n':'')+
+      'If the place publishes its own figures, those are worth a minute now \u2014 a saved food '+
+      'gets reused every time. Save the estimate anyway?')) return;
+  }
+
   mealLibrary.push({id:Date.now(), name:m.name, prot:m.prot||0, kcal:m.kcal||0, carb:m.carb||0,
+    fat:m.fat||0, src:m.src||'', grounded:!!m.grounded, serving:m.serving||'',
     micros:m.micros?{...m.micros}:undefined, water:m.water||0});
   save();
   renderMealLog();
@@ -4290,6 +4310,30 @@ function _countLibraryUse(name){
 function _libraryByUse(){
   return (mealLibrary||[]).slice().sort((a,b)=>
     ((b.n||0)-(a.n||0)) || ((b.last||b.id||0)-(a.last||a.id||0)));
+}
+
+// Works on any meal, whatever logged it, and needs no fat figure for its strongest test.
+// Returns null when there is nothing to check against.
+function _mealSanity(m){
+  if(!m) return null;
+  const P=+m.prot||0, C=+m.carb||0, F=+m.fat||0, K=+m.kcal||0;
+  if(!K && (P||C)) return {bad:true, msg:'It has macros but no calories.'};
+  if(!K) return null;
+  // Protein and carbs are 4 kcal/g and fat only adds, so this cannot legitimately be exceeded.
+  // A halved calorie figure and a mistyped one both land here.
+  const floor=4*P+4*C;
+  if(floor > K*1.05){
+    return {bad:true, msg:P+'g protein and '+C+'g carbs are already '+Math.round(floor)+
+      ' kcal on their own, but it says '+K.toLocaleString()+'. That cannot be right.'};
+  }
+  // Only when fat is known can the full Atwater sum be compared.
+  if(F>0){
+    const est=4*P+4*C+9*F;
+    const off=Math.round(Math.abs(est-K)/K*100);
+    if(off>20) return {bad:true, msg:'Its macros come to '+Math.round(est).toLocaleString()+
+      ' kcal but it says '+K.toLocaleString()+' \u2014 '+off+'% apart.'};
+  }
+  return {bad:false};
 }
 
 function logMeal(meal){
@@ -4345,7 +4389,7 @@ function renderMealLibrary(){
     <div style="display:flex;align-items:center;gap:.625rem;padding:6px 0;border-bottom:1px solid var(--b1)">
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:500;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</div>
-        <div style="font-size:11px;color:var(--t3)">${m.prot?m.prot+'g prot':''}${m.prot&&m.kcal?' · ':''}${m.kcal?m.kcal+' kcal':''}${m.n>1?' · logged '+m.n+'×':''}</div>
+        <div style="font-size:11px;color:var(--t3)">${(m.src==='ai'&&!m.grounded)?'<span style="color:var(--amber);font-weight:600">estimate</span> \u00b7 ':''}${m.prot?m.prot+'g prot':''}${m.prot&&m.kcal?' · ':''}${m.kcal?m.kcal+' kcal':''}${m.n>1?' · logged '+m.n+'×':''}</div>
       </div>
       <button onclick="logMeal(${JSON.stringify(m).replace(/"/g,'&quot;')})" style="padding:5px 12px;background:var(--teal);border:none;border-radius:8px;color:var(--focus-ac-ink);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:transform .08s cubic-bezier(.34,1.56,.64,1)" onmousedown="this.style.transform='scale(.92)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''" ontouchend="this.style.transform=''"><i class="ti ti-plus" style="font-size:11px"></i> Log</button>
       <button onclick="deleteMealFromLibrary(${m.id})" aria-label="Delete ${m.name} from library" style="width:36px;height:36px;background:var(--s2);border:1px solid var(--b2);border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t3);flex-shrink:0"><i class="ti ti-trash" style="font-size:12px" aria-hidden="true"></i></button>
