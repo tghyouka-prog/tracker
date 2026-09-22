@@ -1568,6 +1568,8 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .lift-shadow strong{color:var(--teal);font-weight:700}
 .lift-shadow-new{color:var(--t3);font-size:11.5px;background:transparent;border-left-color:var(--b2)}
 /* Double-progression instruction, sits under the "last time" line */
+.lift-pace{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);margin:2px 0 6px;padding:5px 10px;border-radius:6px;background:var(--s2);border-left:2px solid var(--focus-ac)}
+.lift-pace strong{color:var(--focus-ac);font-weight:700;font-variant-numeric:tabular-nums}
 .lift-target{display:flex;align-items:center;flex-wrap:wrap;gap:5px;font-size:12px;color:var(--t2);margin:-4px 0 8px 30px;padding:5px 10px;border-radius:6px;background:var(--s2);border-left:2px solid var(--focus-ac)}
 .lift-target strong{color:var(--focus-ac);font-weight:700}
 .lt-note{font-size:10.5px;color:var(--t3)}
@@ -6088,6 +6090,23 @@ function renderWorkoutStats(){
 // Marking an exercise complete — Hevy checks off each set; one row here is one exercise, so
 // the tick lives at that level.
 
+// The open session's type, for the handful of places where cardio means something different
+// from a lift rather than just a different unit.
+function _isCardioNow(){ return document.getElementById('sess-type-select')?.value==='Cardio'; }
+
+// Distance and duration are already being typed, so pace is free. Summed across rows so
+// intervals give a session pace rather than the first leg's.
+function _cardioPace(l){
+  const rows=_liftRows(l);
+  let km=0, min=0;
+  rows.forEach(r=>{ km+=parseFloat(r.kg)||0; min+=parseFloat(r.reps)||0; });
+  if(!(km>0)||!(min>0)) return null;
+  const per=min/km;
+  let m=Math.floor(per), s=Math.round((per-m)*60);
+  if(s===60){ m++; s=0; }
+  return {txt:m+':'+String(s).padStart(2,'0')+' /km', km:+km.toFixed(2), min:+min.toFixed(1)};
+}
+
 function renderLiftRows(){
   const el=document.getElementById('lift-rows');
   if(!el) return;
@@ -6096,7 +6115,7 @@ function renderLiftRows(){
     el.innerHTML='<div style="font-size:12px;color:var(--t3);padding:.25rem 0 .5rem">Select a session type above — exercises will pre-fill.</div>';
     return;
   }
-  const isCardio=document.getElementById('sess-type-select')?.value==='Cardio';
+  const isCardio=_isCardioNow();
   const wLbl=isCardio?'Distance':'Weight', wPh=isCardio?'km':'kg', wStep=isCardio?'0.1':'0.5';
   // "Top reps" not "Reps" — one row is one exercise, so this is the top set, not an average.
   const rLbl=isCardio?'Duration':'Top reps', rPh=isCardio?'min':'—';
@@ -6134,20 +6153,22 @@ function renderLiftRows(){
         <button class="lift-card-del" onclick="removeLiftRow(${i})" aria-label="Remove exercise ${i+1}"><i class="ti ti-x" style="font-size:13px" aria-hidden="true"></i></button>
       </div>
       ${shadowHtml}
-      <div class="set-head"><span>Set</span><span>Previous</span><span>${wPh==='km'?'km':'kg'}</span><span>Reps</span><span></span></div>
+      <div class="set-head"><span>${isCardio?'#':'Set'}</span><span>Previous</span><span>${wPh}</span><span>${isCardio?'min':'Reps'}</span><span></span></div>
       ${_liftRows(l).map((r,ri)=>`
       <div class="set-row${r.done?' is-done':''}">
         <span class="set-n">${ri+1}</span>
         <span class="set-prev">${prevSet(shadow,ri)}</span>
         <input class="set-in" type="number" inputmode="decimal" value="${r.kg}" placeholder="${prevSetKg(shadow,ri)}"
-          min="0" step="${wStep}" onchange="setRowVal(${i},${ri},'kg',this.value)" aria-label="Weight, set ${ri+1}">
+          min="0" step="${wStep}" onchange="setRowVal(${i},${ri},'kg',this.value)" aria-label="${isCardio?'Distance in km, leg':'Weight, set'} ${ri+1}">
         <input class="set-in" type="number" inputmode="numeric" value="${r.reps}" placeholder="${(!isCardio&&l._repRange)?l._repRange:'—'}"
-          min="0" onchange="setRowVal(${i},${ri},'reps',this.value)" aria-label="Reps, set ${ri+1}">
+          min="0" onchange="setRowVal(${i},${ri},'reps',this.value)" aria-label="${isCardio?'Duration in minutes, leg':'Reps, set'} ${ri+1}">
         <button class="set-tick${r.done?' on':''}" onclick="toggleSetDone(${i},${ri})" aria-pressed="${!!r.done}" aria-label="${r.done?'Mark set '+(ri+1)+' not done':'Mark set '+(ri+1)+' done'}"><i class="ti ti-check" aria-hidden="true"></i></button>
       </div>`).join('')}
+      ${(()=>{ if(!isCardio) return ''; const pc=_cardioPace(l);
+        return pc?`<div class="lift-pace"><i class="ti ti-stopwatch" style="font-size:12px" aria-hidden="true"></i><strong>${pc.txt}</strong><span class="lt-note">${pc.km}km in ${pc.min} min</span></div>`:''; })()}
       <div class="set-actions">
-        <button class="set-add" onclick="addSetRow(${i})"><i class="ti ti-plus" aria-hidden="true"></i>Add set</button>
-        ${_liftRows(l).length>1?`<button class="set-del" onclick="removeSetRow(${i},${_liftRows(l).length-1})" aria-label="Remove last set">Remove set</button>`:''}
+        <button class="set-add" onclick="addSetRow(${i})"><i class="ti ti-plus" aria-hidden="true"></i>Add ${isCardio?'leg':'set'}</button>
+        ${_liftRows(l).length>1?`<button class="set-del" onclick="removeSetRow(${i},${_liftRows(l).length-1})" aria-label="Remove last ${isCardio?'leg':'set'}">Remove ${isCardio?'leg':'set'}</button>`:''}
       </div>
     </div>`;}).join('');
   _initDraftWatch();
@@ -6206,7 +6227,7 @@ function toggleSetDone(i,ri){
   rows[ri].done=!rows[ri].done;
   _syncLiftSummary(l);
   renderLiftRows();
-  if(rows[ri].done){ try{ _autoRest(); if(navigator.vibrate) navigator.vibrate(10); }catch(e){} }
+  if(rows[ri].done){ try{ if(!_isCardioNow()) _autoRest(); if(navigator.vibrate) navigator.vibrate(10); }catch(e){} }
 }
 function addSetRow(i){
   const l=currentLifts[i]; if(!l) return;
@@ -6382,8 +6403,9 @@ function _liftVerdict(l){
   const pw=parseFloat(prev.match.weight), pr=parseFloat(prev.match.reps);
   const cw=parseFloat(l.weight), cr=parseFloat(l.reps);
   if(isNaN(cw)&&isNaN(cr)) return null;
-  if(!isNaN(cw)&&!isNaN(pw)&&cw>pw) return {cls:'up',txt:'↑ beat'};
-  if(!isNaN(cw)&&!isNaN(pw)&&cw<pw) return {cls:'down',txt:'↓ lighter'};
+  const car=_isCardioNow();
+  if(!isNaN(cw)&&!isNaN(pw)&&cw>pw) return {cls:'up',txt:car?'↑ further':'↑ beat'};
+  if(!isNaN(cw)&&!isNaN(pw)&&cw<pw) return {cls:'down',txt:car?'↓ shorter':'↓ lighter'};
   // same load (or load not comparable) — reps decide
   if(!isNaN(cr)&&!isNaN(pr)){
     if(cr>pr) return {cls:'up',txt:'↑ beat'};
@@ -6722,6 +6744,7 @@ function renderTrainHero(){
       <div class="trc-strip">
         <div class="trc-col"><div class="trc-val">${dist||'—'}${dist?'<span class="trc-u">km</span>':''}</div><span class="trc-lbl">Distance</span></div>
         <div class="trc-col"><div class="trc-val">${dur||'—'}${dur?'<span class="trc-u">min</span>':''}</div><span class="trc-lbl">Duration</span></div>
+        <div class="trc-col"><div class="trc-val">${(dist>0&&dur>0)?(()=>{const q=dur/dist;let m=Math.floor(q),s=Math.round((q-m)*60);if(s===60){m++;s=0;}return m+':'+String(s).padStart(2,'0');})():'—'}${(dist>0&&dur>0)?'<span class="trc-u">/km</span>':''}</div><span class="trc-lbl">Pace</span></div>
         <div class="trc-col"><div class="trc-val">${weekCount}<span class="trc-u">x</span></div><span class="trc-lbl">This week</span></div>
       </div>
     </div>`;
