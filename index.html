@@ -3726,7 +3726,11 @@ function _foodSearch(q){
     .map(m=>[m.name,'saved',m.kcal||0,m.prot||0,m.carb||0,
              (m.micros&&m.micros.fiber)||0,(m.micros&&m.micros.sugar)||0,
              (m.micros&&m.micros.sodium)||0,(m.micros&&m.micros.potassium)||0,m.water||0]);
-  const hit=mine.concat(FOOD_DB.filter(f=>f[0].toLowerCase().includes(s)));
+  // A saved food and a seeded row can carry the same name and different numbers. Showing both
+  // is worse than showing either: nothing distinguishes them at a glance. Yours survives.
+  const mineNames=new Set(mine.map(f=>String(f[0]).trim().toLowerCase()));
+  const hit=mine.concat(FOOD_DB.filter(f=>f[0].toLowerCase().includes(s)
+    && !mineNames.has(f[0].trim().toLowerCase())));
   // Whatever starts with the query is what you meant; the rest follow.
   hit.sort((a,b)=>{
     const ai=a[0].toLowerCase().startsWith(s)?0:1, bi=b[0].toLowerCase().startsWith(s)?0:1;
@@ -3746,6 +3750,10 @@ function renderFoodSearch(){
   if(!box||!list) return;
   const hits=_foodSearch(box.value);
   _searchHits=hits;
+  // Saved foods already rank first in these results, so keeping the saved list below them
+  // showed the same entry twice. It is the at-rest view; searching replaces it.
+  const wrap=document.getElementById('meal-library-section');
+  if(wrap) wrap.hidden = String(box.value||'').trim().length>0;
   if(!hits.length){ list.innerHTML=''; list.hidden=true; return; }
   list.hidden=false;
   list.innerHTML=hits.map((f,i)=>{
@@ -4266,9 +4274,28 @@ function _inLibrary(name){
   return !!n && (mealLibrary||[]).some(m=>String(m.name||'').trim().toLowerCase()===n);
 }
 
+// Every log is a vote for that saved food. Counted here because this is the one funnel every
+// path goes through — search, library, basket, AI and the manual form all end up here.
+function _countLibraryUse(name){
+  const n=String(name||'').trim().toLowerCase();
+  if(!n) return;
+  const m=(mealLibrary||[]).find(x=>String(x.name||'').trim().toLowerCase()===n);
+  if(!m) return;
+  m.n=(m.n||0)+1;
+  m.last=Date.now();
+}
+
+// Most-logged first, most-recent breaking ties. A brand new save has no count, so recency is
+// what keeps it from sinking to the bottom of a long list the moment it is created.
+function _libraryByUse(){
+  return (mealLibrary||[]).slice().sort((a,b)=>
+    ((b.n||0)-(a.n||0)) || ((b.last||b.id||0)-(a.last||a.id||0)));
+}
+
 function logMeal(meal){
   // Defensive: ensure meal has a stable timestamp id
   const entry={...meal, ts:Date.now()};
+  _countLibraryUse(meal.name);
   const protBefore=macros.prot;
   mealLog.push(entry);
   syncMacrosFromTimeline(); // recalculates everything including mealLog
@@ -4314,11 +4341,11 @@ function renderMealLibrary(){
     el.innerHTML='<div style="font-size:12px;color:var(--t3);padding:.25rem 0 .625rem">No saved meals yet — create one below.</div>';
     return;
   }
-  el.innerHTML=mealLibrary.map(m=>`
+  el.innerHTML=_libraryByUse().map(m=>`
     <div style="display:flex;align-items:center;gap:.625rem;padding:6px 0;border-bottom:1px solid var(--b1)">
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:500;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</div>
-        <div style="font-size:11px;color:var(--t3)">${m.prot?m.prot+'g prot':''}${m.prot&&m.kcal?' · ':''}${m.kcal?m.kcal+' kcal':''}</div>
+        <div style="font-size:11px;color:var(--t3)">${m.prot?m.prot+'g prot':''}${m.prot&&m.kcal?' · ':''}${m.kcal?m.kcal+' kcal':''}${m.n>1?' · logged '+m.n+'×':''}</div>
       </div>
       <button onclick="logMeal(${JSON.stringify(m).replace(/"/g,'&quot;')})" style="padding:5px 12px;background:var(--teal);border:none;border-radius:8px;color:var(--focus-ac-ink);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:transform .08s cubic-bezier(.34,1.56,.64,1)" onmousedown="this.style.transform='scale(.92)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''" ontouchend="this.style.transform=''"><i class="ti ti-plus" style="font-size:11px"></i> Log</button>
       <button onclick="deleteMealFromLibrary(${m.id})" aria-label="Delete ${m.name} from library" style="width:36px;height:36px;background:var(--s2);border:1px solid var(--b2);border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t3);flex-shrink:0"><i class="ti ti-trash" style="font-size:12px" aria-hidden="true"></i></button>
