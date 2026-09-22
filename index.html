@@ -1515,7 +1515,10 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .set-head span{text-align:center}
 .set-head span:nth-child(2){text-align:left}
 .set-row{display:grid;grid-template-columns:28px 1fr 1fr 1fr 36px;gap:8px;align-items:center;padding:4px 0}
-.set-n{font-size:13px;font-weight:700;color:var(--t2);text-align:center;font-variant-numeric:tabular-nums}
+.set-n{font-size:13px;font-weight:700;color:var(--t2);text-align:center;font-variant-numeric:tabular-nums;border:none;background:transparent;font-family:inherit;padding:6px 0;cursor:pointer;width:100%}
+.set-n.is-warm{color:var(--amber)}
+.set-row.is-warm .set-in,.set-row.is-warm .set-prev{opacity:.6}
+.set-hint{font-size:10.5px;line-height:1.5;color:var(--t3);padding:2px 2px 6px}
 .set-prev{font-size:11.5px;color:var(--t3);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .set-in{width:100%;min-width:0;font-size:17px;font-weight:700;color:var(--t1);background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-sm);padding:11px 2px;text-align:center;outline:none;font-family:inherit;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
 .set-in::-webkit-outer-spin-button,.set-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
@@ -6039,24 +6042,32 @@ function weeklySetsByMuscle(){
   // would credit you four sets of an exercise you have not started.
   (currentLifts||[]).forEach(l=>{
     const rows=Array.isArray(l.rows)?l.rows:null;
-    add(l.name, rows ? rows.filter(r=>r&&r.done).length : (parseInt(l.sets)||0));
+    add(l.name, rows ? rows.filter(r=>r&&r.done&&!r.warm).length : (parseInt(l.sets)||0));
   });
   return out;
 }
 
-// What this set looked like last time. The stored summary is one top set per exercise, so
-// until per-set history accumulates this shows that figure against every row rather than
-// inventing a per-set breakdown that was never recorded.
+// What this set looked like last time. Sessions store their per-set rows, so this is the real
+// row-for-row figure; the one-top-set fallback below is only for sessions logged before
+// per-set rows existed.
+// Working rows only. Otherwise last session's 40kg warm-up lines up against the row where
+// you actually pressed 85, which is worse than showing nothing.
+function _prevRow(m,ri){
+  if(!Array.isArray(m.rows)) return null;
+  return m.rows.filter(r=>r&&!r.warm)[ri]||null;
+}
 function prevSet(shadow,ri){
   if(!shadow||!shadow.match) return '—';
-  const m=shadow.match;
-  if(Array.isArray(m.rows)&&m.rows[ri]) return (m.rows[ri].kg||'—')+'×'+(m.rows[ri].reps||'—');
+  const m=shadow.match, r=_prevRow(m,ri);
+  if(r) return (r.kg||'—')+'×'+(r.reps||'—');
+  if(Array.isArray(m.rows)) return '—';
   return (m.weight?m.weight+'×'+(m.reps||'—'):'—');
 }
 function prevSetKg(shadow,ri){
   if(!shadow||!shadow.match) return '—';
-  const m=shadow.match;
-  if(Array.isArray(m.rows)&&m.rows[ri]) return m.rows[ri].kg||'—';
+  const m=shadow.match, r=_prevRow(m,ri);
+  if(r) return r.kg||'—';
+  if(Array.isArray(m.rows)) return '—';
   return m.weight||'—';
 }
 
@@ -6065,7 +6076,7 @@ function renderTrainSticky(){
   const bar=document.getElementById('train-sticky');
   if(!bar) return;
   const sel=document.getElementById('sess-type-select');
-  const ticked=(currentLifts||[]).reduce((a,l)=>a+((l.rows||[]).filter(r=>r&&r.done).length),0);
+  const ticked=(currentLifts||[]).reduce((a,l)=>a+((l.rows||[]).filter(r=>r&&r.done&&!r.warm).length),0);
   const anyData=(currentLifts||[]).some(l=>l.name&&(l.weight||l.reps));
   bar.hidden=!(sel&&sel.value&&anyData);
   if(bar.hidden) return;
@@ -6154,18 +6165,19 @@ function renderLiftRows(){
       </div>
       ${shadowHtml}
       <div class="set-head"><span>${isCardio?'#':'Set'}</span><span>Previous</span><span>${wPh}</span><span>${isCardio?'min':'Reps'}</span><span></span></div>
-      ${_liftRows(l).map((r,ri)=>`
-      <div class="set-row${r.done?' is-done':''}">
-        <span class="set-n">${ri+1}</span>
-        <span class="set-prev">${prevSet(shadow,ri)}</span>
-        <input class="set-in" type="number" inputmode="decimal" value="${r.kg}" placeholder="${prevSetKg(shadow,ri)}"
+      ${(()=>{ let wn=0; return _liftRows(l).map((r,ri)=>{ if(!r.warm) wn++; return `
+      <div class="set-row${r.done?' is-done':''}${r.warm?' is-warm':''}">
+        <button class="set-n${r.warm?' is-warm':''}" onclick="toggleWarmRow(${i},${ri})" title="${r.warm?'Warm-up — tap for a working set':'Working set — tap to mark it a warm-up'}" aria-label="Row ${ri+1}, ${r.warm?'warm-up, tap to make it a working set':'working set, tap to mark it a warm-up'}">${r.warm?'W':wn}</button>
+        <span class="set-prev">${r.warm?'—':prevSet(shadow,wn-1)}</span>
+        <input class="set-in" type="number" inputmode="decimal" value="${r.kg}" placeholder="${r.warm?'—':prevSetKg(shadow,wn-1)}"
           min="0" step="${wStep}" onchange="setRowVal(${i},${ri},'kg',this.value)" aria-label="${isCardio?'Distance in km, leg':'Weight, set'} ${ri+1}">
         <input class="set-in" type="number" inputmode="numeric" value="${r.reps}" placeholder="${(!isCardio&&l._repRange)?l._repRange:'—'}"
           min="0" onchange="setRowVal(${i},${ri},'reps',this.value)" aria-label="${isCardio?'Duration in minutes, leg':'Reps, set'} ${ri+1}">
         <button class="set-tick${r.done?' on':''}" onclick="toggleSetDone(${i},${ri})" aria-pressed="${!!r.done}" aria-label="${r.done?'Mark set '+(ri+1)+' not done':'Mark set '+(ri+1)+' done'}"><i class="ti ti-check" aria-hidden="true"></i></button>
-      </div>`).join('')}
+      </div>`; }).join(''); })()}
       ${(()=>{ if(!isCardio) return ''; const pc=_cardioPace(l);
         return pc?`<div class="lift-pace"><i class="ti ti-stopwatch" style="font-size:12px" aria-hidden="true"></i><strong>${pc.txt}</strong><span class="lt-note">${pc.km}km in ${pc.min} min</span></div>`:''; })()}
+      ${(i===0 && !currentLifts.some(x=>(x.rows||[]).some(r=>r&&r.warm)))?'<div class="set-hint">Tap a set number to mark it a warm-up — it stays logged but stops counting toward volume.</div>':''}
       <div class="set-actions">
         <button class="set-add" onclick="addSetRow(${i})"><i class="ti ti-plus" aria-hidden="true"></i>Add ${isCardio?'leg':'set'}</button>
         ${_liftRows(l).length>1?`<button class="set-del" onclick="removeSetRow(${i},${_liftRows(l).length-1})" aria-label="Remove last ${isCardio?'leg':'set'}">Remove ${isCardio?'leg':'set'}</button>`:''}
@@ -6197,8 +6209,10 @@ function _liftRows(l){
 
 // Top set drives progression, so it is the heaviest row, ties broken by reps. Sets counted are
 // the ones actually ticked; before anything is ticked, the rows carrying numbers stand in.
+// Warm-ups are skipped here, which is the whole mechanism: l.weight/l.reps feed the verdict,
+// PBs and progression, and l.sets is what weekly volume reads back out of a saved session.
 function _syncLiftSummary(l){
-  const rows=(l.rows||[]).filter(r=>r&&(r.kg!==''||r.reps!==''));
+  const rows=(l.rows||[]).filter(r=>r&&!r.warm&&(r.kg!==''||r.reps!==''));
   if(!rows.length){ l.weight=''; l.reps=''; l.sets=''; return; }
   let top=rows[0];
   rows.forEach(r=>{
@@ -6206,7 +6220,7 @@ function _syncLiftSummary(l){
     if(rk>tk || (rk===tk && (parseFloat(r.reps)||0)>(parseFloat(top.reps)||0))) top=r;
   });
   l.weight=top.kg; l.reps=top.reps;
-  const ticked=(l.rows||[]).filter(r=>r&&r.done).length;
+  const ticked=(l.rows||[]).filter(r=>r&&r.done&&!r.warm).length;
   l.sets=String(ticked||rows.length);
 }
 
@@ -6220,6 +6234,18 @@ function setRowVal(i,ri,field,v){
   renderWorkoutStats();
   _saveDraft();
 }
+// Hevy's gesture: the set number is the control. Nothing new in the 5-column grid, and a
+// warm-up is still logged — it just stops counting as work.
+function toggleWarmRow(i,ri){
+  const l=currentLifts[i]; if(!l) return;
+  const rows=_liftRows(l);
+  if(!rows[ri]) return;
+  rows[ri].warm=!rows[ri].warm;
+  _syncLiftSummary(l);
+  renderLiftRows();
+  _updateVerdict(i);
+}
+
 function toggleSetDone(i,ri){
   const l=currentLifts[i]; if(!l) return;
   const rows=_liftRows(l);
@@ -6227,7 +6253,8 @@ function toggleSetDone(i,ri){
   rows[ri].done=!rows[ri].done;
   _syncLiftSummary(l);
   renderLiftRows();
-  if(rows[ri].done){ try{ if(!_isCardioNow()) _autoRest(); if(navigator.vibrate) navigator.vibrate(10); }catch(e){} }
+  // A warm-up is not what the 2–3 minutes is for.
+  if(rows[ri].done){ try{ if(!_isCardioNow()){ if(rows[ri].warm){ if(!_rtInterval) startRestTimer(60); } else _autoRest(l); } if(navigator.vibrate) navigator.vibrate(10); }catch(e){} }
 }
 function addSetRow(i){
   const l=currentLifts[i]; if(!l) return;
@@ -6508,9 +6535,24 @@ function _updateVerdict(i){
 // Logging a set IS the moment rest starts — auto-start so it stops getting skipped when tired.
 // 120s is the middle of the programme's range (compounds 2–3 min, isolations 1–2 min); the
 // preset buttons still override, and an already-running timer is never restarted mid-rest.
-function _autoRest(){
-  if(_rtInterval) return;
-  startRestTimer(120);
+// The rep range is the proxy for compound-vs-isolation that is already in the data, and the
+// three results are the same 1:30 / 2:00 / 3:00 the presets offer — so an auto-start is only
+// pre-pressing one of them, and any of the three still overrides it mid-rest.
+// A lift with no range (swapped in, or added by hand) keeps the old flat 2:00.
+function _restForLift(l){
+  const m=String((l&&l._repRange)||'').match(/^(\d+)\s*-\s*(\d+)$/);
+  if(!m) return 120;
+  const hi=+m[2];
+  return hi<=10 ? 180 : hi>=15 ? 90 : 120;
+}
+
+function _autoRest(l){
+  const want=_restForLift(l);
+  // "Never restart mid-rest" still holds — but a 60s warm-up rest already running would
+  // otherwise swallow the 3 minutes the working set it precedes is the whole reason for.
+  // So: lengthen only, never reset to the same or less.
+  if(_rtInterval && _rtTotal>=want) return;
+  startRestTimer(want);
 }
 
 // Find the most recent logged instance of a given exercise (for the progressive-overload shadow)
