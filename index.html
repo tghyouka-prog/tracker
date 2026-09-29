@@ -3515,6 +3515,32 @@ function logBarcodeItem(){
   try{ closeMealLogger(); }catch(e){}
 }
 
+// Shared by both paths. 1280px on the long edge is enough to read a nutrition panel and small
+// enough to post; a raw phone photo is several MB of base64 and was going up untouched.
+const PHOTO_MAX_DIM=1280;
+function _downscaleDataUrl(dataUrl){
+  return new Promise(resolve=>{
+    try{
+      const img=new Image();
+      img.onload=()=>{
+        try{
+          let w=img.naturalWidth, h=img.naturalHeight;
+          if(!w||!h){ resolve(dataUrl); return; }
+          if(w>=h && w>PHOTO_MAX_DIM){ h=Math.round(h*PHOTO_MAX_DIM/w); w=PHOTO_MAX_DIM; }
+          else if(h>w && h>PHOTO_MAX_DIM){ w=Math.round(w*PHOTO_MAX_DIM/h); h=PHOTO_MAX_DIM; }
+          else { resolve(dataUrl); return; }          // already small enough, leave it alone
+          const c=document.createElement('canvas');
+          c.width=w; c.height=h;
+          c.getContext('2d').drawImage(img,0,0,w,h);
+          resolve(c.toDataURL('image/jpeg',0.85));
+        }catch(e){ resolve(dataUrl); }                // a failed resize must not lose the photo
+      };
+      img.onerror=()=>resolve(dataUrl);
+      img.src=dataUrl;
+    }catch(e){ resolve(dataUrl); }
+  });
+}
+
 function _capturePhotoFrame(){
   const video=document.getElementById('camera-live-video');
   const canvas=document.getElementById('camera-capture-canvas');
@@ -3549,7 +3575,8 @@ function handleCameraCapture(event){
   const file = event.target.files?.[0];
   if(!file) return;
   const reader  = new FileReader();
-  reader.onload = (e)=>_attachMealPhoto(e.target.result, file.type||'image/jpeg');
+  reader.onload = (e)=>_downscaleDataUrl(e.target.result)
+    .then(d=>_attachMealPhoto(d, d.startsWith('data:image/jpeg')?'image/jpeg':(file.type||'image/jpeg')));
   reader.readAsDataURL(file);
 }
 
@@ -3557,6 +3584,10 @@ function handleCameraCapture(event){
 // then dropped — storing it would be megabytes in localStorage. 112px at 0.6 quality is a few
 // KB, which is affordable given mealLog is cleared daily by resetDay().
 
+// These two are script-scoped `let`s, NOT window properties — reading them as
+// window._mealPhotoBase64 returns undefined and silently sends the request with no image.
+// That shipped once and was invisible for months: the preview, the toast and the answer all
+// looked right.
 function _attachMealPhoto(dataUrl, mime){
   _mealPhotoMime = mime || 'image/jpeg';
   _mealPhotoBase64 = dataUrl.split(',')[1];
@@ -3565,7 +3596,7 @@ function _attachMealPhoto(dataUrl, mime){
   if(img)     img.src = dataUrl;
   if(preview) preview.style.display = 'block';
   setTimeout(()=>document.getElementById('meal-desc-main')?.focus(), 120);
-  showToast('Photo attached — describe the portion for accuracy','action');
+  showToast('Photo attached — tap Estimate, or add a portion note first','action');
 }
 
 function clearMealPhoto(){
@@ -4030,7 +4061,9 @@ async function aiAnalyseMeal(force){
   const desc = ''; // desc is now merged into mainDesc
 
   // Helper — re-queries each time so stale refs after render() don't bite us
-  const photoDataPeek = ()=>!!window._mealPhotoBase64;
+  // Read the script-scoped binding the capture path actually writes. Going through window
+  // here silently dropped every photo — see the note above _attachMealPhoto.
+  const photoDataPeek = ()=>!!_mealPhotoBase64;
   const btn  = ()=>document.getElementById('ai-analyse-btn');
   const lbl  = ()=>document.getElementById('ai-btn-label');
   const strip= ()=>document.getElementById('ai-result-strip');
@@ -4045,7 +4078,8 @@ async function aiAnalyseMeal(force){
   };
 
   if(!_geminiKey){ showStrip('Add your Gemini API key in Settings → AI Food Analysis first.',true); return; }
-  if(!name){ showStrip('Enter a meal name above first.',true); return; }
+  // A photo of a labelled pack carries more than anything that would be typed about it.
+  if(!name && !photoDataPeek()){ showStrip('Describe the food, or take a photo of it.',true); return; }
 
   // Loading state — an indeterminate bar rather than a percentage, because a single fetch has
   // no measurable progress and a fake percentage would be a lie. The caption does change on a
@@ -4061,12 +4095,34 @@ async function aiAnalyseMeal(force){
   if(strip()) strip().style.display='none';
 
   // Check for photo data
-  const photoData = window._mealPhotoBase64 || null;
-  const photoMime = window._mealPhotoMime || 'image/jpeg';
+  const photoData = _mealPhotoBase64 || null;
+  const photoMime = _mealPhotoMime || 'image/jpeg';
+
+  // With a photo, identification comes first and everything else follows from what was read.
+  // Ranked by how much is actually known: a visible label beats a search, a search beats an
+  // estimate. Named explicitly because the model will not infer the ordering.
+  const photoBlock = photoData ? `A PHOTO IS ATTACHED. Work through it in this order:
+
+1. READ THE PACKAGING. Look for a brand name, product name, flavour/variant, and the pack size
+   or net weight. State what you read in the note, exactly as printed, so the user can see
+   whether you read it correctly.
+2. IF A NUTRITION PANEL IS VISIBLE, TRANSCRIBE IT. Those printed figures are the answer — do
+   not search, do not estimate, do not "adjust" them. Convert per-100g figures to the stated
+   serving or the whole pack, say which you used in serving_desc, and set confidence high.
+3. IF NO PANEL IS VISIBLE but you read a brand or product name, USE GOOGLE SEARCH for that exact
+   product. A photographed brand is a specific product, not a generic dish — treat it exactly
+   as if the user had typed the brand name.
+4. ONLY IF the photo shows unbranded, home-style or hawker food, judge portion size from the
+   image and estimate.
+
+The description below may be empty or vague. When it is, the photo is the whole input — do not
+fall back to a generic version of the dish because the text was thin.
+
+` : '';
 
   const prompt = `You are a precise nutritional analyst. Estimate the nutritional macros from the ${photoData?'photo and ':''}description provided.
 
-Food description: ${name}
+${photoBlock}Food description: ${name || '(none given \u2014 use the photo)'}
 
 SEARCH FIRST. If the description names anything findable — a restaurant, cafe, hawker stall, fast-food or kebab/burrito chain, a supermarket or packaged product, a brand, or a specific menu item — use Google Search and report the figures from the operator's OWN published nutrition page or the product's label. A chain's nutrition calculator or menu nutrition page is the best source; a reputable aggregator is second. Do not estimate a generic version of a dish that has published figures.
 
@@ -4074,7 +4130,7 @@ Estimate from typical preparation ONLY when the food is genuinely unbranded and 
 
 If the item is built to order (burrito, kebab, bowl, sandwich) and the description does not say which fillings, assume the chain's standard/default build, say so in the note, and set confidence to low — do not silently pick the smallest version.
 
-In the note, say where the number came from: the source if you searched, or "estimated, not found" if you did not.
+In the note, say where the number came from: what you read off the packaging, the source if you searched, or "estimated, not found" if you did neither.
 
 Respond with ONLY a single JSON object, no markdown, no backticks, no text before or after it:
 {"food":"<clean short dish name>","serving_desc":"<what ONE serving is, with an approximate weight, e.g. 1 regular 12-inch burrito, about 380 g>","protein_g":<number>,"calories_kcal":<number>,"carbs_g":<number>,"fat_g":<number>,"fiber_g":<number>,"sugar_g":<number>,"sodium_mg":<number>,"potassium_mg":<number>,"water_ml":<number>,"calcium_mg":<number>,"iron_mg":<number>,"magnesium_mg":<number>,"zinc_mg":<number>,"vitamin_c_mg":<number>,"vitamin_d_ug":<number>,"vitamin_b12_ug":<number>,"folate_ug":<number>,"confidence":"high|medium|low","note":"<one short sentence: key assumption, or the source if a specific product was found>"}
