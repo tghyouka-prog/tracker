@@ -400,6 +400,11 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .arc-sval{font-size:13px;font-weight:700;color:var(--t1);min-width:84px;text-align:center;font-variant-numeric:tabular-nums}
 .arc-sbtn{width:30px;height:30px;border-radius:50%;border:1px solid var(--b2);background:transparent;color:var(--t1);font-size:16px;font-weight:600;line-height:1;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
 .arc-sbtn:active{transform:scale(.9)}
+.arc-fix{display:flex;gap:6px;margin-bottom:.625rem}
+.arc-fix input{flex:1;min-width:0;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r-sm);padding:10px 11px;font-size:12.5px;color:var(--t1);font-family:inherit;outline:none}
+.arc-fix input:focus{border-color:var(--focus-ac)}
+.arc-fixb{flex-shrink:0;padding:0 16px;border-radius:var(--r-sm);border:1px solid var(--b2);background:var(--s2);color:var(--t1);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.arc-fixb:active{transform:scale(.96)}
 .arc-log{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;border-radius:var(--r-md);border:none;background:var(--focus-ac);color:var(--focus-ac-ink);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer}
 .arc-log:active{transform:scale(.98)}
 .ge-row{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.7rem 0;border-bottom:1px solid var(--b1)}
@@ -3554,7 +3559,7 @@ function _capturePhotoFrame(){
   canvas.getContext('2d').drawImage(video,0,0,w,h);
   const dataUrl=canvas.toDataURL('image/jpeg',0.85);
   closeCameraView();
-  _attachMealPhoto(dataUrl,'image/jpeg');
+  _attachMealPhoto(dataUrl,'image/jpeg',true);
 }
 
 function triggerCameraPicker(){
@@ -3576,7 +3581,7 @@ function handleCameraCapture(event){
   if(!file) return;
   const reader  = new FileReader();
   reader.onload = (e)=>_downscaleDataUrl(e.target.result)
-    .then(d=>_attachMealPhoto(d, d.startsWith('data:image/jpeg')?'image/jpeg':(file.type||'image/jpeg')));
+    .then(d=>_attachMealPhoto(d, d.startsWith('data:image/jpeg')?'image/jpeg':(file.type||'image/jpeg'), true));
   reader.readAsDataURL(file);
 }
 
@@ -3588,15 +3593,23 @@ function handleCameraCapture(event){
 // window._mealPhotoBase64 returns undefined and silently sends the request with no image.
 // That shipped once and was invisible for months: the preview, the toast and the answer all
 // looked right.
-function _attachMealPhoto(dataUrl, mime){
+function _attachMealPhoto(dataUrl, mime, auto){
   _mealPhotoMime = mime || 'image/jpeg';
   _mealPhotoBase64 = dataUrl.split(',')[1];
   const preview = document.getElementById('meal-photo-preview');
   const img     = document.getElementById('meal-photo-img');
   if(img)     img.src = dataUrl;
   if(preview) preview.style.display = 'block';
+
+  // Taking the picture is the whole intent — there is nothing to confirm. Without a key there
+  // is nothing to run, so it falls back to the old behaviour rather than erroring at you.
+  if(auto && _geminiKey){
+    showToast('Reading the photo…','action');
+    setTimeout(()=>{ try{ setMealTab('describe'); aiAnalyseMeal(); }catch(e){} }, 150);
+    return;
+  }
   setTimeout(()=>document.getElementById('meal-desc-main')?.focus(), 120);
-  showToast('Photo attached — tap Estimate, or add a portion note first','action');
+  showToast(_geminiKey?'Photo attached — tap Estimate':'Photo attached — add an API key in Settings to read it','action');
 }
 
 function clearMealPhoto(){
@@ -4009,8 +4022,30 @@ function renderAiResult(){
       <div class="arc-mcard m-carb"><i class="ti ti-bread" aria-hidden="true"></i><div class="arc-mc-l">Carbs</div><div class="arc-mc-v">${v.carb}g</div></div>
     </div>
     ${v.fat>0?`<div class="arc-fat">Fat ${v.fat}g \u2014 shown because the calorie check needs it; not tracked.</div>`:''}
+    <div class="arc-fix">
+      <input id="ai-fix-input" type="text" placeholder="Not right? Say what's off — larger portion, no skin, 2 pieces…"
+        onkeydown="if(event.key==='Enter')aiFixResult()" aria-label="Correct this result">
+      <button class="arc-fixb" onclick="aiFixResult()">Redo</button>
+    </div>
     <button class="arc-log" onclick="logAiResult()">Done</button>
   </div>`;
+}
+
+// Re-asks with the SAME photo plus what you said was wrong — strictly more to go on than the
+// first attempt had. The photo is still attached at this point; only closing the logger clears
+// it. Appended to the description rather than replacing it, so an earlier portion note is kept.
+function aiFixResult(){
+  const el=document.getElementById('ai-fix-input');
+  const t=(el&&el.value||'').trim();
+  if(!t) return;
+  const box=document.getElementById('meal-desc-main');
+  // Only join with a dash when there is something to join to \u2014 a photo with no typed
+  // description would otherwise be sent as "Food description: \u2014 correction: ...".
+  if(box){ const cur=(box.value||'').trim();
+    box.value = cur ? cur+' \u2014 correction: '+t : 'correction: '+t; }
+  _aiResult=null;
+  renderAiResult();
+  aiAnalyseMeal(true);   // force, so a corrected question never answers from the cache
 }
 
 function logAiResult(){
@@ -4129,6 +4164,8 @@ SEARCH FIRST. If the description names anything findable — a restaurant, cafe,
 Estimate from typical preparation ONLY when the food is genuinely unbranded and home-style (e.g. "two eggs on toast") or when a real search turns up nothing usable.
 
 If the item is built to order (burrito, kebab, bowl, sandwich) and the description does not say which fillings, assume the chain's standard/default build, say so in the note, and set confidence to low — do not silently pick the smallest version.
+
+If the description contains "correction:", the user has seen your previous answer and is telling you what was wrong with it. Treat that as authoritative — it overrides your own reading of the photo and any assumption you made about portion size.
 
 In the note, say where the number came from: what you read off the packaging, the source if you searched, or "estimated, not found" if you did neither.
 
