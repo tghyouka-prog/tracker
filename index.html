@@ -5025,9 +5025,10 @@ const TIMELINE={
     {phase:'Sleep',t:'~22:30',label:'Sleep — blackout, earplugs, DND',sub:'Target 7.5–8 hrs',type:'sleep',tier:'foundation'},
   ],
   ns1:[
-    {phase:'Afternoon',t:'+10 min',label:'Fast carb',sub:'Banana, rice cakes, white toast, honey, dates or juice — any fast-digesting carb. Avoid fibre.',type:'food',prot:0,kcal:100,tier:'default'},
-    {phase:'Pre-shift gym',t:'~16:00',label:'Gym — Delts + Arms',sub:'Cycle day 2. Lowest CNS demand, which is why it sits on the shift day. 16:00 holds: training earlier would eat the afternoon sleep this shift runs on.',type:'action',tier:'foundation'},
-    {phase:'Pre-shift gym',t:'~17:30',label:'Buy food + post-gym flask',sub:'Grab your mid-shift meal after the gym. Protein flask on the way out.',type:'food',tier:'default'},
+    {phase:'Morning gym',t:'~10:00',label:'Gym — Delts + Arms',sub:'Cycle day 2. Inside ActiveSG off-peak on weekdays (last entry 15:30), before the afternoon nap. Lowest CNS demand, which is why it sits on the shift day.',type:'action',tier:'foundation'},
+    {phase:'Morning gym',t:'Post-gym',label:'Post-gym flask',sub:'Protein flask on the way out.',type:'food',tier:'default'},
+    {phase:'Afternoon',t:'After nap',label:'Fast carb',sub:'Banana, rice cakes, white toast, honey, dates or juice — any fast-digesting carb. Avoid fibre.',type:'food',prot:0,kcal:100,tier:'default'},
+    {phase:'Pre-shift',t:'~17:30',label:'Buy food',sub:'Grab your mid-shift meal on the way in.',type:'food',tier:'default'},
     {phase:'Night shift',t:'~01:00',label:'Mid-shift meal',sub:_SUB_MIDMEAL,type:'food',prot:50,kcal:700,tier:'foundation'},
     {phase:'Wind-down',t:'On arrival',label:'Get the room sleep-ready',sub:'Blue-blocks on before you exit (most important action of the morning) · aircon to 19–20°C · blackout, mask, earplugs, DND.',type:'action',tier:'foundation'},
     {phase:'Wind-down',t:'Before sleep',label:'Sleep stack + vault',sub:'Magnesium Glycinate + 0.5mg Melatonin (post-night days only) · '+_SUB_VAULT,type:'supp',prot:22,kcal:295,tier:'foundation'},
@@ -5105,11 +5106,11 @@ const CYCLE_DNOO = [
    sub:'No gym today. Rest and recover.'},
   {label:'Day 2',type:'n',typeLabel:'Night',gym:'Delts + Arms',session:'Mon-Push',
    short:'Delts + Arms pre-shift · Cables only · Blue-blocks at 08:30',
-   mission:'Night shift. Afternoon wake → 90-min nap → gym (Delts + Arms) → flask → mid-shift takeout → blue-blocks 08:30.',
+   mission:'Night shift. Morning gym (Delts + Arms, off-peak) → flask → 90-min nap → mid-shift takeout → blue-blocks 08:30.',
    sub:'Cable/machine only — lowest CNS cost before a 12h night.'},
   {label:'Day 3',type:'o',typeLabel:'Off',gym:'Lower + Delts',session:'Fri-Lower',
    short:'Lower + Delts · Legs at maintenance · Deload check',
-   mission:'Off day. Post-night wind-down first, then afternoon gym — Lower + Delts. Delts lead: legs are maintenance, so the priority muscle gets the fresh slot.',
+   mission:'Off day. Post-night wind-down first, then evening gym — Lower + Delts. Delts lead: legs are maintenance, so the priority muscle gets the fresh slot.',
    sub:'Bridge mode activates if you just finished Night shift.'},
   {label:'Day 4',type:'o',typeLabel:'Off',gym:'Upper · Chest + Back + Zone 2',session:'Thu-Upper',
    short:'Upper — incline 30° · Zone 2 30 min post-gym',
@@ -5768,7 +5769,7 @@ function getContextualHint(){
   }
   if(shift==='ns1'||shift==='ns2'||shift==='xns'){
     const postShift=8*60+30;
-    if(mins<14*60) return `Afternoon wake window`;
+    if(mins<14*60) return (shift==='ns1' && mins>=8*60+30) ? `Morning gym in off-peak, then nap before the shift` : `Afternoon wake window`;
     if(mins<20*60+30) return `Shift starts in ${fmt(20*60+30-mins)}`;
     if(mins>20*60+30&&mins<24*60+60) return `Mid-shift meal in ${fmt((24*60+60)-mins+20*60+30)}`;
     if(mins<postShift) return `Post-shift protocol in ${fmt(postShift-mins)}`;
@@ -5868,7 +5869,10 @@ const SESSION_DEFAULTS={
     // where being fresh actually pays (a stronger press = more load over time = more chest),
     // and the laterals lose nothing by following it.
     'Thu-Upper':[{name:'Incline Smith Press',sets:'4',rep:'6-10'},{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Lat Pulldown',sets:'4',rep:'6-10'},{name:'Chest-Supported Row',sets:'3',rep:'8-12'},{name:'Single-Arm Reverse Pec Deck',sets:'3',rep:'12-20'},{name:'Incline DB Curl',sets:'2',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'}],
-    // DNOO cycle day 3 — first off day, best recovered, so leg work lives here. Delts still lead:
+    // DNOO cycle day 3 — the post-night off day, the LEAST recovered in the cycle, trained in
+    // the evening after the recovery sleep (peak hours). Lower sits here rather than Upper because
+    // it is shorter and mostly machines/dumbbells, so it tolerates both a tired day and a crowd
+    // better than the cable-heavy 25-set Upper session, which gets day 4. Delts still lead:
     // legs run at maintenance (9 sets), so the priority muscle gets the fresh slot. Core is
     // anti-rotation/anti-flexion only — no loaded side flexion, which is the one thing that can
     // actually widen the waist. 20 sets.
