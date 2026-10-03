@@ -2344,7 +2344,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
             <option value="Tue-Legs">Legs — Delts/arms + legs</option>
           </optgroup>
           <optgroup label="Conditioning">
-            <option value="Cardio">Cardio — Zone 2 (after Session B)</option>
+            <option value="Cardio">Cardio — Zone 2 (Day 3, outdoors)</option>
           </optgroup>
           <optgroup label="Legacy PPL A/B">
             <option value="Push A">Push A — Chest</option>
@@ -2995,7 +2995,7 @@ const RULES=[
   {icon:'ti-barbell',col:'b',title:'Pull session only — Night Shift 1',body:'Lowest CNS demand for the pre-shift slot. Push or Legs here is a recovery mistake.',shifts:['ns1']},
   {icon:'ti-run',col:'t',title:'Zone 2 walk only — no lifting today',body:'CNS is in the deep trench. Resistance training today is counterproductive.',shifts:['ns2']},
   {icon:'ti-clock',col:'p',title:'Magnesium 60–90 min before sleep',body:'Not at the vault — take it 60 min before. Peak plasma concentration takes ~1 hour.',shifts:'all'},
-  {icon:'ti-heartbeat',col:'t',title:'Zone 2 cardio — 30 min after Session B (Day 4)',body:'Brisk walk or easy cycle at 120–140 BPM immediately after Session B. Conversational pace. Skipping this is the one missed cardiovascular adaptation per cycle.',shifts:['off']},
+  {icon:'ti-heartbeat',col:'t',title:'Zone 2 cardio — 30–45 min outdoors on Day 3',body:'After you wake from the post-night sleep. Brisk walk or easy run at 120–140 BPM, conversational pace. Daylight also helps reset your body clock after the night. Skipping this is the one missed cardiovascular adaptation per cycle.',shifts:['off']},
   {icon:'ti-sun',col:'b',title:'Outdoor light within 30 min of waking',body:'Anchors cortisol peak for the day. Most important circadian action on day shift and off days.',shifts:['ds','off']},
   {icon:'ti-pencil',col:'a',title:'Log today\'s training session',body:'Date · exercise · weight · sets · reps. Without a log the program drifts to maintenance in 4–6 weeks.',shifts:['ns1','off']},
   {icon:'ti-refresh',col:'a',title:'Deload week — reduce all weights 40–50%',body:'Keep every set and rep. Volume reduction, not rest. Early trigger: 2 consecutive drops in primary lifts.',shifts:'all',deloadOnly:true},
@@ -5047,7 +5047,7 @@ const TIMELINE={
     {phase:'Gym',t:'Pre-gym',label:'10-min warm-up',sub:"Dead hang × 3 → Cat-Cow → World's Greatest Stretch → 90/90 → Activation",type:'action',tier:'default'},
     {phase:'Gym',t:'Session',label:'Training session — log it',sub:'V-taper priority: side delts → lats/back width → arms → chest/rear delts. Legs at maintenance.',type:'action',tier:'foundation'},
     {phase:'Gym',t:'Post-gym',label:'Post-gym flask',sub:_SUB_POSTGYM,type:'food',prot:50,kcal:350,tier:'foundation'},
-    {phase:'Zone 2',t:'Post-gym',label:'Zone 2 cardio — 30 min (on a rest day)',sub:'Brisk walk or easy cycle. HR 120–140 BPM. Conversational pace.',type:'action',tier:'optional'},
+    {phase:'Zone 2',t:'Post-gym',label:'Zone 2 — only if you missed it on Day 3',sub:'30 min brisk walk or easy cycle, HR 120–140, conversational pace. Otherwise skip it: Zone 2 lives on Day 3 now.',type:'action',tier:'optional'},
     {phase:'Mid-day',t:'Midday',label:'Mid-shift meal',sub:_SUB_MIDMEAL,type:'food',prot:50,kcal:700,tier:'foundation'},
     {phase:'Pre-sleep',t:'~22:00',label:'Vault',sub:_SUB_VAULT,type:'food',prot:22,kcal:295,tier:'default'},
     {phase:'Sleep',t:'~22:30',label:'Sleep — blackout, earplugs, DND',sub:'Target 7.5–8 hrs',type:'sleep',tier:'foundation'},
@@ -5058,6 +5058,7 @@ const TIMELINE={
     {phase:'Wind-down',t:'Before sleep',label:'Sleep stack + vault',sub:'Magnesium Glycinate + 0.5mg Melatonin (post-night only) · '+_SUB_VAULT,type:'supp',prot:22,kcal:295,tier:'foundation'},
     {phase:'Sleep',t:'Then sleep',label:'Sleep',sub:'DND release ~18:00. Collapse and rest — off-day starts when you wake.',type:'sleep',tier:'foundation'},
     {phase:'After sleep',t:'+20 min',label:'Fast carb',sub:'Banana, oats, white toast, honey — light carb anchor post-sleep.',type:'food',prot:4,kcal:150,tier:'default'},
+    {phase:'Evening',t:'Before dark',label:'Zone 2 outdoors — 30–45 min',sub:'Easy, conversational pace (HR 120–140). Outdoors, so no crowds and no gym entry. Daylight helps reset your body clock after the night.',type:'action',tier:'optional'},
     {phase:'Evening',t:'~19:30',label:'Mid-shift meal',sub:_SUB_MIDMEAL,type:'food',prot:50,kcal:700,tier:'foundation'},
   ],
 
@@ -5107,14 +5108,14 @@ const CYCLE_DNOO = [
    short:'Session A · morning, off-peak · Blue-blocks at 08:30',
    mission:'Night shift. Morning gym (Session A, off-peak) → flask → 90-min nap → mid-shift takeout → blue-blocks 08:30.',
    sub:'Mostly machines and cables — low CNS cost before a 12h night.'},
-  {label:'Day 3',type:'o',typeLabel:'Off',gym:'Rest',session:null,
-   short:'Post-night recovery · No gym',
-   mission:'Off day. Post-night recovery — sleep first, no gym. You wake after off-peak closes and the evening is peak hours, so Sessions A and B carry the cycle.',
+  {label:'Day 3',type:'o',typeLabel:'Off',gym:'Zone 2 (outdoors)',session:null,
+   short:'Post-night recovery · No gym · Zone 2 outdoors',
+   mission:'Off day. Post-night recovery — sleep first, no gym. You wake after off-peak closes and the evening is peak hours, so Sessions A and B carry the cycle. Zone 2 outdoors after you wake: no crowds, and the daylight helps reset your body clock.',
    sub:'Bridge mode activates if you just finished Night shift.'},
-  {label:'Day 4',type:'o',typeLabel:'Off',gym:'Session B + Zone 2',session:'Thu-Upper',
-   short:'Session B · morning, off-peak · incline 30° · Zone 2 after',
-   mission:'Off day. Session B — Chest, Back, Delts → Zone 2 cardio immediately after. Incline press at 30° and cable fly low-to-high: both bias the clavicular (upper) pec instead of leaking into front delts.',
-   sub:'Longest session — you are fully recovered. Zone 2 does not compromise it at correct intensity.'},
+  {label:'Day 4',type:'o',typeLabel:'Off',gym:'Session B',session:'Thu-Upper',
+   short:'Session B · morning, off-peak · incline 30°',
+   mission:'Off day. Session B — Chest, Back, Delts. Incline press at 30° and cable fly low-to-high: both bias the clavicular (upper) pec instead of leaking into front delts.',
+   sub:'Longest session — you are fully recovered.'},
 ];
 
 const CYCLE_TO_SHIFT_DNOO = ['ds','ns1','off','off'];
