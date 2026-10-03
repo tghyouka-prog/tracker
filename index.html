@@ -2335,16 +2335,16 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
         <select id="sess-type-select" onchange="updateSessType();renderSessChips()" class="sel-input" style="display:none">
           <option value="">— pick session —</option>
           <optgroup label="DNOO cycle">
-            <option value="Mon-Push">Delts + Arms — cycle day 2, pre-shift</option>
-            <option value="Fri-Lower">Lower + Delts — cycle day 3, off</option>
-            <option value="Thu-Upper">Upper · Chest + Back — cycle day 4, off</option>
+            <option value="Mon-Push">A · Delts, Arms, Legs — cycle day 2, morning</option>
+            <option value="Thu-Upper">B · Chest, Back, Delts — cycle day 4, morning</option>
+            <option value="Fri-Lower">Lower + Delts — retired (old cycle day 3)</option>
           </optgroup>
           <optgroup label="Other">
             <option value="Sun-Pull">Pull — Lat width + triceps</option>
             <option value="Tue-Legs">Legs — Delts/arms + legs</option>
           </optgroup>
           <optgroup label="Conditioning">
-            <option value="Cardio">Cardio — Zone 2 (Wed/Sat)</option>
+            <option value="Cardio">Cardio — Zone 2 (after Session B)</option>
           </optgroup>
           <optgroup label="Legacy PPL A/B">
             <option value="Push A">Push A — Chest</option>
@@ -2995,7 +2995,7 @@ const RULES=[
   {icon:'ti-barbell',col:'b',title:'Pull session only — Night Shift 1',body:'Lowest CNS demand for the pre-shift slot. Push or Legs here is a recovery mistake.',shifts:['ns1']},
   {icon:'ti-run',col:'t',title:'Zone 2 walk only — no lifting today',body:'CNS is in the deep trench. Resistance training today is counterproductive.',shifts:['ns2']},
   {icon:'ti-clock',col:'p',title:'Magnesium 60–90 min before sleep',body:'Not at the vault — take it 60 min before. Peak plasma concentration takes ~1 hour.',shifts:'all'},
-  {icon:'ti-heartbeat',col:'t',title:'Zone 2 cardio — 30 min post-Push session (Day 5)',body:'Brisk walk or easy cycle at 120–140 BPM immediately after Push B. Conversational pace. Skipping this is the one missed cardiovascular adaptation per cycle.',shifts:['off']},
+  {icon:'ti-heartbeat',col:'t',title:'Zone 2 cardio — 30 min after Session B (Day 4)',body:'Brisk walk or easy cycle at 120–140 BPM immediately after Session B. Conversational pace. Skipping this is the one missed cardiovascular adaptation per cycle.',shifts:['off']},
   {icon:'ti-sun',col:'b',title:'Outdoor light within 30 min of waking',body:'Anchors cortisol peak for the day. Most important circadian action on day shift and off days.',shifts:['ds','off']},
   {icon:'ti-pencil',col:'a',title:'Log today\'s training session',body:'Date · exercise · weight · sets · reps. Without a log the program drifts to maintenance in 4–6 weeks.',shifts:['ns1','off']},
   {icon:'ti-refresh',col:'a',title:'Deload week — reduce all weights 40–50%',body:'Keep every set and rep. Volume reduction, not rest. Early trigger: 2 consecutive drops in primary lifts.',shifts:'all',deloadOnly:true},
@@ -5025,7 +5025,7 @@ const TIMELINE={
     {phase:'Sleep',t:'~22:30',label:'Sleep — blackout, earplugs, DND',sub:'Target 7.5–8 hrs',type:'sleep',tier:'foundation'},
   ],
   ns1:[
-    {phase:'Morning gym',t:'~10:00',label:'Gym — Delts + Arms',sub:'Cycle day 2. Inside ActiveSG off-peak on weekdays (last entry 15:30), before the afternoon nap. Lowest CNS demand, which is why it sits on the shift day.',type:'action',tier:'foundation'},
+    {phase:'Morning gym',t:'~10:00',label:'Gym — Session A',sub:'Cycle day 2. Inside ActiveSG off-peak on weekdays (last entry 15:30), before the afternoon nap. Mostly machines and cables, which is why it sits on the shift day.',type:'action',tier:'foundation'},
     {phase:'Morning gym',t:'Post-gym',label:'Post-gym flask',sub:'Protein flask on the way out.',type:'food',tier:'default'},
     {phase:'Afternoon',t:'After nap',label:'Fast carb',sub:'Banana, rice cakes, white toast, honey, dates or juice — any fast-digesting carb. Avoid fibre.',type:'food',prot:0,kcal:100,tier:'default'},
     {phase:'Pre-shift',t:'~17:30',label:'Buy food',sub:'Grab your mid-shift meal on the way in.',type:'food',tier:'default'},
@@ -5058,7 +5058,6 @@ const TIMELINE={
     {phase:'Wind-down',t:'Before sleep',label:'Sleep stack + vault',sub:'Magnesium Glycinate + 0.5mg Melatonin (post-night only) · '+_SUB_VAULT,type:'supp',prot:22,kcal:295,tier:'foundation'},
     {phase:'Sleep',t:'Then sleep',label:'Sleep',sub:'DND release ~18:00. Collapse and rest — off-day starts when you wake.',type:'sleep',tier:'foundation'},
     {phase:'After sleep',t:'+20 min',label:'Fast carb',sub:'Banana, oats, white toast, honey — light carb anchor post-sleep.',type:'food',prot:4,kcal:150,tier:'default'},
-    {phase:'Evening',t:'~18:30',label:'Training session — if energy allows',sub:'Skip if sleep was poor — the next off day takes it.',type:'action',tier:'optional'},
     {phase:'Evening',t:'~19:30',label:'Mid-shift meal',sub:_SUB_MIDMEAL,type:'food',prot:50,kcal:700,tier:'foundation'},
   ],
 
@@ -5104,17 +5103,17 @@ const CYCLE_DNOO = [
    short:'No gym · Vault at 22:00 · Sleep by 23:00',
    mission:'Day shift. Morning light → transporter → takeout + supps → 09:30 PM Mag → vault → sleep.',
    sub:'No gym today. Rest and recover.'},
-  {label:'Day 2',type:'n',typeLabel:'Night',gym:'Delts + Arms',session:'Mon-Push',
-   short:'Delts + Arms pre-shift · Cables only · Blue-blocks at 08:30',
-   mission:'Night shift. Morning gym (Delts + Arms, off-peak) → flask → 90-min nap → mid-shift takeout → blue-blocks 08:30.',
-   sub:'Cable/machine only — lowest CNS cost before a 12h night.'},
-  {label:'Day 3',type:'o',typeLabel:'Off',gym:'Lower + Delts',session:'Fri-Lower',
-   short:'Lower + Delts · Legs at maintenance · Deload check',
-   mission:'Off day. Post-night wind-down first, then evening gym — Lower + Delts. Delts lead: legs are maintenance, so the priority muscle gets the fresh slot.',
+  {label:'Day 2',type:'n',typeLabel:'Night',gym:'Session A',session:'Mon-Push',
+   short:'Session A · morning, off-peak · Blue-blocks at 08:30',
+   mission:'Night shift. Morning gym (Session A, off-peak) → flask → 90-min nap → mid-shift takeout → blue-blocks 08:30.',
+   sub:'Mostly machines and cables — low CNS cost before a 12h night.'},
+  {label:'Day 3',type:'o',typeLabel:'Off',gym:'Rest',session:null,
+   short:'Post-night recovery · No gym',
+   mission:'Off day. Post-night recovery — sleep first, no gym. You wake after off-peak closes and the evening is peak hours, so Sessions A and B carry the cycle.',
    sub:'Bridge mode activates if you just finished Night shift.'},
-  {label:'Day 4',type:'o',typeLabel:'Off',gym:'Upper · Chest + Back + Zone 2',session:'Thu-Upper',
-   short:'Upper — incline 30° · Zone 2 30 min post-gym',
-   mission:'Off day. Upper — Chest + Back → Zone 2 cardio immediately after. Incline press at 30° and cable fly low-to-high: both bias the clavicular (upper) pec instead of leaking into front delts.',
+  {label:'Day 4',type:'o',typeLabel:'Off',gym:'Session B + Zone 2',session:'Thu-Upper',
+   short:'Session B · morning, off-peak · incline 30° · Zone 2 after',
+   mission:'Off day. Session B — Chest, Back, Delts → Zone 2 cardio immediately after. Incline press at 30° and cable fly low-to-high: both bias the clavicular (upper) pec instead of leaking into front delts.',
    sub:'Longest session — you are fully recovered. Zone 2 does not compromise it at correct intensity.'},
 ];
 
@@ -5768,12 +5767,18 @@ function getContextualHint(){
     return 'Vault + sleep window now';
   }
   if(shift==='ns1'||shift==='ns2'||shift==='xns'){
-    const postShift=8*60+30;
-    if(mins<14*60) return (shift==='ns1' && mins>=8*60+30) ? `Morning gym in off-peak, then nap before the shift` : `Afternoon wake window`;
-    if(mins<20*60+30) return `Shift starts in ${fmt(20*60+30-mins)}`;
-    if(mins>20*60+30&&mins<24*60+60) return `Mid-shift meal in ${fmt((24*60+60)-mins+20*60+30)}`;
-    if(mins<postShift) return `Post-shift protocol in ${fmt(postShift-mins)}`;
-    return 'Blue-blocks + Mag + Vault now';
+    // Shift 20:30–08:30, mid-shift meal ~01:00. `shift` only changes when picked, so a night
+    // setting between midnight and 08:30 means on shift — those hours come first. The old order
+    // let the 14:00 check swallow them ("Afternoon wake window" at 02:00, at work), and the meal
+    // countdown added an extra 20:30 ("24h 30m" at 21:00).
+    const start=20*60+30, end=8*60+30, meal=60;
+    if(mins>=start) return `Mid-shift meal in ${fmt(24*60-mins+meal)}`;
+    if(mins<meal)   return `Mid-shift meal in ${fmt(meal-mins)}`;
+    if(mins<end)    return `Post-shift protocol in ${fmt(end-mins)}`;
+    // ns1 follows a normal night's sleep, so its morning holds Session A. ns2 and xns follow a
+    // night shift and genuinely open with sleep.
+    if(mins<14*60)  return shift==='ns1' ? `Session A in off-peak, then nap before the shift` : `Afternoon wake window`;
+    return `Shift starts in ${fmt(start-mins)}`;
   }
   if(shift==='off'||shift==='leave'){
     if(mins<7*60) return 'Rest day — no shift pressure';
@@ -5858,7 +5863,9 @@ const SESSION_DEFAULTS={
     // at the stretched-elbow start, which grows the DISTAL arm. Incline extends the shoulder,
     // lengthening the long head, which grows the PROXIMAL arm. Running both covers regions
     // either alone would miss; preacher takes the larger share by preference.
-    'Mon-Push':[{name:'Seated DB Shoulder Press',sets:'3',rep:'6-10'},{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Cable Reverse Fly',sets:'3',rep:'12-20'},{name:'Preacher Curl',sets:'3',rep:'10-15'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'},{name:'Pallof Press',sets:'2',rep:'10-15'}],
+    // SESSION A (cycle day 2, morning, off-peak). Absorbed the retired day-3 leg work, since
+    // that day no longer trains. 25 sets.
+    'Mon-Push':[{name:'Seated DB Shoulder Press',sets:'3',rep:'6-10'},{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Leg Press',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Cable Reverse Fly',sets:'3',rep:'12-20'},{name:'Preacher Curl',sets:'3',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'3',rep:'10-15'},{name:'Pallof Press',sets:'2',rep:'10-15'}],
     'Tue-Legs':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Face Pull',sets:'3',rep:'12-20'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Leg Press',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Standing Calf Raise',sets:'2',rep:'10-15'}],
     // DNOO cycle day 4 — second off day, fully recovered, so the longest session. This is the
     // taper session. Incline press at 30° (peak clavicular pec EMG; 45° leaks into front delts,
@@ -5868,11 +5875,12 @@ const SESSION_DEFAULTS={
     // effect from order — only strength favours going first. So the compound takes the slot
     // where being fresh actually pays (a stronger press = more load over time = more chest),
     // and the laterals lose nothing by following it.
-    'Thu-Upper':[{name:'Incline Smith Press',sets:'4',rep:'6-10'},{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Lat Pulldown',sets:'4',rep:'6-10'},{name:'Chest-Supported Row',sets:'3',rep:'8-12'},{name:'Single-Arm Reverse Pec Deck',sets:'3',rep:'12-20'},{name:'Incline DB Curl',sets:'2',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'}],
-    // DNOO cycle day 3 — the post-night off day, the LEAST recovered in the cycle, trained in
-    // the evening after the recovery sleep (peak hours). Lower sits here rather than Upper because
-    // it is shorter and mostly machines/dumbbells, so it tolerates both a tired day and a crowd
-    // better than the cable-heavy 25-set Upper session, which gets day 4. Delts still lead:
+    // SESSION B (cycle day 4, morning, off-peak). DB laterals here and cable in A, so the two
+    // weekly lateral exposures don't both queue for the same cable stack. 25 sets.
+    'Thu-Upper':[{name:'Incline Smith Press',sets:'4',rep:'6-10'},{name:'DB Lateral Raise',sets:'4',rep:'12-20'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Lat Pulldown',sets:'3',rep:'6-10'},{name:'Chest-Supported Row',sets:'3',rep:'8-12'},{name:'Incline DB Curl',sets:'3',rep:'10-15'},{name:'Single-Arm Reverse Pec Deck',sets:'3',rep:'12-20'},{name:'45° Back Extension',sets:'2',rep:'10-15'}],
+    // RETIRED from the rotation (Oct 2026): cycle day 3 is the post-night day and no longer
+    // trains — off-peak needs cut sleep, the evening is peak hours. Its leg work moved into
+    // Session A. Kept so older logged sessions stay editable. Original notes follow. Delts lead:
     // legs run at maintenance (9 sets), so the priority muscle gets the fresh slot. Core is
     // anti-rotation/anti-flexion only — no loaded side flexion, which is the one thing that can
     // actually widen the waist. 20 sets.
@@ -6152,9 +6160,8 @@ function openSessionLogger(){
 // which just reveals the original select — old logged types still need to be selectable to be
 // edited.
 const LIVE_SESSIONS=[
-  {v:'Mon-Push',  label:'Delts + Arms',          sub:'pre-shift'},
-  {v:'Fri-Lower', label:'Lower + Delts',         sub:'off day'},
-  {v:'Thu-Upper', label:'Upper · Chest + Back',  sub:'off day'},
+  {v:'Mon-Push',  label:'A · Delts, Arms, Legs', sub:'night day'},
+  {v:'Thu-Upper', label:'B · Chest, Back, Delts', sub:'off day'},
   {v:'Cardio',    label:'Cardio',                sub:'Zone 2'}
 ];
 
@@ -6541,7 +6548,10 @@ function _prefillLift(lift){
   // weight and reps stay in the Previous column and out of the inputs: a pre-filled box you
   // forget to change records a lift you never did, and it silently feeds progression, PBs and
   // the weekly set totals.
-  if(!lift.sets&&prev.match.sets) lift.sets=prev.match.sets;
+  // A lift that comes from a session template takes the template's count — that IS the plan,
+  // and carrying last time's count meant a programme change showed the old number of rows
+  // until you'd done the session once. Hand-added lifts have no template, so they still carry.
+  if(!lift.sets&&!lift._defaultSets&&prev.match.sets) lift.sets=prev.match.sets;
   delete lift.rows;
   _liftRows(lift);
   return lift;
