@@ -2337,7 +2337,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
           <optgroup label="DNOO cycle">
             <option value="Mon-Push">A · Delts, Arms, Legs — cycle day 2, morning</option>
             <option value="Thu-Upper">B · Chest, Back, Delts — cycle day 4, morning</option>
-            <option value="Sess-C">C · Delts, Chest, Arms — cycle day 3, ~21:30</option>
+            <option value="Sess-C">C · Delts, Chest, Arms — cycle day 3, after Zone 2</option>
             <option value="Fri-Lower">Lower + Delts — retired (old cycle day 3)</option>
           </optgroup>
           <optgroup label="Other">
@@ -5062,9 +5062,9 @@ const TIMELINE={
     {phase:'Wind-down',t:'Before sleep',label:'Sleep stack + vault',sub:'Magnesium Glycinate + 0.5mg Melatonin (post-night only) · '+_SUB_VAULT,type:'supp',prot:22,kcal:295,tier:'foundation'},
     {phase:'Sleep',t:'Then sleep',label:'Sleep',sub:'DND release ~18:00. Collapse and rest — off-day starts when you wake.',type:'sleep',tier:'foundation'},
     {phase:'After sleep',t:'+20 min',label:'Fast carb',sub:'Banana, oats, white toast, honey — light carb anchor post-sleep.',type:'food',prot:4,kcal:150,tier:'default'},
-    {phase:'Evening',t:'Before dark',label:'Zone 2 outdoors — 30–45 min',sub:'Easy, conversational pace (HR 120–140). Outdoors, so no crowds and no gym entry. Daylight helps reset your body clock after the night.',type:'action',tier:'optional'},
-    {phase:'Evening',t:'~19:30',label:'Main meal',sub:_SUB_MIDMEAL,type:'food',prot:50,kcal:700,tier:'foundation'},
-    {phase:'Night gym',t:'~21:30',label:'Gym — Session C',sub:'15 sets, cables and machines only: side and rear delts, upper chest, arms. Done by ~22:30, leaving 2+ hours before bed (~01:00).',type:'action',tier:'default'},
+    {phase:'Evening',t:'Before dark',label:'Zone 2 outdoors — 30–45 min',sub:'Easy, conversational pace (HR 120–140). Outdoors before dark because daylight helps reset your body clock after the night. Then straight to the gym.',type:'action',tier:'optional'},
+    {phase:'Evening',t:'After Zone 2',label:'Gym — Session C',sub:'15 sets, cables and machines only: side and rear delts, upper chest, arms. Straight after Zone 2 — one trip out, and finished hours before bed (~01:00).',type:'action',tier:'default'},
+    {phase:'Evening',t:'Post-gym',label:'Main meal',sub:_SUB_MIDMEAL,type:'food',prot:50,kcal:700,tier:'foundation'},
   ],
 
   leave:[
@@ -5114,8 +5114,8 @@ const CYCLE_DNOO = [
    mission:'Night shift. Morning gym (Session A) → flask → 90-min nap → pre-shift dinner → blue-blocks 08:30.',
    sub:'Mostly machines and cables — low CNS cost before a 12h night.'},
   {label:'Day 3',type:'o',typeLabel:'Off',gym:'Zone 2 + Session C',session:'Sess-C',
-   short:'Post-night · Zone 2 outdoors · Session C ~21:30',
-   mission:'Off day. Sleep first and wake naturally. Zone 2 outdoors before dark — the daylight helps reset your body clock — then Session C at ~21:30: a short cable/machine top-up, past the evening rush and 2+ hours before bed.',
+   short:'Post-night · Zone 2 outdoors → Session C → dinner',
+   mission:'Off day. Sleep first and wake naturally. Zone 2 outdoors before dark (daylight helps reset your body clock), straight into Session C, then dinner as the post-workout meal. One trip out, done hours before bed.',
    sub:'Bridge mode activates if you just finished Night shift.'},
   {label:'Day 4',type:'o',typeLabel:'Off',gym:'Session B',session:'Thu-Upper',
    short:'Session B · morning · incline 30°',
@@ -5891,10 +5891,11 @@ const SESSION_DEFAULTS={
     // anti-rotation/anti-flexion only — no loaded side flexion, which is the one thing that can
     // actually widen the waist. 20 sets.
     'Fri-Lower':[{name:'DB Lateral Raise',sets:'4',rep:'12-20'},{name:'Leg Press',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Bulgarian Split Squat',sets:'2',rep:'8-12'},{name:'45° Back Extension',sets:'3',rep:'10-15'},{name:'Standing Calf Raise',sets:'2',rep:'10-15'},{name:'Hanging Knee Raise',sets:'2',rep:'10-15'}],
-    // SESSION C (cycle day 3, ~21:30, after the post-night sleep). A 15-set cable/machine top-up
+    // SESSION C (cycle day 3, straight after Zone 2, post-night). A 15-set cable/machine top-up
     // for the priorities — side delts, rear delts, upper chest, arms — on the least recovered day,
-    // so isolation only. Night is what makes it possible (24/7 gym): past the evening rush and
-    // 2+ hours before bed. First thing to trim if Session B's main lifts slip.
+    // so isolation only. Possible because of 24/7 access: the old off-peak pass closed before the
+    // post-night wake. Zone 2 first is fine for an isolation session (no hypertrophy interference
+    // from concurrent aerobic work, Schumann 2022). First thing to trim if B's main lifts slip.
     'Sess-C':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Reverse Pec Deck',sets:'3',rep:'12-20'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'}],
     'Cardio':[{name:'Zone 2 run / walk / cycle',sets:'',reps:'',weight:''}],
 };
