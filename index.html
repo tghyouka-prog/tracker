@@ -5062,7 +5062,7 @@ const TIMELINE={
     {phase:'Wind-down',t:'Before sleep',label:'Sleep stack + vault',sub:'Magnesium Glycinate + 0.5mg Melatonin (post-night only) · '+_SUB_VAULT,type:'supp',prot:22,kcal:295,tier:'foundation'},
     {phase:'Sleep',t:'Then sleep',label:'Sleep',sub:'DND release ~18:00. Collapse and rest — off-day starts when you wake.',type:'sleep',tier:'foundation'},
     {phase:'After sleep',t:'+20 min',label:'Fast carb',sub:'Banana, oats, white toast, honey — light carb anchor post-sleep.',type:'food',prot:4,kcal:150,tier:'default'},
-    {phase:'Evening',t:'Start by ~18:00',label:'Gym — Lower (legs + side delts & biceps)',sub:'16 sets, ~45 min. You wake ~16:00–17:00, so starting by 18:00 finishes it (~40 min) before 19:00 and 6 h before bed (~01:00) — later exercise is linked to later, shorter sleep and shifts the body clock later.',type:'action',tier:'default'},
+    {phase:'Evening',t:'Start by ~18:00',label:'Gym — Lower (legs + side delts)',sub:'13 sets, ~35 min. You wake ~16:00–17:00, so starting by 18:00 finishes it (~40 min) before 19:00 and 6 h before bed (~01:00) — later exercise is linked to later, shorter sleep and shifts the body clock later.',type:'action',tier:'default'},
     {phase:'Evening',t:'Post-gym',label:'Main meal',sub:_SUB_MIDMEAL,type:'food',prot:50,kcal:700,tier:'foundation'},
   ],
 
@@ -5114,7 +5114,7 @@ const CYCLE_DNOO = [
    sub:'Finishes 4+ hours before the afternoon nap — the gap linked to undisturbed sleep.'},
   {label:'Day 3',type:'o',typeLabel:'Off',gym:'Lower',session:'Sess-C',
    short:'Post-night · Lower by ~18:00 → dinner',
-   mission:'Off day. Sleep first and wake naturally (~16:00–17:00). Lower (legs + side delts & biceps) by about 18:00, then dinner as the post-workout meal. Finish at least 4 hours before bed and ideally before 19:00: later exercise is linked to later, shorter sleep and shifts the body clock later.',
+   mission:'Off day. Sleep first and wake naturally (~16:00–17:00). Lower (legs + side delts) by about 18:00, then dinner as the post-workout meal. Finish at least 4 hours before bed and ideally before 19:00: later exercise is linked to later, shorter sleep and shifts the body clock later.',
    sub:'Bridge mode activates if you just finished Night shift.'},
   {label:'Day 4',type:'o',typeLabel:'Off',gym:'Upper 2 + Zone 2',session:'Thu-Upper',
    short:'Upper 2 (chest & back) · morning · then Zone 2 outdoors',
@@ -5871,11 +5871,13 @@ const SESSION_DEFAULTS={
     // UPPER 1 — shoulders & arms (cycle day 2, ~10:00, before the nap). 47 h before Upper 2, so
     // its chest, rear-delt and triceps work is recovered by then (failure-adjacent sets need
     // 24–48 h, Morán-Navarro 2017). Delt work per head: front 3, side 4 (+1.5 indirect), rear 6 —
-    // each under the ~11-sets-per-muscle-per-session point (Remmert 2025, preprint). 24 sets.
+    // each under the ~11-sets-per-muscle-per-session point (Remmert 2025, preprint). 27 sets.
+    // All biceps work sits on Days 2 and 4 (~47 h apart); the hammer curl moved here from Lower,
+    // where it trained biceps ~15 h before Upper 2's incline curl.
     // Rear delts are ONE exercise x6: a cable reverse fly and a reverse pec deck back to back were
     // the same muscle and movement twice, with no evidence they differ — one setup, same volume.
     // A shoulder press machine is an equal swap for the DB press (Haugen 2023).
-    'Mon-Push':[{name:'Seated DB Shoulder Press',sets:'3',rep:'6-10'},{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Cable Reverse Fly',sets:'6',rep:'12-20'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Preacher Curl',sets:'3',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'5',rep:'10-15'}],
+    'Mon-Push':[{name:'Seated DB Shoulder Press',sets:'3',rep:'6-10'},{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Cable Reverse Fly',sets:'6',rep:'12-20'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Preacher Curl',sets:'3',rep:'10-15'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'5',rep:'10-15'}],
     'Tue-Legs':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Face Pull',sets:'3',rep:'12-20'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Leg Press',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Standing Calf Raise',sets:'2',rep:'10-15'}],
     // DNOO cycle day 4 — second off day, fully recovered, so the longest session. This is the
     // taper session. Incline press at 30° (peak clavicular pec EMG; 45° leaks into front delts,
@@ -5896,12 +5898,11 @@ const SESSION_DEFAULTS={
     // anti-rotation/anti-flexion only — no loaded side flexion, which is the one thing that can
     // actually widen the waist. 20 sets.
     'Fri-Lower':[{name:'DB Lateral Raise',sets:'4',rep:'12-20'},{name:'Leg Press',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Bulgarian Split Squat',sets:'2',rep:'8-12'},{name:'45° Back Extension',sets:'3',rep:'10-15'},{name:'Standing Calf Raise',sets:'2',rep:'10-15'},{name:'Hanging Knee Raise',sets:'2',rep:'10-15'}],
-    // LOWER — legs + side delts & biceps (cycle day 3, start by ~18:00). The shortest gap in the
-    // cycle (~15 h to Upper 2), so it holds what Upper 2's main lifts don't use: legs and core.
-    // Side delts and biceps are the only overlap, and both are accessories on Day 4. Legs run
+    // LOWER — legs + side delts (cycle day 3, start by ~18:00). The shortest gap in the cycle
+    // (~15 h to Upper 2), so it holds what Upper 2's main lifts don't use: legs and core. Legs run
     // once per cycle at maintenance (Bickel 2011: 1/9 of the volume kept size in young adults).
-    // ~45 min, ends >=4 h before bed (Leota 2025). 16 sets.
-    'Sess-C':[{name:'Leg Press',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Pallof Press',sets:'2',rep:'10-15'}],
+    // ~35 min, ends >=4 h before bed (Leota 2025). 13 sets.
+    'Sess-C':[{name:'Leg Press',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Pallof Press',sets:'2',rep:'10-15'}],
     'Cardio':[{name:'Zone 2 run / walk / cycle',sets:'',reps:'',weight:''}],
 };
 
