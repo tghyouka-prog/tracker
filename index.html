@@ -2996,7 +2996,7 @@ const RULES=[
   {icon:'ti-barbell',col:'b',title:'Pull session only — Night Shift 1',body:'Lowest CNS demand for the pre-shift slot. Push or Legs here is a recovery mistake.',shifts:['ns1']},
   {icon:'ti-run',col:'t',title:'Zone 2 walk only — no lifting today',body:'CNS is in the deep trench. Resistance training today is counterproductive.',shifts:['ns2']},
   {icon:'ti-clock',col:'p',title:'Magnesium 60–90 min before sleep',body:'Not at the vault — take it 60 min before. Peak plasma concentration takes ~1 hour.',shifts:'all'},
-  {icon:'ti-heartbeat',col:'t',title:'Zone 2 cardio — 30–45 min outdoors on Day 3',body:'After you wake from the post-night sleep. Brisk walk or easy run at 120–140 BPM, conversational pace. Daylight also helps reset your body clock after the night. Skipping this is the one missed cardiovascular adaptation per cycle.',shifts:['off']},
+  {icon:'ti-heartbeat',col:'t',title:'Zone 2 cardio — 30–45 min outdoors on Day 4',body:'Straight after Session B, in morning daylight. Brisk walk or easy run at 120–140 BPM, conversational pace. Morning exercise and light shift the body clock earlier, which helps the early Day 1 wake. Skipping this is the one missed aerobic session per cycle.',shifts:['off']},
   {icon:'ti-sun',col:'b',title:'Outdoor light within 30 min of waking',body:'Anchors cortisol peak for the day. Most important circadian action on day shift and off days.',shifts:['ds','off']},
   {icon:'ti-pencil',col:'a',title:'Log today\'s training session',body:'Date · exercise · weight · sets · reps. Without a log the program drifts to maintenance in 4–6 weeks.',shifts:['ns1','off']},
   {icon:'ti-refresh',col:'a',title:'Deload week — reduce all weights 40–50%',body:'Keep every set and rep. Volume reduction, not rest. Early trigger: 2 consecutive drops in primary lifts.',shifts:'all',deloadOnly:true},
@@ -5029,7 +5029,7 @@ const TIMELINE={
     {phase:'Sleep',t:'~22:30',label:'Sleep — blackout, earplugs, DND',sub:'Target 7.5–8 hrs',type:'sleep',tier:'foundation'},
   ],
   ns1:[
-    {phase:'Morning gym',t:'~10:00',label:'Gym — Session A',sub:'Cycle day 2. Morning, before the afternoon nap. Mostly machines and cables, which is why it sits on the shift day.',type:'action',tier:'foundation'},
+    {phase:'Morning gym',t:'~10:00',label:'Gym — Session A',sub:'Cycle day 2. Morning, finishing 4+ hours before the afternoon nap.',type:'action',tier:'foundation'},
     {phase:'Morning gym',t:'Post-gym',label:'Post-gym flask',sub:'Protein flask on the way out.',type:'food',tier:'default'},
     {phase:'Afternoon',t:'After nap',label:'Fast carb',sub:'Banana, rice cakes, white toast, honey, dates or juice — any fast-digesting carb. Avoid fibre.',type:'food',prot:0,kcal:100,tier:'default'},
     {phase:'Pre-shift',t:'~18:00',label:'Pre-shift dinner — main meal',sub:'~50g protein, rice or noodles, veg. Eat the big meal before the shift, not at 01:00: in lab studies of simulated night work, eating only in the daytime prevented the drop in glucose tolerance and the mood dip that night eating caused.',type:'food',prot:50,kcal:700,tier:'foundation'},
@@ -5051,7 +5051,7 @@ const TIMELINE={
     {phase:'Gym',t:'Pre-gym',label:'10-min warm-up',sub:"Dead hang × 3 → Cat-Cow → World's Greatest Stretch → 90/90 → Activation",type:'action',tier:'default'},
     {phase:'Gym',t:'Session',label:'Training session — log it',sub:'V-taper priority: side delts → lats/back width → arms → chest/rear delts. Legs at maintenance.',type:'action',tier:'foundation'},
     {phase:'Gym',t:'Post-gym',label:'Post-gym flask',sub:_SUB_POSTGYM,type:'food',prot:50,kcal:350,tier:'foundation'},
-    {phase:'Zone 2',t:'Post-gym',label:'Zone 2 — only if you missed it on Day 3',sub:'30 min brisk walk or easy cycle, HR 120–140, conversational pace. Otherwise skip it: Zone 2 lives on Day 3 now.',type:'action',tier:'optional'},
+    {phase:'Zone 2',t:'Post-gym',label:'Zone 2 outdoors — 30–45 min',sub:'Brisk walk or easy cycle, HR 120–140, conversational. Outdoors in morning daylight: morning exercise and light shift the body clock earlier, which helps the 22:30 bedtime before the early Day 1 wake.',type:'action',tier:'default'},
     {phase:'Mid-day',t:'Midday',label:'Main meal',sub:_SUB_MIDMEAL,type:'food',prot:50,kcal:700,tier:'foundation'},
     {phase:'Pre-sleep',t:'~22:00',label:'Vault',sub:_SUB_VAULT,type:'food',prot:22,kcal:295,tier:'default'},
     {phase:'Sleep',t:'~22:30',label:'Sleep — blackout, earplugs, DND',sub:'Target 7.5–8 hrs',type:'sleep',tier:'foundation'},
@@ -5062,8 +5062,7 @@ const TIMELINE={
     {phase:'Wind-down',t:'Before sleep',label:'Sleep stack + vault',sub:'Magnesium Glycinate + 0.5mg Melatonin (post-night only) · '+_SUB_VAULT,type:'supp',prot:22,kcal:295,tier:'foundation'},
     {phase:'Sleep',t:'Then sleep',label:'Sleep',sub:'DND release ~18:00. Collapse and rest — off-day starts when you wake.',type:'sleep',tier:'foundation'},
     {phase:'After sleep',t:'+20 min',label:'Fast carb',sub:'Banana, oats, white toast, honey — light carb anchor post-sleep.',type:'food',prot:4,kcal:150,tier:'default'},
-    {phase:'Evening',t:'Before dark',label:'Zone 2 outdoors — 30–45 min',sub:'Easy, conversational pace (HR 120–140). Outdoors before dark because daylight helps reset your body clock after the night. Then straight to the gym.',type:'action',tier:'optional'},
-    {phase:'Evening',t:'After Zone 2',label:'Gym — Session C',sub:'15 sets, cables and machines only: side and rear delts, upper chest, arms. Straight after Zone 2 — one trip out, and finished hours before bed (~01:00).',type:'action',tier:'default'},
+    {phase:'Evening',t:'~1h after waking',label:'Gym — Session C',sub:'15 sets, cables and machines: side and rear delts, upper chest, arms. Finish at least 4 h before bed (~01:00), ideally before 19:00 — later exercise is linked to later, shorter sleep and shifts the body clock later.',type:'action',tier:'default'},
     {phase:'Evening',t:'Post-gym',label:'Main meal',sub:_SUB_MIDMEAL,type:'food',prot:50,kcal:700,tier:'foundation'},
   ],
 
@@ -5112,15 +5111,15 @@ const CYCLE_DNOO = [
   {label:'Day 2',type:'n',typeLabel:'Night',gym:'Session A',session:'Mon-Push',
    short:'Session A · morning · Blue-blocks at 08:30',
    mission:'Night shift. Morning gym (Session A) → flask → 90-min nap → pre-shift dinner → blue-blocks 08:30.',
-   sub:'Mostly machines and cables — low CNS cost before a 12h night.'},
-  {label:'Day 3',type:'o',typeLabel:'Off',gym:'Zone 2 + Session C',session:'Sess-C',
-   short:'Post-night · Zone 2 outdoors → Session C → dinner',
-   mission:'Off day. Sleep first and wake naturally. Zone 2 outdoors before dark (daylight helps reset your body clock), straight into Session C, then dinner as the post-workout meal. One trip out, done hours before bed.',
+   sub:'Finishes 4+ hours before the afternoon nap — the gap linked to undisturbed sleep.'},
+  {label:'Day 3',type:'o',typeLabel:'Off',gym:'Session C',session:'Sess-C',
+   short:'Post-night · Session C soon after waking → dinner',
+   mission:'Off day. Sleep first and wake naturally. Session C within about an hour of waking, then dinner as the post-workout meal. Finish at least 4 hours before bed and ideally before 19:00: later exercise is linked to later, shorter sleep and shifts the body clock later.',
    sub:'Bridge mode activates if you just finished Night shift.'},
-  {label:'Day 4',type:'o',typeLabel:'Off',gym:'Session B',session:'Thu-Upper',
-   short:'Session B · morning · incline 30°',
-   mission:'Off day. Session B — Chest, Back, Delts. Incline press at 30° and cable fly low-to-high: both bias the clavicular (upper) pec instead of leaking into front delts.',
-   sub:'Fully recovered — the cycle\'s heaviest presses and pulls go here.'},
+  {label:'Day 4',type:'o',typeLabel:'Off',gym:'Session B + Zone 2',session:'Thu-Upper',
+   short:'Session B · morning · then Zone 2 outdoors',
+   mission:'Off day. Session B — Chest, Back, Delts — then Zone 2 outdoors in morning daylight, which shifts the body clock earlier ahead of the early Day 1 wake. Incline press at 30° and cable fly low-to-high bias the upper chest.',
+   sub:'After a full night\'s sleep — the cycle\'s heaviest presses and pulls go here.'},
 ];
 
 const CYCLE_TO_SHIFT_DNOO = ['ds','ns1','off','off'];
@@ -5881,7 +5880,7 @@ const SESSION_DEFAULTS={
     // effect from order — only strength favours going first. So the compound takes the slot
     // where being fresh actually pays (a stronger press = more load over time = more chest),
     // and the laterals lose nothing by following it.
-    // SESSION B (cycle day 4, morning, fully recovered). DB laterals here and cable in A, so the two
+    // SESSION B (cycle day 4, morning, after a full night's sleep). DB laterals here and cable in A, so the two
     // weekly lateral exposures don't both queue for the same cable stack. 25 sets.
     'Thu-Upper':[{name:'Incline Smith Press',sets:'4',rep:'6-10'},{name:'DB Lateral Raise',sets:'4',rep:'12-20'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Lat Pulldown',sets:'3',rep:'6-10'},{name:'Chest-Supported Row',sets:'3',rep:'8-12'},{name:'Incline DB Curl',sets:'3',rep:'10-15'},{name:'Single-Arm Reverse Pec Deck',sets:'3',rep:'12-20'},{name:'45° Back Extension',sets:'2',rep:'10-15'}],
     // RETIRED from the rotation (Oct 2026): its leg work moved into Session A, and cycle day 3 —
@@ -5891,11 +5890,10 @@ const SESSION_DEFAULTS={
     // anti-rotation/anti-flexion only — no loaded side flexion, which is the one thing that can
     // actually widen the waist. 20 sets.
     'Fri-Lower':[{name:'DB Lateral Raise',sets:'4',rep:'12-20'},{name:'Leg Press',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Bulgarian Split Squat',sets:'2',rep:'8-12'},{name:'45° Back Extension',sets:'3',rep:'10-15'},{name:'Standing Calf Raise',sets:'2',rep:'10-15'},{name:'Hanging Knee Raise',sets:'2',rep:'10-15'}],
-    // SESSION C (cycle day 3, straight after Zone 2, post-night). A 15-set cable/machine top-up
-    // for the priorities — side delts, rear delts, upper chest, arms — on the least recovered day,
-    // so isolation only. Possible because of 24/7 access: the old off-peak pass closed before the
-    // post-night wake. Zone 2 first is fine for an isolation session (no hypertrophy interference
-    // from concurrent aerobic work, Schumann 2022). First thing to trim if B's main lifts slip.
+    // SESSION C (cycle day 3, soon after the post-night wake). 15 sets of extra weekly volume for
+    // the priority muscles — side delts, rear delts, upper chest, arms — which is why it is all
+    // isolation. Frequency alone doesn't add growth when weekly volume is equal (Pelland 2025);
+    // the extra sets do. Ends >=4 h before bed (Leota 2025). First thing to trim if B slips.
     'Sess-C':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Reverse Pec Deck',sets:'3',rep:'12-20'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'2',rep:'10-15'}],
     'Cardio':[{name:'Zone 2 run / walk / cycle',sets:'',reps:'',weight:''}],
 };
@@ -6826,7 +6824,10 @@ function _restForLift(l){
   const m=String((l&&l._repRange)||'').match(/^(\d+)\s*-\s*(\d+)$/);
   if(!m) return 120;
   const hi=+m[2];
-  return hi<=10 ? 180 : hi>=15 ? 90 : 120;
+  // Singer et al. 2024 (Bayesian meta): small benefit to rest >60 s, no appreciable hypertrophy
+  // difference beyond ~90 s. So 90 s for isolation ranges, 120 s otherwise — nothing supported
+  // 180 s over 120 s for heavy compounds, and the plan's rule is efficiency. The 3:00 preset stays.
+  return hi>=15 ? 90 : 120;
 }
 
 function _autoRest(l){
