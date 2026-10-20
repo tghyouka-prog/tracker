@@ -5118,7 +5118,7 @@ const CYCLE_DNOO = [
    sub:'Bridge mode activates if you just finished Night shift.'},
   {label:'Day 4',type:'o',typeLabel:'Off',gym:'Upper 2 + Zone 2',session:'Thu-Upper',
    short:'Upper 2 (chest & back) · morning · then Zone 2 outdoors',
-   mission:'Off day. Upper 2 — chest & back — then Zone 2 outdoors in morning daylight, which shifts the body clock earlier ahead of the early Day 1 wake. Incline press at 30° and cable fly low-to-high bias the upper chest.',
+   mission:'Off day. Upper 2 — chest & back — then Zone 2 outdoors in morning daylight, which shifts the body clock earlier ahead of the early Day 1 wake. Incline press at 30°, then pec deck and reverse pec deck back to back on the same machine.',
    sub:'After a full night\'s sleep — the cycle\'s heaviest presses and pulls go here.'},
 ];
 
@@ -5881,7 +5881,7 @@ const SESSION_DEFAULTS={
     'Tue-Legs':[{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Face Pull',sets:'3',rep:'12-20'},{name:'Cable Hammer Curl',sets:'3',rep:'10-15'},{name:'Leg Press',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'Standing Calf Raise',sets:'2',rep:'10-15'}],
     // DNOO cycle day 4 — second off day, fully recovered, so the longest session. This is the
     // taper session. Incline press at 30° (peak clavicular pec EMG; 45° leaks into front delts,
-    // which aren't a priority) and run the cable fly low-to-high for the same reason. 25 sets.
+    // which aren't a priority). [Historical note: the fly here is now a pec deck, see below.]
     // Press leads, laterals second. Earlier drafts led with laterals to give the priority muscle
     // the fresh slot, but the exercise-order meta-analysis found NO significant hypertrophy
     // effect from order — only strength favours going first. So the compound takes the slot
@@ -5891,7 +5891,9 @@ const SESSION_DEFAULTS={
     // (incline press, pullover, row) were last trained 47 h earlier on Upper 1. Machine Pullover
     // because the gym's lat machine is a pullover, not a pulldown. 23 sets. The back extension
     // moved to Lower: it is a hip hinge and sat ~15 h after leg press and leg curl.
-    'Thu-Upper':[{name:'Incline Smith Press',sets:'4',rep:'6-10'},{name:'DB Lateral Raise',sets:'4',rep:'12-20'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Machine Pullover',sets:'3',rep:'10-15'},{name:'Chest-Supported Row',sets:'3',rep:'8-12'},{name:'Incline DB Curl',sets:'3',rep:'10-15'},{name:'Single-Arm Reverse Pec Deck',sets:'3',rep:'12-20'}],
+    // Cable laterals (the user doesn't do DB laterals; cable = DB, Larsen 2025) so all 12 lateral
+    // sets share one history. Pec Deck Flyes sits right before the reverse pec deck: same machine.
+    'Thu-Upper':[{name:'Incline Smith Press',sets:'4',rep:'6-10'},{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Pec Deck Flyes',sets:'3',rep:'12-15'},{name:'Single-Arm Reverse Pec Deck',sets:'3',rep:'12-20'},{name:'Machine Pullover',sets:'3',rep:'10-15'},{name:'Chest-Supported Row',sets:'3',rep:'8-12'},{name:'Incline DB Curl',sets:'3',rep:'10-15'}],
     // RETIRED from the rotation (Oct 2026). Cycle day 3 now runs the Lower session (key Sess-C),
     // which carries this session's leg work.
     // Kept so older logged sessions stay editable. Original notes follow. Delts lead:
