@@ -868,6 +868,8 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .db-s{font-size:11px;color:var(--t3);margin-top:1px}
 .db-btn{flex-shrink:0;padding:8px 14px;border-radius:18px;border:none;background:var(--focus-ac);color:var(--focus-ac-ink);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .db-btn:active{transform:scale(.96)}
+.db-btn.ghost{background:transparent;color:var(--t1);border:1px solid var(--b2)}
+#low-day-ask{margin-top:.5rem}
 .day-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:.875rem}
 /* One row that both shows the week and navigates it: a logged day fills in with a tick, the
    rest stay as dated outlines. Taller than wide, like the reference. */
@@ -2260,6 +2262,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
   <!-- Cal AI's week strip. Backed by weekHistory (per-day macros already stamped on every
        save), so picking a past day shows that day's real figures rather than a placeholder. -->
   <div class="day-banner" id="day-banner" hidden></div>
+  <div class="day-banner" id="low-day-ask" hidden></div>
   <div class="day-strip" id="day-strip"></div>
   <div class="day-viewing" id="day-viewing" hidden></div>
 
@@ -2444,7 +2447,7 @@ function go(id){
     setTimeout(()=>{renderProgress();_playTabEntrance('page-insights',null);},50);
   }
   // Render training check-in flag when Training tab is opened
-  if(id==='nutrition'){healthOpen=false;renderDayBanner();renderCalHero();renderMacroRow();renderMealLog();renderHealthScore();setTimeout(()=>_playTabEntrance('page-nutrition',null),50);}
+  if(id==='nutrition'){healthOpen=false;renderDayBanner();renderLowDayAsk();renderCalHero();renderMacroRow();renderMealLog();renderHealthScore();setTimeout(()=>_playTabEntrance('page-nutrition',null),50);}
   if(id==='training'){renderTrainingCheckinFlag();renderSessionHistory();openSessionLogger();setTimeout(()=>_playTabEntrance('page-training',null),50);}
   // Activate the correct nav button
   ids.forEach(navId=>{
@@ -4515,6 +4518,18 @@ const DAY_DELTA_MIN=-400, DAY_DELTA_MAX=500;
 
 // Today's target is whatever is left in the week, spread over the days that remain. TARGETS.kcal
 // stays the PLAN — Settings, the Coach and the weekly card all still measure against that.
+// A day logged under half the target is more likely unfinished logging than real under-eating
+// (food logs under-report far more than they over-report — Burrows 2019). Only the user knows,
+// so it counts as ON PLAN unless they confirm it was complete. The 0.5 is a judgement.
+const LOW_DAY_FRAC=0.5;
+function _isLowDay(row,base){ const kc=(row&&row.kcal)||0; return base>0 && kc>0 && kc<base*LOW_DAY_FRAC; }
+function _countedKcal(row,base){
+  const kc=(row&&row.kcal)||0;
+  if(!(kc>0)) return base;                                          // not logged: on plan
+  if(_isLowDay(row,base) && row.lowAnswer!=='full') return base;    // low, not confirmed: on plan
+  return kc;
+}
+
 function kcalTargetToday(){
   const base=TARGETS.kcal||0;
   if(!(base>0)) return 0;
@@ -4523,7 +4538,7 @@ function kcalTargetToday(){
   // An unlogged day counts as ON PLAN, not as zero. Treating missing data as a 2,900 deficit
   // would balloon the rest of the week over a day you may well have eaten normally.
   let eaten=0;
-  elapsed.forEach(k=>{ const kc=(weekHistory[k]||{}).kcal||0; eaten += kc>0?kc:base; });
+  elapsed.forEach(k=>{ eaten += _countedKcal(weekHistory[k], base); });
   const daysLeft=7-elapsed.length;           // includes today
   const per=((7*base)-eaten)/Math.max(1,daysLeft);
   return Math.round(Math.max(base+DAY_DELTA_MIN, Math.min(base+DAY_DELTA_MAX, per)));
@@ -4558,7 +4573,7 @@ function _clearDayState(){
 
 function _redrawDay(){
   ['prot','hydro','kcal','carb'].forEach(t=>{ try{ updateMacroUI(t); }catch(e){} });
-  ['renderCalHero','renderMacroRow','renderMealLog','renderHealthScore','renderWaterCard','renderDayStrip','renderDayBanner']
+  ['renderCalHero','renderMacroRow','renderMealLog','renderHealthScore','renderWaterCard','renderDayStrip','renderDayBanner','renderLowDayAsk']
     .forEach(fn=>{ try{ window[fn] && window[fn](); }catch(e){} });
 }
 
@@ -4570,6 +4585,40 @@ setInterval(_rolloverIfDayChanged, 60000);
 
 // Shown only when the app's logging day and the wall calendar disagree, which on this app means
 // exactly one thing: a night shift is still selected and it is before noon.
+// Asks once per low day this week, newest first. Dismissing isn't offered: "No" is the quiet
+// default anyway, and an unanswered day already counts as on plan.
+function _pendingLowDay(){
+  const base=TARGETS.kcal||0;
+  if(!(base>0)) return null;
+  const elapsed=_weekDays(biologicalToday()).slice(0,-1);
+  for(let i=elapsed.length-1;i>=0;i--){
+    const k=elapsed[i], row=weekHistory[k];
+    if(_isLowDay(row,base) && !row.lowAnswer) return k;
+  }
+  return null;
+}
+function renderLowDayAsk(){
+  const el=document.getElementById('low-day-ask');
+  if(!el) return;
+  const k=_pendingLowDay();
+  if(!k){ el.hidden=true; el.innerHTML=''; return; }
+  const row=weekHistory[k];
+  const d=new Date(k+'T12:00:00Z');
+  const label=d.toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
+  el.hidden=false;
+  el.innerHTML='<div class="db-l"><span class="db-t">'+label+' shows '+Math.round(row.kcal).toLocaleString()+' kcal. Did you log everything?</span>'+
+    '<span class="db-s">Yes: the rest of the week makes it up. No: it counts as on plan.</span></div>'+
+    '<button class="db-btn ghost" onclick="answerLowDay(\''+k+'\',\'partial\')">No</button>'+
+    '<button class="db-btn" onclick="answerLowDay(\''+k+'\',\'full\')">Yes</button>';
+}
+function answerLowDay(k,ans){
+  if(!weekHistory[k]) return;
+  weekHistory[k].lowAnswer = ans==='full' ? 'full' : 'partial';
+  save();
+  _redrawDay();
+  showToast(ans==='full' ? 'Counted — the rest of the week makes it up' : 'Counted as on plan','action');
+}
+
 function renderDayBanner(){
   const el=document.getElementById('day-banner');
   if(!el) return;
@@ -7365,6 +7414,8 @@ function analyzeRecent(){
   foodDays.forEach(d=>{
     const w=weekHistory[d];
     if(!w||w.prot===undefined) return;
+    // Same rule as the weekly budget: a low day the user hasn't confirmed is unfinished logging.
+    if(_isLowDay(w,TARGETS.kcal||0) && w.lowAnswer!=='full') return;
     daysWithFood++;
     const pt=w.protTarget||TARGETS.prot;
     const kt=w.kcalTarget||TARGETS.kcal;
