@@ -1386,6 +1386,8 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
 .sub-label{font-size:15px;font-weight:700;letter-spacing:-.01em;color:var(--t1);margin-bottom:.5rem}
 
 /* Button row */
+.plan-actions{margin-top:.5rem;flex-wrap:wrap}
+.plan-actions[hidden]{display:none}
 .btn-row{display:flex;gap:6px;flex-wrap:wrap}
 
 /* Accent variant rem-btns — neutralized (Supphead rollout): Train's "Log a session" is already the
@@ -2348,7 +2350,7 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
             <option value="Tue-Legs">Legs — Delts/arms + legs</option>
           </optgroup>
           <optgroup label="Conditioning">
-            <option value="Cardio">Cardio — Zone 2 (after Upper 2, Day 4)</option>
+            <option value="Cardio">Cardio — Zone 2 (Day 4, after the gym)</option>
           </optgroup>
           <optgroup label="Legacy PPL A/B">
             <option value="Push A">Push A — Chest</option>
@@ -2404,6 +2406,8 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
     <div class="btn-row" style="margin-top:.625rem">
       <button class="rem-btn accent-teal" onclick="openExercisePicker(-1)"><i class="ti ti-plus"></i>Add lift</button>
     </div>
+    <!-- Personalisation: save the logger as this session's plan, rename it, or reset. -->
+    <div class="btn-row plan-actions" id="plan-actions" hidden></div>
 
   </div>
 
@@ -2999,7 +3003,7 @@ const RULES=[
   {icon:'ti-barbell',col:'b',title:'Pull session only — Night Shift 1',body:'Lowest CNS demand for the pre-shift slot. Push or Legs here is a recovery mistake.',shifts:['ns1']},
   {icon:'ti-run',col:'t',title:'Zone 2 walk only — no lifting today',body:'CNS is in the deep trench. Resistance training today is counterproductive.',shifts:['ns2']},
   {icon:'ti-clock',col:'p',title:'Magnesium 60–90 min before sleep',body:'Not at the vault — take it 60 min before. Peak plasma concentration takes ~1 hour.',shifts:'all'},
-  {icon:'ti-heartbeat',col:'t',title:'Zone 2 cardio — 30–45 min outdoors on Day 4',body:'Straight after Upper 2, in morning daylight. Brisk walk or easy run at 120–140 BPM, conversational pace. Morning exercise and light shift the body clock earlier, which helps the early Day 1 wake. Skipping this is the one missed aerobic session per cycle.',shifts:['off']},
+  {icon:'ti-heartbeat',col:'t',title:'Zone 2 cardio — 30–45 min outdoors on Day 4',body:'Straight after your Day 4 session, in morning daylight. Brisk walk or easy run at 120–140 BPM, conversational pace. Morning exercise and light shift the body clock earlier, which helps the early Day 1 wake. Skipping this is the one missed aerobic session per cycle.',shifts:['off']},
   {icon:'ti-sun',col:'b',title:'Outdoor light within 30 min of waking',body:'Anchors cortisol peak for the day. Most important circadian action on day shift and off days.',shifts:['ds','off']},
   {icon:'ti-pencil',col:'a',title:'Log today\'s training session',body:'Date · exercise · weight · sets · reps. Without a log the program drifts to maintenance in 4–6 weeks.',shifts:['ns1','off']},
   {icon:'ti-refresh',col:'a',title:'Deload week — reduce all weights 40–50%',body:'Keep every set and rep. Volume reduction, not rest. Early trigger: 2 consecutive drops in primary lifts.',shifts:'all',deloadOnly:true},
@@ -3042,13 +3046,13 @@ function renderCycle(){
     <div class="cd ${d.type}-type${i===cycleDay?' today':''}${completedDays.includes(i)?' done':''}" onclick="setDay(${i})">
       <div class="cd-num">${d.label}</div>
       <div class="cd-type">${d.typeLabel}</div>
-      <div class="cd-gym">${d.gym}</div>
+      <div class="cd-gym">${_cy(d.gym,d)}</div>
       <div class="cd-today-badge">TODAY</div>
     </div>`).join('');
   const d=activeCycle[cycleDay]||activeCycle[0];
   const el=id=>document.getElementById(id);
   if(el('cycle-today-label')) el('cycle-today-label').textContent=d.label+' — '+d.typeLabel;
-  if(el('cycle-header-summary')) el('cycle-header-summary').textContent='· '+d.label+' — '+d.gym;
+  if(el('cycle-header-summary')) el('cycle-header-summary').textContent='· '+d.label+' — '+_cy(d.gym,d);
   if(el('cycle-date-label')) el('cycle-date-label').textContent='Tap Day done when this day ends';
   if(el('cycle-num-badge')) el('cycle-num-badge').textContent='Cycle '+cycleNum;
   // Deload progress pips — 4 cycles per block, fill as you go
@@ -3068,8 +3072,8 @@ function renderCycle(){
     el('deload-badge').style.fontWeight='600';
   }
   if(el('today-mission')) el('today-mission').style.display='block';
-  if(el('mission-text')) el('mission-text').textContent=d.short||d.mission;
-  if(el('mission-sub')) el('mission-sub').textContent=d.mission+(d.sub?' — '+d.sub:'');
+  if(el('mission-text')) el('mission-text').textContent=_cy(d.short||d.mission,d);
+  if(el('mission-sub')) el('mission-sub').textContent=_cy(d.mission,d)+(d.sub?' — '+_cy(d.sub,d):'');
   if(el('deload-badge')) el('deload-badge').textContent=(cycleNum%4===0)?'⚠ Deload week':'';
   if(el('offset-display')) el('offset-display').textContent=cycleDay+1;
   // Shift selection is fully manual now — renderCycle only displays the rotation, it never changes `shift`.
@@ -5078,7 +5082,7 @@ const TIMELINE={
     {phase:'Sleep',t:'~22:30',label:'Sleep — blackout, earplugs, DND',sub:'Target 7.5–8 hrs',type:'sleep',tier:'foundation'},
   ],
   ns1:[
-    {phase:'Morning gym',t:'~10:00',label:'Gym — Upper 1 (shoulders & arms)',sub:'Cycle day 2. Morning, finishing 4+ hours before the afternoon nap.',type:'action',tier:'foundation'},
+    {phase:'Morning gym',t:'~10:00',label:'Gym — Upper 1 (shoulders & arms)',sess:'Mon-Push',sub:'Cycle day 2. Morning, finishing 4+ hours before the afternoon nap.',type:'action',tier:'foundation'},
     {phase:'Morning gym',t:'Post-gym',label:'Post-gym flask',sub:'Protein flask on the way out.',type:'food',tier:'default'},
     {phase:'Afternoon',t:'After nap',label:'Fast carb',sub:'Banana, rice cakes, white toast, honey, dates or juice — any fast-digesting carb. Avoid fibre.',type:'food',prot:0,kcal:100,tier:'default'},
     {phase:'Pre-shift',t:'~18:00',label:'Pre-shift dinner — main meal',sub:'~50g protein, rice or noodles, veg. Eat the big meal before the shift, not at 01:00: in lab studies of simulated night work, eating only in the daytime prevented the drop in glucose tolerance and the mood dip that night eating caused.',type:'food',prot:50,kcal:700,tier:'foundation'},
@@ -5098,7 +5102,7 @@ const TIMELINE={
   off:[
     {phase:'Morning',t:'+10 min',label:'Morning transporter',sub:_SUB_TRANSPORTER,type:'food',prot:8,kcal:200,tier:'default'},
     {phase:'Gym',t:'Pre-gym',label:'10-min warm-up',sub:"Dead hang × 3 → Cat-Cow → World's Greatest Stretch → 90/90 → Activation",type:'action',tier:'default'},
-    {phase:'Gym',t:'Session',label:'Training session — log it',sub:'Upper 2 — chest & back. Your goals: broad shoulders, slim waist, biceps, upper chest. Legs at maintenance.',type:'action',tier:'foundation'},
+    {phase:'Gym',t:'Session',label:'Training session — log it',sub:'Your goals: broad shoulders, slim waist, biceps, upper chest. Legs at maintenance.',type:'action',tier:'foundation'},
     {phase:'Gym',t:'Post-gym',label:'Post-gym flask',sub:_SUB_POSTGYM,type:'food',prot:50,kcal:350,tier:'foundation'},
     {phase:'Zone 2',t:'Post-gym',label:'Zone 2 outdoors — 30–45 min',sub:'Brisk walk or easy cycle, HR 120–140, conversational. Outdoors in morning daylight: morning exercise and light shift the body clock earlier, which helps the 22:30 bedtime before the early Day 1 wake.',type:'action',tier:'default'},
     {phase:'Mid-day',t:'Midday',label:'Main meal',sub:_SUB_MIDMEAL,type:'food',prot:50,kcal:700,tier:'foundation'},
@@ -5111,7 +5115,7 @@ const TIMELINE={
     {phase:'Wind-down',t:'Before sleep',label:'Sleep stack + vault',sub:'Magnesium Glycinate + 0.5mg Melatonin (post-night only) · '+_SUB_VAULT,type:'supp',prot:22,kcal:295,tier:'foundation'},
     {phase:'Sleep',t:'Then sleep',label:'Sleep',sub:'DND release ~18:00. Collapse and rest — off-day starts when you wake.',type:'sleep',tier:'foundation'},
     {phase:'After sleep',t:'+20 min',label:'Fast carb',sub:'Banana, oats, white toast, honey — light carb anchor post-sleep.',type:'food',prot:4,kcal:150,tier:'default'},
-    {phase:'Evening',t:'If you go',label:'Gym — Legs (optional)',sub:'11 sets, ~30 min, leg maintenance only — skipping costs little. Best done soon after waking; finish at least 4 h before bed (~01:00). A later session (~20:00) avoids the rush but nudges the body clock later.',type:'action',tier:'optional'},
+    {phase:'Evening',t:'If you go',label:'Gym — Legs (optional)',sess:'Sess-C',sub:'Optional. Best done soon after waking; finish at least 4 h before bed (~01:00). A later session (~20:00) avoids the rush but nudges the body clock later.',type:'action',tier:'optional'},
     {phase:'Evening',t:'Evening',label:'Main meal',sub:_SUB_MIDMEAL,type:'food',prot:50,kcal:700,tier:'foundation'},
   ],
 
@@ -5157,18 +5161,18 @@ const CYCLE_DNOO = [
    short:'No gym · Vault at 22:00 · Sleep by 23:00',
    mission:'Day shift. Morning light → transporter → takeout + supps → 09:30 PM Mag → vault → sleep.',
    sub:'No gym today. Rest and recover.'},
-  {label:'Day 2',type:'n',typeLabel:'Night',gym:'Upper 1',session:'Mon-Push',
-   short:'Upper 1 (shoulders & arms) · morning · Blue-blocks at 08:30',
-   mission:'Night shift. Morning gym (Upper 1 — shoulders & arms) → flask → 90-min nap → pre-shift dinner → blue-blocks 08:30.',
+  {label:'Day 2',type:'n',typeLabel:'Night',gym:'{s}',session:'Mon-Push',
+   short:'{s} · morning · Blue-blocks at 08:30',
+   mission:'Night shift. Morning gym ({s}) → flask → 90-min nap → pre-shift dinner → blue-blocks 08:30.',
    sub:'Finishes 4+ hours before the afternoon nap — the buffer linked to undisturbed night sleep, applied to the nap as a precaution.'},
-  {label:'Day 3',type:'o',typeLabel:'Off',gym:'Lower',session:'Sess-C',
-   short:'Post-night · Legs (optional) → dinner',
-   mission:'Off day. Sleep first and wake naturally. Legs are optional today — maintenance only, so skipping costs little. If you go, finish at least 4 hours before bed; earlier is better, since evening exercise shifts the body clock later.',
+  {label:'Day 3',type:'o',typeLabel:'Off',gym:'{s}',session:'Sess-C',
+   short:'Post-night · {s} (optional) → dinner',
+   mission:'Off day. Sleep first and wake naturally. {s} is optional today. If you go, finish at least 4 hours before bed; earlier is better, since evening exercise shifts the body clock later.',
    sub:'Bridge mode activates if you just finished Night shift.'},
-  {label:'Day 4',type:'o',typeLabel:'Off',gym:'Upper 2 + Zone 2',session:'Thu-Upper',
-   short:'Upper 2 (chest & back) · morning · then Zone 2 outdoors',
-   mission:'Off day. Upper 2 — chest & back — then Zone 2 outdoors in morning daylight, which shifts the body clock earlier ahead of the early Day 1 wake. Incline press at 30°, then pec deck and reverse pec deck back to back on the same machine.',
-   sub:'After a full night\'s sleep — the cycle\'s heaviest presses and pulls go here.'},
+  {label:'Day 4',type:'o',typeLabel:'Off',gym:'{s} + Zone 2',session:'Thu-Upper',
+   short:'{s} · morning · then Zone 2 outdoors',
+   mission:'Off day. {s}, then Zone 2 outdoors in morning daylight, which shifts the body clock earlier ahead of the early Day 1 wake.',
+   sub:'After a full night\'s sleep — a good day for your heaviest lifts.'},
 ];
 
 const CYCLE_TO_SHIFT_DNOO = ['ds','ns1','off','off'];
@@ -5281,7 +5285,10 @@ let hiddenBuiltIn={}; // { shift+'__'+originalLabel: true } — built-in items r
 function getTimeline(s){
   const base=(TIMELINE[s]||[]).filter(it=>!hiddenBuiltIn[s+'__'+it.label]).map(it=>{
     const o=labelEdits[s+'__'+it.label];
-    return o?{...it,custom:false,origLabel:it.label,label:o.label||it.label,sub:(o.sub!==undefined&&o.sub!==null)?o.sub:it.sub}:{...it,custom:false,origLabel:it.label};
+    // A row tied to a session shows that session's current (renamable) name. The static label
+    // stays as the key, so labelEdits and hiddenBuiltIn entries keep working.
+    const shown=it.sess ? 'Gym — '+_sessLabel(it.sess)+(it.tier==='optional'?' (optional)':'') : it.label;
+    return o?{...it,custom:false,origLabel:it.label,label:o.label||shown,sub:(o.sub!==undefined&&o.sub!==null)?o.sub:it.sub}:{...it,custom:false,origLabel:it.label,label:shown};
   });
   const custom=(customItems[s]||[]).map(it=>({...it,custom:true,phase:it.phase||'Custom'}));
   return base.concat(custom);
@@ -5831,7 +5838,7 @@ function getContextualHint(){
     if(mins<end)    return `Post-shift protocol in ${fmt(end-mins)}`;
     // ns1 follows a normal night's sleep, so its morning holds Upper 1. ns2 and xns follow a
     // night shift and genuinely open with sleep.
-    if(mins<14*60)  return shift==='ns1' ? `Upper 1, then nap before the shift` : `Afternoon wake window`;
+    if(mins<14*60)  return shift==='ns1' ? `${_sessLabel('Mon-Push')}, then nap before the shift` : `Afternoon wake window`;
     return `Shift starts in ${fmt(start-mins)}`;
   }
   if(shift==='off'||shift==='leave'){
@@ -6223,7 +6230,7 @@ function openSessionLogger(){
     if(day&&day.session){
       sel.value=day.session;
       updateSessType();
-      showToast('Cycle day '+(cycleDay+1)+' — '+day.gym,'action');
+      showToast('Cycle day '+(cycleDay+1)+' — '+_cy(day.gym,day),'action');
     }
   }
   // No scroll-to and no auto-focus any more: this runs on every visit to the tab now, not on
@@ -6234,6 +6241,92 @@ function openSessionLogger(){
 // The sessions actually in rotation. Everything else stays reachable through "Other sessions",
 // which just reveals the original select — old logged types still need to be selectable to be
 // edited.
+// ── PERSONALISATION ──
+// The user's own version of a session (exercises, set counts, rep ranges) and their own name for
+// it. Empty = the built-in default. Plain script-scope lets: read them directly, never via window.
+let planOverrides={};   // sessionKey -> [{name, sets, rep}]
+let sessionLabels={};   // sessionKey -> custom label
+
+function _sessTemplate(k){
+  return (planOverrides[k] && planOverrides[k].length) ? planOverrides[k] : (SESSION_DEFAULTS[k] || null);
+}
+// The built-in name, ignoring any rename — used to tell "renamed" from "default".
+function _defaultSessLabel(v){
+  const live=LIVE_SESSIONS.find(s=>s.v===v);
+  if(live) return live.label;
+  const sel=document.getElementById('sess-type-select');
+  const opt=sel && [...sel.options].find(o=>o.value===v);
+  const raw=opt ? (opt.dataset.suffix!==undefined ? opt.dataset.base : opt.textContent.split(' — ')[0]) : v;
+  return String(raw||v).trim();
+}
+// Fills {s} in cycle text with the session's current name.
+function _cy(str, d){
+  return String(str||'').split('{s}').join(d && d.session ? _sessLabel(d.session) : '');
+}
+function _selSess(){ const s=document.getElementById('sess-type-select'); return s ? s.value : ''; }
+function _loggerHasNumbers(){ return (currentLifts||[]).some(l=>{ try{ return _liftHasEntry(l); }catch(e){ return false; } }); }
+
+function _refreshSessionNames(){
+  try{ renderSessChips(); }catch(e){}
+  try{ renderCycle(); }catch(e){}
+  try{ render(); }catch(e){}
+  try{ renderTrainSticky(); }catch(e){}
+  renderPlanActions();
+}
+
+function savePlanFromLogger(){
+  const k=_selSess(); if(!k) return;
+  const rows=(currentLifts||[]).filter(l=>l.name&&l.name.trim()).map(l=>({
+    name:_canonicalExercise(l.name.trim()),
+    sets:String(Math.max(1,_liftRows(l).length)),
+    rep:l._repRange||''
+  }));
+  if(!rows.length){ showToast('Add at least one exercise first','action'); return; }
+  const list=rows.map(r=>'• '+r.name+' × '+r.sets).join('\n');
+  if(!confirm('Make this your '+_sessLabel(k)+' from now on?\n\n'+list)) return;
+  planOverrides[k]=rows;
+  save();
+  renderPlanActions();
+  showToast('Saved as your '+_sessLabel(k),'action');
+}
+
+function resetPlan(){
+  const k=_selSess(); if(!k) return;
+  if(!confirm('Restore the default exercises and name for '+_sessLabel(k)+'?')) return;
+  delete planOverrides[k];
+  delete sessionLabels[k];
+  save();
+  // Reloading the logger would wipe sets already typed in, so only do it when it's empty.
+  if(!_loggerHasNumbers()){ try{ updateSessType(); }catch(e){} }
+  _refreshSessionNames();
+  showToast(_loggerHasNumbers() ? 'Default restored — applies next time you start this session' : 'Default restored','action');
+}
+
+function renameSession(){
+  const k=_selSess(); if(!k) return;
+  const v=prompt('Name this session', _sessLabel(k));
+  if(v===null) return;
+  const t=v.trim().slice(0,40);
+  if(!t || t===_defaultSessLabel(k)) delete sessionLabels[k]; else sessionLabels[k]=t;
+  save();
+  _refreshSessionNames();
+  showToast('Now called '+_sessLabel(k),'action');
+}
+
+// The row under the logger. Reset only shows when there's something to reset.
+function renderPlanActions(){
+  const el=document.getElementById('plan-actions');
+  if(!el) return;
+  const k=_selSess();
+  if(!k){ el.hidden=true; el.innerHTML=''; return; }
+  const custom=!!(planOverrides[k] || sessionLabels[k]);
+  el.hidden=false;
+  el.innerHTML=
+    '<button class="rem-btn" onclick="savePlanFromLogger()"><i class="ti ti-device-floppy"></i>Save as my plan</button>'+
+    '<button class="rem-btn" onclick="renameSession()"><i class="ti ti-pencil"></i>Rename</button>'+
+    (custom ? '<button class="rem-btn" onclick="resetPlan()"><i class="ti ti-rotate"></i>Reset to default</button>' : '');
+}
+
 const LIVE_SESSIONS=[
   {v:'Mon-Push',  label:'Upper 1 · Shoulders & Arms', sub:'night day'},
   {v:'Sess-C',    label:'Lower · Legs',               sub:'optional'},
@@ -6251,10 +6344,18 @@ function renderSessChips(){
     const on=sel.value===s.v;
     const isToday=s.v===todaySession;
     return '<button class="sess-chip'+(on?' on':'')+'" onclick="pickSession(\''+s.v+'\')" aria-pressed="'+on+'">'+
-      '<span class="sc-l">'+s.label+'</span>'+
+      '<span class="sc-l">'+String(_sessLabel(s.v)).replace(/</g,'&lt;')+'</span>'+
       '<span class="sc-s">'+(isToday?'Today':s.sub)+'</span>'+
       '</button>';
   }).join('');
+  // Select option text follows renames: the part before " — " is the name, the rest is context.
+  [...sel.options].forEach(o=>{
+    if(!o.value) return;
+    if(o.dataset.suffix===undefined){ const parts=o.textContent.split(' — '); o.dataset.base=parts[0]; o.dataset.suffix=parts.slice(1).join(' — '); }
+    const nm=sessionLabels[o.value] || o.dataset.base;
+    o.textContent = o.dataset.suffix ? nm+' — '+o.dataset.suffix : nm;
+  });
+  renderPlanActions();
   // A legacy or off-rotation type selected from the dropdown still needs to show somewhere.
   const known=LIVE_SESSIONS.some(s=>s.v===sel.value);
   const more=document.getElementById('sess-more');
@@ -6288,8 +6389,8 @@ function updateSessType(){
   const sessType=sel.value;
   if(disp) disp.textContent=sessType||'Select session type';
 
-  if(sessType&&SESSION_DEFAULTS[sessType]){
-    currentLifts=SESSION_DEFAULTS[sessType].map(d=>_prefillLift({name:d.name,weight:'',sets:'',reps:'',rpe:'',_defaultSets:d.sets,_repRange:d.rep}));
+  if(sessType&&_sessTemplate(sessType)){
+    currentLifts=_sessTemplate(sessType).map(d=>_prefillLift({name:d.name,weight:'',sets:'',reps:'',rpe:'',_defaultSets:d.sets,_repRange:d.rep}));
   } else {
     currentLifts=[];
   }
@@ -7097,6 +7198,7 @@ function saveSession(){
 // second table to keep in step.
 function _sessLabel(v){
   if(!v) return 'Session';
+  if(sessionLabels && sessionLabels[v]) return sessionLabels[v];
   const live=(typeof LIVE_SESSIONS!=='undefined') ? LIVE_SESSIONS.find(s=>s.v===v) : null;
   if(live) return live.label;
   const sel=document.getElementById('sess-type-select');
@@ -7217,7 +7319,7 @@ function save(){
   try{
     localStorage.setItem(STORE,JSON.stringify({
       date:biologicalToday(),shift,ticks,macros,history,
-      mealLibrary,mealLog,weekHistory,sessionLog,customExercises,customMuscles,
+      mealLibrary,mealLog,weekHistory,sessionLog,customExercises,customMuscles,planOverrides,sessionLabels,
       cycleDay,cycleNum,cycleAnchorDate,completedDays,
       streak:dayStreak,
       sleepRating,sleepHistory,yesterdayData,
@@ -7291,6 +7393,8 @@ function load(){
     if(d.sessionLog) sessionLog=d.sessionLog;
     if(Array.isArray(d.customExercises)) customExercises=d.customExercises;
     if(d.customMuscles && typeof d.customMuscles==='object') customMuscles=d.customMuscles;
+    if(d.planOverrides && typeof d.planOverrides==='object') planOverrides=d.planOverrides;
+    if(d.sessionLabels && typeof d.sessionLabels==='object') sessionLabels=d.sessionLabels;
 
     // DAY-SCOPED state — only meaningful if the stored day is the one we are on.
     if(d.date===biologicalToday()){
@@ -8281,7 +8385,7 @@ function exportData(){
     version:'4.1',
     exportedAt:new Date().toISOString(),
     date:biologicalToday(),shift,ticks,macros,history,
-    mealLibrary,mealLog,weekHistory,sessionLog,customExercises,customMuscles,
+    mealLibrary,mealLog,weekHistory,sessionLog,customExercises,customMuscles,planOverrides,sessionLabels,
     cycleDay,cycleNum,cycleAnchorDate,completedDays,
     streak:dayStreak,
     sleepRating,sleepHistory,yesterdayData,
@@ -8325,6 +8429,8 @@ function importData(){
     if(d.sessionLog) sessionLog=d.sessionLog;
     if(Array.isArray(d.customExercises)) customExercises=d.customExercises;
     if(d.customMuscles && typeof d.customMuscles==='object') customMuscles=d.customMuscles;
+    if(d.planOverrides && typeof d.planOverrides==='object') planOverrides=d.planOverrides;
+    if(d.sessionLabels && typeof d.sessionLabels==='object') sessionLabels=d.sessionLabels;
     if(d.customItems) customItems=d.customItems;
     if(d.skippedToday) skippedToday=d.skippedToday;
     if(d.halfTicks) halfTicks=d.halfTicks;
