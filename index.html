@@ -2341,10 +2341,16 @@ input,select,textarea{scroll-margin-top:80px;scroll-margin-bottom:120px}
         <button class="sess-more" id="sess-more" onclick="toggleSessMore()">Other sessions</button>
         <select id="sess-type-select" onfocus="this.dataset.prev=this.value" onchange="onSessSelect()" class="sel-input" style="display:none">
           <option value="">— pick session —</option>
-          <optgroup label="DNOO cycle">
-            <option value="Mon-Push">Upper 1 · Shoulders & Arms — cycle day 2, morning</option>
-            <option value="Sess-C">Lower · Legs — cycle day 3, optional</option>
-            <option value="Thu-Upper">Upper 2 · Chest & Back — cycle day 4, morning</option>
+          <optgroup label="6-day rotation">
+            <option value="Chest-Bi-Shoulders">Chest · Biceps · Shoulders — D1</option>
+            <option value="Sess-C">Legs · Abs — D2 and D5, optional</option>
+            <option value="Chest-Back">Chest · Back — D3</option>
+            <option value="Shoulders-Arms">Shoulders · Arms — D4</option>
+            <option value="Back-Triceps">Back · Triceps — D6</option>
+          </optgroup>
+          <optgroup label="Retired">
+            <option value="Mon-Push">Upper 1 · Shoulders & Arms — retired Nov 2026</option>
+            <option value="Thu-Upper">Upper 2 · Chest & Back — retired Nov 2026</option>
             <option value="Fri-Lower">Lower + Delts — retired (old cycle day 3)</option>
           </optgroup>
           <optgroup label="Other">
@@ -5084,7 +5090,7 @@ const TIMELINE={
     {phase:'Sleep',t:'~22:30',label:'Sleep — blackout, earplugs, DND',sub:'Target 7.5–8 hrs',type:'sleep',tier:'foundation'},
   ],
   ns1:[
-    {phase:'Morning gym',t:'~10:00',label:'Gym — Upper 1 (shoulders & arms)',sess:'Mon-Push',sub:'Cycle day 2. Morning, finishing 4+ hours before the afternoon nap.',type:'action',tier:'foundation'},
+    {phase:'Morning gym',t:'~10:00',label:'Gym — Upper 1 (shoulders & arms)',get sess(){ return _nextUpper(); },sub:'Cycle day 2. Morning, finishing 4+ hours before the afternoon nap.',type:'action',tier:'foundation'},
     {phase:'Morning gym',t:'Post-gym',label:'Post-gym flask',sub:'Protein flask on the way out.',type:'food',tier:'default'},
     {phase:'Afternoon',t:'After nap',label:'Fast carb',sub:'Banana, rice cakes, white toast, honey, dates or juice — any fast-digesting carb. Avoid fibre.',type:'food',prot:0,kcal:100,tier:'default'},
     {phase:'Pre-shift',t:'~18:00',label:'Pre-shift dinner — main meal',sub:'~50g protein, rice or noodles, veg. Eat the big meal before the shift, not at 01:00: in lab studies of simulated night work, eating only in the daytime prevented the drop in glucose tolerance and the mood dip that night eating caused.',type:'food',prot:50,kcal:700,tier:'foundation'},
@@ -5147,7 +5153,7 @@ const TIMELINE={
   school:[
     {phase:'Morning',t:'~07:10',label:'Morning transporter',sub:_SUB_TRANSPORTER,type:'food',prot:8,kcal:200,tier:'default'},
     {phase:'Midday',t:'~12:30',label:'Midday meal',sub:_SUB_MIDMEAL,type:'food',prot:50,kcal:700,tier:'foundation'},
-    {phase:'After school',t:'~18:00',label:'Training — priority: delts/lats/arms (if training today)',sub:'Evening gym slot. Log the session; skip on rest days — train whichever days suit the week.',type:'action',tier:'optional'},
+    {phase:'After school',t:'~18:00',label:'Training — priority: delts/lats/arms (if training today)',get sess(){ return _nextInRotation(); },sub:'Evening gym slot. Log the session; skip on rest days — train whichever days suit the week.',type:'action',tier:'optional'},
     {phase:'After school',t:'Post-gym',label:'Post-gym flask (training days)',sub:_SUB_POSTGYM,type:'food',prot:50,kcal:350,tier:'optional'},
     {phase:'Evening',t:'~19:30',label:'Dinner',sub:'Protein + carbs + veg — main evening meal. Aim ~40–50g protein.',type:'food',prot:45,kcal:650,tier:'foundation'},
     {phase:'Pre-sleep',t:'~22:30',label:'Vault',sub:_SUB_VAULT,type:'food',prot:23,kcal:300,tier:'default'},
@@ -5157,13 +5163,40 @@ const TIMELINE={
 
 
 // ── ROTATION SCHEDULE ──
+// The 6-day split is a rotation, not a calendar: the next session is the one after the last one
+// logged. Legs appear twice, so position is read from the uppers.
+const ROT_UPPERS=['Chest-Bi-Shoulders','Chest-Back','Shoulders-Arms','Back-Triceps'];
+function _lastLogged(keys){
+  try{ return (sessionLog||[]).find(s=>keys.includes(s.type))||null; }catch(e){ return null; }
+}
+// The upper that's due. One already logged today stays "today's" rather than jumping ahead.
+function _nextUpper(){
+  const last=_lastLogged(ROT_UPPERS);
+  if(!last) return ROT_UPPERS[0];
+  if(last.date===today()) return last.type;
+  return ROT_UPPERS[(ROT_UPPERS.indexOf(last.type)+1)%ROT_UPPERS.length];
+}
+// The full rotation, for school days, which have no roster Day 3 to anchor the legs:
+// legs follow Chest·Biceps·Shoulders and Shoulders·Arms.
+function _nextInRotation(){
+  const last=_lastLogged(ROT_UPPERS.concat('Sess-C'));
+  if(last && last.date===today()) return last.type;
+  return last && (last.type==='Chest-Bi-Shoulders'||last.type==='Shoulders-Arms') ? 'Sess-C' : _nextUpper();
+}
+// What today's suggestion is. On the roster, Days 2 and 4 take the next upper and Day 3 takes
+// legs, which is the "drop a skipped legs day" rule without anyone having to remember it.
+function _todaySession(){
+  if(shift==='school') return _nextInRotation();
+  const d=getActiveCycle()[cycleDay];
+  return d&&d.session||null;
+}
 // DNOO: Day → Night → Off → Off (4-day cycle)
 const CYCLE_DNOO = [
   {label:'Day 1',type:'d',typeLabel:'Day',gym:'Rest',session:null,
    short:'No gym · Vault at 22:00 · Sleep by 23:00',
    mission:'Day shift. Morning light → transporter → takeout + supps → 09:30 PM Mag → vault → sleep.',
    sub:'No gym today. Rest and recover.'},
-  {label:'Day 2',type:'n',typeLabel:'Night',gym:'{s}',session:'Mon-Push',
+  {label:'Day 2',type:'n',typeLabel:'Night',gym:'{s}',get session(){ return _nextUpper(); },
    short:'{s} · morning · Blue-blocks at 08:30',
    mission:'Night shift. Morning gym ({s}) → flask → 90-min nap → pre-shift dinner → blue-blocks 08:30.',
    sub:'Finishes 4+ hours before the afternoon nap — the buffer linked to undisturbed night sleep, applied to the nap as a precaution.'},
@@ -5171,7 +5204,7 @@ const CYCLE_DNOO = [
    short:'Post-night · {s} (optional) → dinner',
    mission:'Off day. Sleep first and wake naturally. {s} is optional today. If you go, finish at least 4 hours before bed; earlier is better, since evening exercise shifts the body clock later.',
    sub:'Bridge mode activates if you just finished Night shift.'},
-  {label:'Day 4',type:'o',typeLabel:'Off',gym:'{s} + Zone 2',session:'Thu-Upper',
+  {label:'Day 4',type:'o',typeLabel:'Off',gym:'{s} + Zone 2',get session(){ return _nextUpper(); },
    short:'{s} · morning · then Zone 2 outdoors',
    mission:'Off day. {s}, then Zone 2 outdoors in morning daylight, which shifts the body clock earlier ahead of the early Day 1 wake.',
    sub:'After a full night\'s sleep — a good day for your heaviest lifts.'},
@@ -5838,9 +5871,9 @@ function getContextualHint(){
     if(mins>=start) return `Mid-shift meal in ${fmt(24*60-mins+meal)}`;
     if(mins<meal)   return `Mid-shift meal in ${fmt(meal-mins)}`;
     if(mins<end)    return `Post-shift protocol in ${fmt(end-mins)}`;
-    // ns1 follows a normal night's sleep, so its morning holds Upper 1. ns2 and xns follow a
+    // ns1 follows a normal night's sleep, so its morning holds the next upper session. ns2 and xns follow a
     // night shift and genuinely open with sleep.
-    if(mins<14*60)  return shift==='ns1' ? `${_sessLabel('Mon-Push')}, then nap before the shift` : `Afternoon wake window`;
+    if(mins<14*60)  return shift==='ns1' ? `${_sessLabel(_nextUpper())}, then nap before the shift` : `Afternoon wake window`;
     return `Shift starts in ${fmt(start-mins)}`;
   }
   if(shift==='off'||shift==='leave'){
@@ -5926,6 +5959,7 @@ const SESSION_DEFAULTS={
     // at the stretched-elbow start, which grows the DISTAL arm. Incline extends the shoulder,
     // lengthening the long head, which grows the PROXIMAL arm. Running both covers regions
     // either alone would miss; preacher takes the larger share by preference.
+    // RETIRED 27 Nov 2026 for the 6-day rotation below; kept so logged sessions stay editable.
     // UPPER 1 — shoulders & arms (cycle day 2, ~10:00, before the nap). 47 h before Upper 2, so
     // its chest, rear-delt and triceps work is recovered by then (failure-adjacent sets need
     // 24–48 h, Morán-Navarro 2017). Delt work per head: front 3, side 6 (+1.5 indirect), rear 6 —
@@ -5946,6 +5980,7 @@ const SESSION_DEFAULTS={
     // effect from order — only strength favours going first. So the compound takes the slot
     // where being fresh actually pays (a stronger press = more load over time = more chest),
     // and the laterals lose nothing by following it.
+    // RETIRED 27 Nov 2026 for the 6-day rotation below; kept so logged sessions stay editable.
     // UPPER 2 — chest & back (cycle day 4, morning, after a full night's sleep). Its main lifts
     // (incline press, pulldown, rows) were last trained 47 h earlier on Upper 1. 28 sets. The back
     // covers three pulls (user's request, 29 Oct): Lat Pulldown (vertical; front pull has the most
@@ -5968,7 +6003,24 @@ const SESSION_DEFAULTS={
     // (Bickel 2011: 1/9 of the volume kept size in young adults). All priority work lives on the
     // two off-peak upper days. Holds all hip/hamstring work, incl. the 45° back extension.
     // ~30 min; ends >=4 h before bed (Leota 2025). 11 sets.
-    'Sess-C':[{name:'Leg Press',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'45° Back Extension',sets:'2',rep:'10-15'},{name:'Pallof Press',sets:'2',rep:'10-15'}],
+    // Abs added for the 6-day rotation (27 Nov): anti-rotation and hanging knee raises only, no
+    // loaded spinal flexion while the back is unassessed. 13 sets.
+    'Sess-C':[{name:'Leg Press',sets:'4',rep:'8-12'},{name:'Seated Leg Curl',sets:'3',rep:'10-15'},{name:'45° Back Extension',sets:'2',rep:'10-15'},{name:'Pallof Press',sets:'2',rep:'10-15'},{name:'Hanging Knee Raise',sets:'2',rep:'10-15'}],
+    // ── 6-DAY ROTATION (27 Nov 2026, the user's split) ──
+    // Run in order on whatever days they train: Chest·Biceps·Shoulders → Legs·Abs → Chest·Back →
+    // Shoulders·Arms → Legs·Abs → Back·Triceps. Legs sit in slots 2 and 5 so that on the roster
+    // they land on Day 3 (post-night, peak hour, the day that gets skipped) and every upper lands
+    // on Day 2 or Day 4, ~47 h or more after the previous upper. A skipped legs day is dropped,
+    // not carried, so the uppers keep their days (legs at maintenance tolerate misses, Bickel 2011).
+    // Volume: each upper comes round once per 8 days on the roster (5/6 a week at school, five
+    // evenings), so weekly fractional sets are side delts ~13.6, biceps ~13, chest ~11, triceps
+    // ~11, lats ~11 — all above the user's 10-set floor (Schoenfeld 2017), with side delts
+    // highest because broad shoulders is the first goal. Laterals go in all four uppers so no
+    // session needs more than 4. Exercise names match what's already logged, so history carries.
+    'Chest-Bi-Shoulders':[{name:'Incline Smith Press',sets:'3',rep:'6-10'},{name:'Deep Cable Fly',sets:'3',rep:'12-15'},{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Preacher Curl',sets:'3',rep:'10-15'},{name:'Cable Hammer Curl',sets:'2',rep:'10-15'}],
+    'Chest-Back':[{name:'Incline Smith Press',sets:'4',rep:'6-10'},{name:'Lat Pulldown',sets:'3',rep:'6-10'},{name:'Pec Deck Flyes',sets:'3',rep:'12-15'},{name:'Single-Arm Reverse Pec Deck',sets:'3',rep:'12-20'},{name:'Chest-Supported Row (elbows out)',sets:'3',rep:'8-12'},{name:'Cable Lateral Raise',sets:'3',rep:'12-20'}],
+    'Shoulders-Arms':[{name:'Seated DB Shoulder Press',sets:'3',rep:'6-10'},{name:'Cable Lateral Raise',sets:'4',rep:'12-20'},{name:'Cable Reverse Fly',sets:'3',rep:'12-20'},{name:'Incline DB Curl',sets:'3',rep:'10-15'},{name:'Overhead Cable Triceps Extension',sets:'3',rep:'10-15'}],
+    'Back-Triceps':[{name:'Lat Pulldown',sets:'4',rep:'6-10'},{name:'Iso-Lateral Low Row',sets:'4',rep:'8-12'},{name:'Overhead Cable Triceps Extension',sets:'3',rep:'10-15'},{name:'Cable Triceps Pushdown',sets:'2',rep:'10-15'},{name:'Cable Lateral Raise',sets:'3',rep:'12-20'}],
     'Cardio':[{name:'Zone 2 run / walk / cycle',sets:'',reps:'',weight:''}],
 };
 
@@ -6228,11 +6280,11 @@ function openSessionLogger(){
   const sel=document.getElementById('sess-type-select');
   setTimeout(renderSessChips,0);
   if(sel&&!sel.value&&!currentLifts.length){
-    const day=getActiveCycle()[cycleDay];
-    if(day&&day.session){
-      sel.value=day.session;
+    const due=_todaySession();
+    if(due){
+      sel.value=due;
       updateSessType();
-      showToast('Cycle day '+(cycleDay+1)+' — '+_cy(day.gym,day),'action');
+      showToast((shift==='school'?'Next up':'Cycle day '+(cycleDay+1))+' — '+_sessLabel(due),'action');
     }
   }
   // No scroll-to and no auto-focus any more: this runs on every visit to the tab now, not on
@@ -6404,11 +6456,14 @@ function renderPlanActions(){
     (custom ? '<button class="rem-btn" onclick="resetPlan()"><i class="ti ti-'+(own?'trash':'rotate')+'"></i>'+(own?'Delete session':'Reset to default')+'</button>' : '');
 }
 
+// In rotation order; subs are the user's own D1–D6 numbering.
 const LIVE_SESSIONS=[
-  {v:'Mon-Push',  label:'Upper 1 · Shoulders & Arms', sub:'night day'},
-  {v:'Sess-C',    label:'Lower · Legs',               sub:'optional'},
-  {v:'Thu-Upper', label:'Upper 2 · Chest & Back',     sub:'off day'},
-  {v:'Cardio',    label:'Cardio',                sub:'Zone 2'}
+  {v:'Chest-Bi-Shoulders', label:'Chest · Biceps · Shoulders', sub:'D1'},
+  {v:'Sess-C',             label:'Legs · Abs',                 sub:'D2 · D5 · optional'},
+  {v:'Chest-Back',         label:'Chest · Back',               sub:'D3'},
+  {v:'Shoulders-Arms',     label:'Shoulders · Arms',           sub:'D4'},
+  {v:'Back-Triceps',       label:'Back · Triceps',             sub:'D6'},
+  {v:'Cardio',             label:'Cardio',                     sub:'Zone 2'}
 ];
 
 function renderSessChips(){
@@ -6416,7 +6471,7 @@ function renderSessChips(){
   const sel=document.getElementById('sess-type-select');
   if(!el||!sel) return;
   let todaySession=null;
-  try{ todaySession=(getActiveCycle()[cycleDay]||{}).session||null; }catch(e){}
+  try{ todaySession=_todaySession(); }catch(e){}
   const own=_ownSessions();
   own.forEach(_ensureSessOption);
   el.innerHTML=LIVE_SESSIONS.concat(own.map(k=>({v:k,label:k,sub:'My session'}))).map(s=>{
