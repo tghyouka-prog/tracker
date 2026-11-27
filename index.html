@@ -3128,7 +3128,7 @@ function autoRollCycle(){
   if(daysPassed<=0) return; // same day or clock weirdness — leave it
   if(daysPassed>14){
     // Too long away — don't guess wildly, just re-anchor to today without rolling
-    cycleAnchorDate=today.toISOString().slice(0,10);
+    cycleAnchorDate=_localDay();
     return;
   }
   const len=getCycleLength();
@@ -3138,7 +3138,9 @@ function autoRollCycle(){
     if(rolled===0) cycleNum++;
   }
   cycleDay=rolled;
-  cycleAnchorDate=today.toISOString().slice(0,10);
+  // Local date, not toISOString(): that's the UTC date of local midnight, which in Singapore is
+  // yesterday, so every later launch counted a day that hadn't passed and rolled again.
+  cycleAnchorDate=_localDay();
   completedDays=[];
 }
 
